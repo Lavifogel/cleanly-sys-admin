@@ -40,6 +40,16 @@ const Index = () => {
     redirectUser();
   }, [session, navigate]);
 
+  const handleAdminClick = () => {
+    // Direct login redirect to admin dashboard
+    navigate('/admin/dashboard');
+  };
+
+  const handleCleanerClick = () => {
+    // Direct login redirect to cleaner dashboard
+    navigate('/cleaners/dashboard');
+  };
+
   return (
     <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-6">
       <motion.div 
@@ -84,11 +94,20 @@ const Index = () => {
         >
           {!session ? (
             <>
-              <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
-                <Link to="/admin/dashboard">Admin</Link>
+              <Button 
+                size="lg" 
+                className="rounded-full px-8 py-6 shadow-md"
+                onClick={handleAdminClick}
+              >
+                Admin
               </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full px-8 py-6">
-                <Link to="/cleaners/dashboard">Cleaners</Link>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="rounded-full px-8 py-6"
+                onClick={handleCleanerClick}
+              >
+                Cleaners
               </Button>
             </>
           ) : null}
