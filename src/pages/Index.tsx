@@ -2,8 +2,22 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user, profile } = useAuth();
+
+  // Determine where to redirect the user if they're already logged in
+  const getDashboardLink = () => {
+    if (!user || !profile) return null;
+    
+    return profile.role === "admin" 
+      ? "/admin/dashboard" 
+      : "/cleaners/dashboard";
+  };
+
+  const dashboardLink = getDashboardLink();
+
   return (
     <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-6">
       <motion.div 
@@ -46,12 +60,23 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
-            <Link to="/admin/dashboard">Admin Dashboard</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="rounded-full px-8 py-6">
-            <Link to="/cleaners/dashboard">Cleaner Dashboard</Link>
-          </Button>
+          {user && dashboardLink ? (
+            <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
+              <Link to={dashboardLink}>Go to Dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
+                <Link to="/auth">Sign In</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-full px-8 py-6">
+                <Link to="/admin/dashboard">Admin Dashboard</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-full px-8 py-6">
+                <Link to="/cleaners/dashboard">Cleaners</Link>
+              </Button>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </div>
