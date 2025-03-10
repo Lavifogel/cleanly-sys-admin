@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { motion } from "framer-motion";
 import { Clock, Camera, Scan, ClipboardCheck, User, PauseCircle, Timer, MapPin, Calendar, FileText, ImageIcon, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import QRCodeScanner from "@/components/QRCodeScanner";
 
 const formatTime = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
@@ -47,8 +47,10 @@ const CleanerDashboard = () => {
     description: string;
     action: () => void;
   } | null>(null);
+  
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [scannerPurpose, setScannerPurpose] = useState<"startShift" | "endShift" | "startCleaning" | "endCleaning">("startShift");
 
-  // Sample cleanings history data
   const [cleaningsHistory, setCleaningsHistory] = useState([
     {
       id: "1",
@@ -74,7 +76,6 @@ const CleanerDashboard = () => {
     },
   ]);
 
-  // Sample shifts history data
   const [shiftsHistory, setShiftsHistory] = useState([
     {
       id: "1",
@@ -96,7 +97,6 @@ const CleanerDashboard = () => {
     },
   ]);
 
-  // Timer logic for shift and cleaning
   useEffect(() => {
     let interval: number | null = null;
     
@@ -125,7 +125,6 @@ const CleanerDashboard = () => {
     };
   }, [activeCleaning]);
 
-  // Helper for confirmation dialogs
   const showConfirmationDialog = (title: string, description: string, action: () => void) => {
     setConfirmAction({
       title,
@@ -133,6 +132,28 @@ const CleanerDashboard = () => {
       action
     });
     setShowConfirmDialog(true);
+  };
+
+  const handleQRScan = (decodedText: string) => {
+    console.log("QR Code scanned:", decodedText);
+    setShowQRScanner(false);
+
+    switch (scannerPurpose) {
+      case "startShift":
+        completeStartShift(decodedText);
+        break;
+      case "endShift":
+        completeEndShift(true, decodedText);
+        break;
+      case "startCleaning":
+        completeStartCleaning(decodedText);
+        break;
+      case "endCleaning":
+        prepareCleaningSummary(true, decodedText);
+        break;
+      default:
+        break;
+    }
   };
 
   const handleStartShift = () => {
@@ -145,7 +166,11 @@ const CleanerDashboard = () => {
       return;
     }
     
-    // In a real app, this would scan QR code first
+    setScannerPurpose("startShift");
+    setShowQRScanner(true);
+  };
+
+  const completeStartShift = (qrData: string) => {
     toast({
       title: "Shift Started",
       description: "Your shift has been started successfully after scanning the QR code.",
@@ -184,18 +209,17 @@ const CleanerDashboard = () => {
         () => completeEndShift(withScan)
       );
     } else {
-      completeEndShift(withScan);
+      setScannerPurpose("endShift");
+      setShowQRScanner(true);
     }
   };
 
-  const completeEndShift = (withScan: boolean) => {
-    // In a real app, this would handle QR scanning if withScan is true
+  const completeEndShift = (withScan: boolean, qrData?: string) => {
     toast({
       title: "Shift Ended",
       description: `Your shift has been ended ${withScan ? 'with' : 'without'} a scan.`,
     });
 
-    // Add to shift history
     const newShift = {
       id: (shiftsHistory.length + 1).toString(),
       date: new Date().toISOString().split('T')[0],
@@ -230,14 +254,22 @@ const CleanerDashboard = () => {
       return;
     }
 
-    // In a real app, this would scan QR code to get location
+    setScannerPurpose("startCleaning");
+    setShowQRScanner(true);
+  };
+
+  const completeStartCleaning = (qrData: string) => {
+    const locationFromQR = qrData.includes("location=") 
+      ? qrData.split("location=")[1].split("&")[0] 
+      : "Conference Room B";
+
     toast({
       title: "Cleaning Started",
       description: "Your cleaning task has been started after scanning the QR code.",
     });
 
     setActiveCleaning({
-      location: "Conference Room B",
+      location: locationFromQR,
       startTime: new Date(),
       timer: 0,
       paused: false,
@@ -277,14 +309,12 @@ const CleanerDashboard = () => {
         () => prepareCleaningSummary(withScan)
       );
     } else {
-      prepareCleaningSummary(withScan);
+      setScannerPurpose("endCleaning");
+      setShowQRScanner(true);
     }
   };
 
-  const prepareCleaningSummary = (withScan: boolean) => {
-    // In a real app, this would handle QR scanning if withScan is true
-    
-    // Prepare cleaning summary
+  const prepareCleaningSummary = (withScan: boolean, qrData?: string) => {
     setCleaningSummary({
       location: activeCleaning!.location,
       startTime: activeCleaning!.startTime.toLocaleTimeString(),
@@ -299,19 +329,16 @@ const CleanerDashboard = () => {
   };
 
   const handleCompleteSummary = () => {
-    // Update the cleaning summary with notes
     setCleaningSummary({
       ...cleaningSummary,
       notes: summaryNotes
     });
 
-    // In a real app, this would save the cleaning summary to the database
     toast({
       title: "Cleaning Completed",
       description: "Your cleaning summary has been saved.",
     });
 
-    // Add to cleaning history
     const newCleaning = {
       id: (cleaningsHistory.length + 1).toString(),
       location: activeCleaning!.location,
@@ -332,13 +359,11 @@ const CleanerDashboard = () => {
   };
 
   const handleAddImage = () => {
-    // In a real app, this would open the camera to take a picture
     toast({
       title: "Image Added",
       description: "Your image has been added to the cleaning summary.",
     });
 
-    // Simulate adding an image
     if (cleaningSummary.images.length < 5) {
       setCleaningSummary({
         ...cleaningSummary,
@@ -633,7 +658,13 @@ const CleanerDashboard = () => {
         )}
       </motion.div>
 
-      {/* Cleaning Summary Dialog */}
+      {showQRScanner && (
+        <QRCodeScanner 
+          onScanSuccess={handleQRScan}
+          onClose={() => setShowQRScanner(false)}
+        />
+      )}
+
       <Dialog open={showSummary} onOpenChange={setShowSummary}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -722,7 +753,6 @@ const CleanerDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
