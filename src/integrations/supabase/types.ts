@@ -53,6 +53,7 @@ export type Database = {
           phone: string | null
           rating: number | null
           specialization: string | null
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -63,6 +64,7 @@ export type Database = {
           phone?: string | null
           rating?: number | null
           specialization?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -73,6 +75,7 @@ export type Database = {
           phone?: string | null
           rating?: number | null
           specialization?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -81,6 +84,92 @@ export type Database = {
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cleanings: {
+        Row: {
+          area_id: string
+          created_at: string
+          end_date: string | null
+          end_time: string | null
+          id: string
+          notes: string | null
+          shift_id: string
+          start_date: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          shift_id: string
+          start_date?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          shift_id?: string
+          start_date?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cleanings_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["area_id"]
+          },
+          {
+            foreignKeyName: "cleanings_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      images: {
+        Row: {
+          cleaning_id: string
+          created_at: string
+          id: string
+          image_url: string
+        }
+        Insert: {
+          cleaning_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+        }
+        Update: {
+          cleaning_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "images_cleaning_id_fkey"
+            columns: ["cleaning_id"]
+            isOneToOne: false
+            referencedRelation: "cleanings"
             referencedColumns: ["id"]
           },
         ]
@@ -114,6 +203,85 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      qr_codes: {
+        Row: {
+          area_id: string
+          area_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          type: string
+        }
+        Insert: {
+          area_id: string
+          area_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          type: string
+        }
+        Update: {
+          area_id?: string
+          area_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          end_time: string | null
+          id: string
+          start_date: string
+          start_time: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          start_date?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          start_date?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "cleaners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
