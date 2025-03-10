@@ -1,21 +1,21 @@
-import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { motion } from "framer-motion";
-import { Clock, Camera, Scan, ClipboardCheck, User, PauseCircle, Timer, MapPin, Calendar, FileText, ImageIcon, ArrowRight, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import QRCodeScanner from "@/components/QRCodeScanner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const formatTime = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-};
+import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import { Clock, Camera, ClipboardCheck, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import QRCodeScanner from "@/components/QRCodeScanner";
+import { formatTime } from "@/utils/timeUtils";
+
+// Imported Components
+import StartShiftCard from "@/components/cleaners/StartShiftCard";
+import ActiveShiftCard from "@/components/cleaners/ActiveShiftCard";
+import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
+import RecentCleaningsCard from "@/components/cleaners/RecentCleaningsCard";
+import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
+import ProfileCard from "@/components/cleaners/ProfileCard";
+import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
+import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
 
 const CleanerDashboard = () => {
   const { toast } = useToast();
@@ -422,26 +422,6 @@ const CleanerDashboard = () => {
     });
   };
 
-  const renderStartShiftCard = () => (
-    <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Start Your Shift</CardTitle>
-        <CardDescription>
-          Scan a QR code to begin your work day
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center">
-        <div className="mb-6 bg-primary/10 p-6 rounded-full">
-          <Scan className="h-16 w-16 text-primary/80" />
-        </div>
-        <Button onClick={handleStartShift} className="w-full text-lg py-6" size="lg">
-          <Scan className="mr-2 h-5 w-5" />
-          Scan to Start Shift
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="container mx-auto p-4 md:p-6">
       <motion.div
@@ -452,7 +432,7 @@ const CleanerDashboard = () => {
         {!activeShift ? (
           <div className="min-h-[80vh] flex flex-col justify-center items-center">
             <div className="w-full max-w-md">
-              {renderStartShiftCard()}
+              <StartShiftCard onStartShift={handleStartShift} />
             </div>
           </div>
         ) : (
@@ -483,219 +463,34 @@ const CleanerDashboard = () => {
               </TabsList>
 
               <TabsContent value="home" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Active Shift</CardTitle>
-                    <CardDescription>
-                      Started at {activeShift.startTime.toLocaleTimeString()}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center mb-4">
-                      <div className="text-4xl font-bold mb-2">
-                        {formatTime(elapsedTime)}
-                      </div>
-                      <p className="text-muted-foreground">Elapsed Time</p>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleEndShift(true)}
-                        className="w-full"
-                      >
-                        <Scan className="mr-2 h-4 w-4" />
-                        End Shift with Scan
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleEndShift(false)}
-                        className="w-full"
-                      >
-                        End Shift without Scan
-                      </Button>
-                      <Button
-                        onClick={handleStartCleaning}
-                        className="w-full mt-4"
-                      >
-                        <Scan className="mr-2 h-4 w-4" />
-                        Scan to Start Cleaning
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ActiveShiftCard 
+                  startTime={activeShift.startTime}
+                  elapsedTime={elapsedTime}
+                  onEndShiftWithScan={() => handleEndShift(true)}
+                  onEndShiftWithoutScan={() => handleEndShift(false)}
+                  onStartCleaning={handleStartCleaning}
+                />
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Cleanings</CardTitle>
-                    <CardDescription>Your cleaning history</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {cleaningsHistory.length > 0 ? (
-                        cleaningsHistory.map((cleaning) => (
-                          <div
-                            key={cleaning.id}
-                            className="border rounded-lg p-4 space-y-2"
-                          >
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <div className="flex items-center">
-                                  <MapPin className="h-4 w-4 mr-1 text-primary" />
-                                  <h4 className="font-medium">{cleaning.location}</h4>
-                                </div>
-                                <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  <p>{cleaning.date}</p>
-                                </div>
-                                <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  <p>{cleaning.startTime} - {cleaning.endTime}</p>
-                                </div>
-                              </div>
-                              <div className="text-sm font-medium flex items-center bg-primary/10 px-2 py-1 rounded">
-                                <Timer className="h-3 w-3 mr-1 text-primary" />
-                                {cleaning.duration}
-                              </div>
-                            </div>
-                            {cleaning.notes && (
-                              <div className="flex items-center text-sm">
-                                <FileText className="h-3 w-3 mr-1 text-muted-foreground" />
-                                <p className="text-sm">{cleaning.notes}</p>
-                              </div>
-                            )}
-                            {cleaning.images > 0 && (
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <ImageIcon className="h-3 w-3 mr-1" />
-                                {cleaning.images} images
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-6 text-muted-foreground">
-                          No cleaning history yet
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                <RecentCleaningsCard cleaningsHistory={cleaningsHistory} />
               </TabsContent>
 
               <TabsContent value="cleaning" className="space-y-4">
                 {activeCleaning && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <MapPin className="h-5 w-5 mr-2 text-primary" />
-                        {activeCleaning.location}
-                      </CardTitle>
-                      <CardDescription>
-                        Started at {activeCleaning.startTime.toLocaleTimeString()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center mb-6">
-                        <div className="text-4xl font-bold mb-2">
-                          {formatTime(cleaningElapsedTime)}
-                        </div>
-                        <p className="text-muted-foreground">
-                          {activeCleaning.paused ? "PAUSED" : "Elapsed Time"}
-                        </p>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          variant={activeCleaning.paused ? "default" : "outline"}
-                          onClick={handlePauseCleaning}
-                          className="w-full"
-                        >
-                          <PauseCircle className="mr-2 h-4 w-4" />
-                          {activeCleaning.paused ? "Resume Cleaning" : "Pause Cleaning"}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleEndCleaning(true)}
-                          className="w-full mt-4"
-                        >
-                          <Scan className="mr-2 h-4 w-4" />
-                          Complete with Scan
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleEndCleaning(false)}
-                          className="w-full"
-                        >
-                          Complete without Scan
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <ActiveCleaningCard 
+                    location={activeCleaning.location}
+                    startTime={activeCleaning.startTime}
+                    cleaningElapsedTime={cleaningElapsedTime}
+                    isPaused={activeCleaning.paused}
+                    onPauseCleaning={handlePauseCleaning}
+                    onEndCleaningWithScan={() => handleEndCleaning(true)}
+                    onEndCleaningWithoutScan={() => handleEndCleaning(false)}
+                  />
                 )}
               </TabsContent>
 
               <TabsContent value="profile" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Shift History</CardTitle>
-                    <CardDescription>View your past shifts</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {shiftsHistory.map((shift) => (
-                        <div key={shift.id} className="border rounded-lg overflow-hidden">
-                          <div className="p-4 bg-card">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <div className="flex items-center">
-                                  <Calendar className="h-4 w-4 mr-1 text-primary" />
-                                  <h4 className="font-medium">{shift.date}</h4>
-                                </div>
-                                <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  <p>{shift.startTime} - {shift.endTime}</p>
-                                </div>
-                              </div>
-                              <div className="text-sm font-medium flex items-center bg-primary/10 px-2 py-1 rounded">
-                                <Timer className="h-3 w-3 mr-1 text-primary" />
-                                {shift.duration}
-                              </div>
-                            </div>
-                            <div className="mt-2 text-sm text-muted-foreground flex items-center">
-                              <ClipboardCheck className="h-3 w-3 mr-1" />
-                              {shift.cleanings} cleanings completed
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Your profile details</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="text-muted-foreground">Name:</span>
-                        <span className="font-medium">John Doe</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="text-muted-foreground">Phone:</span>
-                        <span className="font-medium">+1234567890</span>
-                      </div>
-                      <div className="flex justify-between py-2 border-b">
-                        <span className="text-muted-foreground">Start Date:</span>
-                        <span className="font-medium">January 15, 2023</span>
-                      </div>
-                      <div className="flex justify-between py-2">
-                        <span className="text-muted-foreground">Role:</span>
-                        <span className="font-medium">Cleaner</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ShiftHistoryCard shiftsHistory={shiftsHistory} />
+                <ProfileCard />
               </TabsContent>
             </Tabs>
           </>
@@ -709,147 +504,34 @@ const CleanerDashboard = () => {
         />
       )}
 
-      <Dialog open={showSummary} onOpenChange={setShowSummary}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Cleaning Summary</DialogTitle>
-            <DialogDescription>
-              Complete your cleaning record
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 mr-2 text-primary" />
-                <h4 className="font-medium">{cleaningSummary.location}</h4>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-muted-foreground flex items-center">
-                  <Clock className="h-3 w-3 mr-1" />
-                  Start:
-                </div>
-                <div>{cleaningSummary.startTime}</div>
-                
-                <div className="text-muted-foreground flex items-center">
-                  <Clock className="h-3 w-3 mr-1" />
-                  End:
-                </div>
-                <div>{cleaningSummary.endTime}</div>
-                
-                <div className="text-muted-foreground flex items-center">
-                  <Timer className="h-3 w-3 mr-1" />
-                  Duration:
-                </div>
-                <div>{cleaningSummary.duration}</div>
-              </div>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium">Add Notes (Optional)</label>
-              <Textarea 
-                placeholder="Enter any notes about the cleaning" 
-                value={summaryNotes}
-                onChange={(e) => setSummaryNotes(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium">Images (Optional)</label>
-                <span className="text-xs text-muted-foreground">{cleaningSummary.images.length}/5</span>
-              </div>
-              
-              {cleaningSummary.images.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {cleaningSummary.images.map((img, index) => (
-                    <div key={index} className="aspect-square bg-muted rounded-md flex items-center justify-center relative">
-                      <Avatar className="w-full h-full rounded-md">
-                        <AvatarImage src={img} alt={`Cleaning image ${index + 1}`} className="object-cover" />
-                        <AvatarFallback className="rounded-md">
-                          <Camera className="h-6 w-6 text-muted-foreground" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <Button 
-                        variant="destructive" 
-                        size="icon" 
-                        className="absolute top-1 right-1 h-5 w-5 rounded-full"
-                        onClick={() => handleRemoveImage(index)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4 border rounded-md text-sm text-muted-foreground">
-                  No images added
-                </div>
-              )}
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full mt-2"
-                onClick={handleAddImage}
-                disabled={cleaningSummary.images.length >= 5}
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Take Photo
-              </Button>
-              
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button type="button" onClick={handleCompleteSummary} className="w-full">
-              Complete Cleaning
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CleaningSummaryDialog 
+        open={showSummary}
+        onOpenChange={setShowSummary}
+        cleaningSummary={cleaningSummary}
+        summaryNotes={summaryNotes}
+        onSummaryNotesChange={setSummaryNotes}
+        onAddImage={handleAddImage}
+        onRemoveImage={handleRemoveImage}
+        onCompleteSummary={handleCompleteSummary}
+      />
 
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{confirmAction?.title}</DialogTitle>
-            <DialogDescription>
-              {confirmAction?.description}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="sm:justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setShowConfirmDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="button" 
-              variant="destructive" 
-              onClick={() => {
-                if (confirmAction?.action) {
-                  confirmAction.action();
-                }
-                setShowConfirmDialog(false);
-              }}
-            >
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmationDialog 
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        title={confirmAction?.title || ""}
+        description={confirmAction?.description || ""}
+        onConfirm={() => confirmAction?.action && confirmAction.action()}
+      />
+
+      {/* Hidden file input for image upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
     </div>
   );
 };
