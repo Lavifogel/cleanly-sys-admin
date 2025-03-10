@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
-import { Clock, Camera, Scan, ClipboardCheck, User, PauseCircle, Timer, MapPin, Calendar, FileText, ImageIcon, ArrowRight } from "lucide-react";
+import { Clock, Camera, Scan, ClipboardCheck, User, PauseCircle, Timer, MapPin, Calendar, FileText, ImageIcon, ArrowRight, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import QRCodeScanner from "@/components/QRCodeScanner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const formatTime = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
@@ -96,6 +97,39 @@ const CleanerDashboard = () => {
       cleanings: 4,
     },
   ]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const imageUrl = URL.createObjectURL(file);
+    
+    setCleaningSummary({
+      ...cleaningSummary,
+      images: [...cleaningSummary.images, imageUrl]
+    });
+    
+    toast({
+      title: "Image Added",
+      description: "Your image has been added to the cleaning summary.",
+    });
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   useEffect(() => {
     let interval: number | null = null;
@@ -359,23 +393,33 @@ const CleanerDashboard = () => {
   };
 
   const handleAddImage = () => {
-    toast({
-      title: "Image Added",
-      description: "Your image has been added to the cleaning summary.",
-    });
-
-    if (cleaningSummary.images.length < 5) {
-      setCleaningSummary({
-        ...cleaningSummary,
-        images: [...cleaningSummary.images, `image-${Date.now()}`]
-      });
-    } else {
+    if (cleaningSummary.images.length >= 5) {
       toast({
         title: "Maximum Images Reached",
         description: "You can only add up to 5 images per cleaning.",
         variant: "destructive",
       });
+      return;
     }
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = [...cleaningSummary.images];
+    newImages.splice(index, 1);
+    
+    setCleaningSummary({
+      ...cleaningSummary,
+      images: newImages
+    });
+    
+    toast({
+      title: "Image Removed",
+      description: "The image has been removed from the cleaning summary.",
+    });
   };
 
   const renderStartShiftCard = () => (
@@ -720,8 +764,21 @@ const CleanerDashboard = () => {
               {cleaningSummary.images.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
                   {cleaningSummary.images.map((img, index) => (
-                    <div key={img} className="aspect-square bg-muted rounded-md flex items-center justify-center">
-                      <Camera className="h-6 w-6 text-muted-foreground" />
+                    <div key={index} className="aspect-square bg-muted rounded-md flex items-center justify-center relative">
+                      <Avatar className="w-full h-full rounded-md">
+                        <AvatarImage src={img} alt={`Cleaning image ${index + 1}`} className="object-cover" />
+                        <AvatarFallback className="rounded-md">
+                          <Camera className="h-6 w-6 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <Button 
+                        variant="destructive" 
+                        size="icon" 
+                        className="absolute top-1 right-1 h-5 w-5 rounded-full"
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -741,6 +798,15 @@ const CleanerDashboard = () => {
                 <Camera className="h-4 w-4 mr-2" />
                 Take Photo
               </Button>
+              
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </div>
           </div>
           
