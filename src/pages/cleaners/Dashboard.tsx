@@ -804,8 +804,8 @@ const CleanerDashboard = () => {
                 ref={fileInputRef}
                 accept="image/*"
                 capture="environment"
-                onChange={handleFileSelect}
                 className="hidden"
+                onChange={handleFileSelect}
               />
             </div>
           </div>
