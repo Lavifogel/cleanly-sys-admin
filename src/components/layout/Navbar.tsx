@@ -61,13 +61,9 @@ const Navbar = () => {
       { path: '/', label: 'Home' }
     ];
 
-    // If user is not logged in, show both dashboard options
+    // If user is not logged in, don't show any dashboard links
     if (!session) {
-      return [
-        ...commonRoutes,
-        { path: '/admin/dashboard', label: 'Admin' },
-        { path: '/cleaners/dashboard', label: 'Cleaners' },
-      ];
+      return commonRoutes;
     }
 
     // If user is logged in, only show their relevant dashboard
@@ -96,9 +92,7 @@ const Navbar = () => {
     <header
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out py-4 px-6',
-        isScrolled
-          ? 'bg-background/80 backdrop-blur-md border-b'
-          : 'bg-transparent'
+        isScrolled ? 'bg-background/80 backdrop-blur-md border-b' : 'bg-transparent'
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">

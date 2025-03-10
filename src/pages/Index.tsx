@@ -4,12 +4,13 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const [userRole, setUserRole] = useState<string | null>(null);
-
-  // Fetch user session
+  const navigate = useNavigate();
+  
+  // Fetch user session and role
   const { data: session } = useQuery({
     queryKey: ['session'],
     queryFn: async () => {
@@ -18,43 +19,26 @@ const Index = () => {
     },
   });
 
-  // Fetch user profile to get role
+  // Redirect authenticated users to their respective dashboards
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const redirectUser = async () => {
       if (session?.user) {
-        const { data } = await supabase
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
         
-        if (data) {
-          setUserRole(data.role);
+        if (profileData?.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (profileData?.role === 'cleaner') {
+          navigate('/cleaners/dashboard');
         }
-      } else {
-        setUserRole(null);
       }
     };
 
-    fetchUserProfile();
-  }, [session]);
-
-  // Determine dashboard link based on user role
-  const getDashboardLink = () => {
-    if (!session) {
-      return null;
-    }
-
-    if (userRole === 'admin') {
-      return '/admin/dashboard';
-    } else if (userRole === 'cleaner') {
-      return '/cleaners/dashboard';
-    }
-
-    return null;
-  };
-
-  const dashboardLink = getDashboardLink();
+    redirectUser();
+  }, [session, navigate]);
 
   return (
     <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-6">
@@ -98,20 +82,16 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          {session ? (
-            <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
-              <Link to={dashboardLink || '/'}>Go to Dashboard</Link>
-            </Button>
-          ) : (
+          {!session ? (
             <>
               <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
-                <Link to="/admin/dashboard">Admin Dashboard</Link>
+                <Link to="/admin/dashboard">Admin</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-full px-8 py-6">
-                <Link to="/cleaners/dashboard">Cleaners Dashboard</Link>
+                <Link to="/cleaners/dashboard">Cleaners</Link>
               </Button>
             </>
-          )}
+          ) : null}
         </motion.div>
       </motion.div>
     </div>
