@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
-import { Clock, Camera, Scan, ClipboardCheck, User, PauseCircle } from "lucide-react";
+import { Clock, Camera, Scan, ClipboardCheck, User, PauseCircle, Timer, MapPin, Calendar, FileText, ImageIcon, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const formatTime = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
@@ -29,6 +31,22 @@ const CleanerDashboard = () => {
   }>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [cleaningElapsedTime, setCleaningElapsedTime] = useState(0);
+  const [showSummary, setShowSummary] = useState(false);
+  const [cleaningSummary, setCleaningSummary] = useState({
+    location: "",
+    startTime: "",
+    endTime: "",
+    duration: "",
+    notes: "",
+    images: [] as string[]
+  });
+  const [summaryNotes, setSummaryNotes] = useState("");
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    title: string;
+    description: string;
+    action: () => void;
+  } | null>(null);
 
   // Sample cleanings history data
   const [cleaningsHistory, setCleaningsHistory] = useState([
@@ -53,6 +71,28 @@ const CleanerDashboard = () => {
       status: "finished without scan",
       images: 0,
       notes: "",
+    },
+  ]);
+
+  // Sample shifts history data
+  const [shiftsHistory, setShiftsHistory] = useState([
+    {
+      id: "1",
+      date: "2023-08-15",
+      startTime: "09:00",
+      endTime: "17:00",
+      duration: "8h",
+      status: "finished with scan",
+      cleanings: 5,
+    },
+    {
+      id: "2",
+      date: "2023-08-14",
+      startTime: "08:30",
+      endTime: "16:30",
+      duration: "8h",
+      status: "finished without scan",
+      cleanings: 4,
     },
   ]);
 
@@ -84,6 +124,16 @@ const CleanerDashboard = () => {
       if (interval) clearInterval(interval);
     };
   }, [activeCleaning]);
+
+  // Helper for confirmation dialogs
+  const showConfirmationDialog = (title: string, description: string, action: () => void) => {
+    setConfirmAction({
+      title,
+      description,
+      action
+    });
+    setShowConfirmDialog(true);
+  };
 
   const handleStartShift = () => {
     if (activeShift) {
@@ -127,12 +177,36 @@ const CleanerDashboard = () => {
       return;
     }
 
+    if (!withScan) {
+      showConfirmationDialog(
+        "End Shift Without Scan",
+        "Are you sure you want to end your shift without scanning? This action cannot be undone.",
+        () => completeEndShift(withScan)
+      );
+    } else {
+      completeEndShift(withScan);
+    }
+  };
+
+  const completeEndShift = (withScan: boolean) => {
     // In a real app, this would handle QR scanning if withScan is true
     toast({
       title: "Shift Ended",
       description: `Your shift has been ended ${withScan ? 'with' : 'without'} a scan.`,
     });
 
+    // Add to shift history
+    const newShift = {
+      id: (shiftsHistory.length + 1).toString(),
+      date: new Date().toISOString().split('T')[0],
+      startTime: activeShift!.startTime.toTimeString().slice(0, 5),
+      endTime: new Date().toTimeString().slice(0, 5),
+      duration: `${Math.floor(elapsedTime / 3600)}h ${Math.floor((elapsedTime % 3600) / 60)}m`,
+      status: withScan ? "finished with scan" : "finished without scan",
+      cleanings: 0,
+    };
+
+    setShiftsHistory([newShift, ...shiftsHistory]);
     setActiveShift(null);
     setElapsedTime(0);
   };
@@ -196,30 +270,87 @@ const CleanerDashboard = () => {
       return;
     }
 
+    if (!withScan) {
+      showConfirmationDialog(
+        "End Cleaning Without Scan",
+        "Are you sure you want to end this cleaning without scanning? This action cannot be undone.",
+        () => prepareCleaningSummary(withScan)
+      );
+    } else {
+      prepareCleaningSummary(withScan);
+    }
+  };
+
+  const prepareCleaningSummary = (withScan: boolean) => {
     // In a real app, this would handle QR scanning if withScan is true
-    toast({
-      title: "Cleaning Finished",
-      description: "Please add summary information for this cleaning.",
+    
+    // Prepare cleaning summary
+    setCleaningSummary({
+      location: activeCleaning!.location,
+      startTime: activeCleaning!.startTime.toLocaleTimeString(),
+      endTime: new Date().toLocaleTimeString(),
+      duration: formatTime(cleaningElapsedTime),
+      notes: "",
+      images: []
+    });
+    
+    setSummaryNotes("");
+    setShowSummary(true);
+  };
+
+  const handleCompleteSummary = () => {
+    // Update the cleaning summary with notes
+    setCleaningSummary({
+      ...cleaningSummary,
+      notes: summaryNotes
     });
 
-    // In a real app, this would go to cleaning summary page
-    // For now, we'll just add it to history and reset
+    // In a real app, this would save the cleaning summary to the database
+    toast({
+      title: "Cleaning Completed",
+      description: "Your cleaning summary has been saved.",
+    });
+
+    // Add to cleaning history
     const newCleaning = {
       id: (cleaningsHistory.length + 1).toString(),
-      location: activeCleaning.location,
+      location: activeCleaning!.location,
       date: new Date().toISOString().split('T')[0],
-      startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
+      startTime: activeCleaning!.startTime.toTimeString().slice(0, 5),
       endTime: new Date().toTimeString().slice(0, 5),
       duration: `${Math.floor(cleaningElapsedTime / 60)}m`,
-      status: `finished ${withScan ? 'with' : 'without'} scan`,
-      images: 0,
-      notes: "",
+      status: `finished with scan`,
+      images: cleaningSummary.images.length,
+      notes: summaryNotes,
     };
 
     setCleaningsHistory([newCleaning, ...cleaningsHistory]);
     setActiveCleaning(null);
     setCleaningElapsedTime(0);
+    setShowSummary(false);
     setActiveTab("home");
+  };
+
+  const handleAddImage = () => {
+    // In a real app, this would open the camera to take a picture
+    toast({
+      title: "Image Added",
+      description: "Your image has been added to the cleaning summary.",
+    });
+
+    // Simulate adding an image
+    if (cleaningSummary.images.length < 5) {
+      setCleaningSummary({
+        ...cleaningSummary,
+        images: [...cleaningSummary.images, `image-${Date.now()}`]
+      });
+    } else {
+      toast({
+        title: "Maximum Images Reached",
+        description: "You can only add up to 5 images per cleaning.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -286,6 +417,13 @@ const CleanerDashboard = () => {
                     >
                       End Shift without Scan
                     </Button>
+                    <Button
+                      onClick={handleStartCleaning}
+                      className="w-full mt-4"
+                    >
+                      <Scan className="mr-2 h-4 w-4" />
+                      Scan to Start Cleaning
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -306,27 +444,6 @@ const CleanerDashboard = () => {
               </Card>
             )}
 
-            {activeShift && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Cleaning Tasks</CardTitle>
-                  <CardDescription>
-                    Manage your cleaning tasks
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={handleStartCleaning}
-                    className="w-full"
-                    disabled={!!activeCleaning}
-                  >
-                    <Scan className="mr-2 h-4 w-4" />
-                    Scan to Start Cleaning
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
             <Card>
               <CardHeader>
                 <CardTitle>Recent Cleanings</CardTitle>
@@ -342,19 +459,33 @@ const CleanerDashboard = () => {
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-medium">{cleaning.location}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {cleaning.date} • {cleaning.startTime} - {cleaning.endTime}
-                            </p>
+                            <div className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-1 text-primary" />
+                              <h4 className="font-medium">{cleaning.location}</h4>
+                            </div>
+                            <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              <p>{cleaning.date}</p>
+                            </div>
+                            <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                              <Clock className="h-3 w-3 mr-1" />
+                              <p>{cleaning.startTime} - {cleaning.endTime}</p>
+                            </div>
                           </div>
-                          <div className="text-sm font-medium">{cleaning.duration}</div>
+                          <div className="text-sm font-medium flex items-center bg-primary/10 px-2 py-1 rounded">
+                            <Timer className="h-3 w-3 mr-1 text-primary" />
+                            {cleaning.duration}
+                          </div>
                         </div>
                         {cleaning.notes && (
-                          <p className="text-sm">{cleaning.notes}</p>
+                          <div className="flex items-center text-sm">
+                            <FileText className="h-3 w-3 mr-1 text-muted-foreground" />
+                            <p className="text-sm">{cleaning.notes}</p>
+                          </div>
                         )}
                         {cleaning.images > 0 && (
                           <div className="flex items-center text-sm text-muted-foreground">
-                            <Camera className="h-3 w-3 mr-1" />
+                            <ImageIcon className="h-3 w-3 mr-1" />
                             {cleaning.images} images
                           </div>
                         )}
@@ -374,9 +505,12 @@ const CleanerDashboard = () => {
             {activeCleaning && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Active Cleaning</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="flex items-center">
+                    <MapPin className="h-5 w-5 mr-2 text-primary" />
                     {activeCleaning.location}
+                  </CardTitle>
+                  <CardDescription>
+                    Started at {activeCleaning.startTime.toLocaleTimeString()}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -400,7 +534,7 @@ const CleanerDashboard = () => {
                     <Button
                       variant="destructive"
                       onClick={() => handleEndCleaning(true)}
-                      className="w-full"
+                      className="w-full mt-4"
                     >
                       <Scan className="mr-2 h-4 w-4" />
                       Complete with Scan
@@ -421,49 +555,63 @@ const CleanerDashboard = () => {
           <TabsContent value="profile" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Your Profile</CardTitle>
-                <CardDescription>View your information and history</CardDescription>
+                <CardTitle>Shift History</CardTitle>
+                <CardDescription>View your past shifts</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-medium mb-2">Personal Information</h3>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="text-muted-foreground">Name:</div>
-                      <div>John Doe</div>
-                      <div className="text-muted-foreground">Phone:</div>
-                      <div>+1234567890</div>
-                      <div className="text-muted-foreground">Start Date:</div>
-                      <div>January 15, 2023</div>
+                  {shiftsHistory.map((shift) => (
+                    <div key={shift.id} className="border rounded-lg overflow-hidden">
+                      <div className="p-4 bg-card">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-1 text-primary" />
+                              <h4 className="font-medium">{shift.date}</h4>
+                            </div>
+                            <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                              <Clock className="h-3 w-3 mr-1" />
+                              <p>{shift.startTime} - {shift.endTime}</p>
+                            </div>
+                          </div>
+                          <div className="text-sm font-medium flex items-center bg-primary/10 px-2 py-1 rounded">
+                            <Timer className="h-3 w-3 mr-1 text-primary" />
+                            {shift.duration}
+                          </div>
+                        </div>
+                        <div className="mt-2 text-sm text-muted-foreground flex items-center">
+                          <ClipboardCheck className="h-3 w-3 mr-1" />
+                          {shift.cleanings} cleanings completed
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-                  <div>
-                    <h3 className="font-medium mb-2">Shift History</h3>
-                    <div className="border rounded-lg divide-y">
-                      <div className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="font-medium">August 15, 2023</div>
-                            <div className="text-sm text-muted-foreground">
-                              8:00 AM - 4:00 PM
-                            </div>
-                          </div>
-                          <div className="text-sm font-medium">8h</div>
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="font-medium">August 14, 2023</div>
-                            <div className="text-sm text-muted-foreground">
-                              8:00 AM - 4:00 PM
-                            </div>
-                          </div>
-                          <div className="text-sm font-medium">8h</div>
-                        </div>
-                      </div>
-                    </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Personal Information</CardTitle>
+                <CardDescription>Your profile details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Name:</span>
+                    <span className="font-medium">John Doe</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Phone:</span>
+                    <span className="font-medium">+1234567890</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Start Date:</span>
+                    <span className="font-medium">January 15, 2023</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-muted-foreground">Role:</span>
+                    <span className="font-medium">Cleaner</span>
                   </div>
                 </div>
               </CardContent>
@@ -471,6 +619,128 @@ const CleanerDashboard = () => {
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      {/* Cleaning Summary Dialog */}
+      <Dialog open={showSummary} onOpenChange={setShowSummary}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cleaning Summary</DialogTitle>
+            <DialogDescription>
+              Complete your cleaning record
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 mr-2 text-primary" />
+                <h4 className="font-medium">{cleaningSummary.location}</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-muted-foreground flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Start:
+                </div>
+                <div>{cleaningSummary.startTime}</div>
+                
+                <div className="text-muted-foreground flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  End:
+                </div>
+                <div>{cleaningSummary.endTime}</div>
+                
+                <div className="text-muted-foreground flex items-center">
+                  <Timer className="h-3 w-3 mr-1" />
+                  Duration:
+                </div>
+                <div>{cleaningSummary.duration}</div>
+              </div>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium">Add Notes (Optional)</label>
+              <Textarea 
+                placeholder="Enter any notes about the cleaning" 
+                value={summaryNotes}
+                onChange={(e) => setSummaryNotes(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium">Images (Optional)</label>
+                <span className="text-xs text-muted-foreground">{cleaningSummary.images.length}/5</span>
+              </div>
+              
+              {cleaningSummary.images.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {cleaningSummary.images.map((img, index) => (
+                    <div key={img} className="aspect-square bg-muted rounded-md flex items-center justify-center">
+                      <Camera className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 border rounded-md text-sm text-muted-foreground">
+                  No images added
+                </div>
+              )}
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full mt-2"
+                onClick={handleAddImage}
+                disabled={cleaningSummary.images.length >= 5}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Take Photo
+              </Button>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button type="button" onClick={handleCompleteSummary} className="w-full">
+              Complete Cleaning
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmAction?.title}</DialogTitle>
+            <DialogDescription>
+              {confirmAction?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowConfirmDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              variant="destructive" 
+              onClick={() => {
+                if (confirmAction?.action) {
+                  confirmAction.action();
+                }
+                setShowConfirmDialog(false);
+              }}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
