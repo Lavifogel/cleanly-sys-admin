@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
 import CameraAccess from "./scanner/CameraAccess";
 import ScanSimulation from "./scanner/ScanSimulation";
 import ScannerCore from "./scanner/ScannerCore";
