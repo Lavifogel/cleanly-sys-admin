@@ -1,11 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -40,14 +40,120 @@ const Index = () => {
     redirectUser();
   }, [session, navigate]);
 
-  const handleAdminClick = () => {
-    // Direct login redirect to admin dashboard
-    navigate('/admin/dashboard');
+  const handleAdminClick = async () => {
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: 'admin@example.com',
+        password: 'admin123',
+        options: {
+          data: {
+            role: 'admin'
+          }
+        }
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (data.user) {
+        // Insert into profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              role: 'admin',
+              email: 'admin@example.com'
+            }
+          ]);
+
+        if (profileError) throw profileError;
+      }
+
+      // Sign in after creating account
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'admin@example.com',
+        password: 'admin123'
+      });
+
+      if (signInError) throw signInError;
+
+      navigate('/admin/dashboard');
+    } catch (error: any) {
+      console.error('Error:', error);
+      if (error.message.includes('already exists')) {
+        // If user exists, just try to sign in
+        try {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: 'admin@example.com',
+            password: 'admin123'
+          });
+          if (signInError) throw signInError;
+          navigate('/admin/dashboard');
+        } catch (signInError: any) {
+          toast.error(signInError.message);
+        }
+      } else {
+        toast.error(error.message);
+      }
+    }
   };
 
-  const handleCleanerClick = () => {
-    // Direct login redirect to cleaner dashboard
-    navigate('/cleaners/dashboard');
+  const handleCleanerClick = async () => {
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: 'cleaner@example.com',
+        password: 'cleaner123',
+        options: {
+          data: {
+            role: 'cleaner'
+          }
+        }
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (data.user) {
+        // Insert into profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              role: 'cleaner',
+              email: 'cleaner@example.com'
+            }
+          ]);
+
+        if (profileError) throw profileError;
+      }
+
+      // Sign in after creating account
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'cleaner@example.com',
+        password: 'cleaner123'
+      });
+
+      if (signInError) throw signInError;
+
+      navigate('/cleaners/dashboard');
+    } catch (error: any) {
+      console.error('Error:', error);
+      if (error.message.includes('already exists')) {
+        // If user exists, just try to sign in
+        try {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: 'cleaner@example.com',
+            password: 'cleaner123'
+          });
+          if (signInError) throw signInError;
+          navigate('/cleaners/dashboard');
+        } catch (signInError: any) {
+          toast.error(signInError.message);
+        }
+      } else {
+        toast.error(error.message);
+      }
+    }
   };
 
   return (
