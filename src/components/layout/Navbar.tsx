@@ -2,15 +2,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { LogOut, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { user, profile, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,25 +22,15 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  // Get routes based on auth status and user role
-  const getRoutes = () => {
-    const routes = [{ path: '/', label: 'Home' }];
+  const routes = [
+    { path: '/', label: 'Home' },
+    { path: '/admin/dashboard', label: 'Admin' },
+    { path: '/cleaners/dashboard', label: 'Cleaner' },
+  ];
 
-    if (!user) {
-      routes.push({ path: '/auth', label: 'Sign In' });
-    } else if (profile) {
-      if (profile.role === 'admin') {
-        routes.push({ path: '/admin/dashboard', label: 'Dashboard' });
-      } else {
-        routes.push({ path: '/cleaners/dashboard', label: 'Dashboard' });
-      }
-    }
-
-    return routes;
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
-
-  const routes = getRoutes();
-  const isActive = (path: string) => location.pathname === path;
 
   return (
     <header
@@ -77,18 +65,6 @@ const Navbar = () => {
               {route.label}
             </Link>
           ))}
-          
-          {user && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={signOut}
-              className="ml-2"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          )}
         </nav>
 
         {/* Mobile Menu Button */}
@@ -125,17 +101,6 @@ const Navbar = () => {
                 {route.label}
               </Link>
             ))}
-            
-            {user && (
-              <Button 
-                variant="ghost"
-                onClick={signOut}
-                className="justify-start"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            )}
           </nav>
         </div>
       )}

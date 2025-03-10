@@ -7,12 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AnimatePresence } from "framer-motion";
 import Navbar from "./components/layout/Navbar";
-import { AuthProvider } from "./contexts/AuthContext";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Pages
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -22,43 +19,29 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Navbar />
-          <main className="pt-20">
-            <AnimatePresence mode="wait">
-              <Suspense fallback={
-                <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
-                  <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                </div>
-              }>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  {/* Protected routes for admins */}
-                  <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                  </Route>
-                  
-                  {/* Protected routes for cleaners */}
-                  <Route element={<ProtectedRoute allowedRoles={["cleaner"]} />}>
-                    <Route path="/cleaners/dashboard" element={<CleanersDashboard />} />
-                  </Route>
-                  
-                  {/* Catch-all route */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </AnimatePresence>
-          </main>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Navbar />
+        <main className="pt-20">
+          <AnimatePresence mode="wait">
+            <Suspense fallback={
+              <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+                <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+              </div>
+            }>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/cleaners/dashboard" element={<CleanersDashboard />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </AnimatePresence>
+        </main>
+      </BrowserRouter>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 
