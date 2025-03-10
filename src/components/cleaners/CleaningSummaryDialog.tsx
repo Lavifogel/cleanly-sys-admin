@@ -68,9 +68,8 @@ const CleaningSummaryDialog = ({
       return;
     }
     
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    // This will direct to camera on mobile devices
+    onAddImage();
   };
 
   return (
@@ -157,21 +156,12 @@ const CleaningSummaryDialog = ({
               variant="outline" 
               size="sm" 
               className="w-full mt-2"
-              onClick={onAddImage}
+              onClick={handleAddImage}
               disabled={cleaningSummary.images.length >= 5}
             >
               <Camera className="h-4 w-4 mr-2" />
               Take Photo
             </Button>
-            
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={handleFileSelect}
-            />
           </div>
         </div>
         

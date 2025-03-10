@@ -4,6 +4,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, Camera, Scan } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface QRCodeScannerProps {
   onScanSuccess: (decodedText: string) => void;
@@ -11,6 +12,7 @@ interface QRCodeScannerProps {
 }
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
+  const { toast } = useToast();
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTakingPicture, setIsTakingPicture] = useState(false);
@@ -125,14 +127,18 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
   const handleTakePicture = () => {
     setIsTakingPicture(true);
-    // For real environments, we would use the file input
+    // Use direct camera access
     if (fileInputRef.current) {
+      // This will open the camera directly on mobile devices
       fileInputRef.current.click();
+    } else {
+      toast({
+        title: "Camera Error",
+        description: "Could not access camera. Please check permissions.",
+        variant: "destructive",
+      });
+      setIsTakingPicture(false);
     }
-    
-    // For simulation (when no real QR code is available)
-    setSimulationActive(true);
-    setSimulationProgress(0);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,6 +242,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
             Simulate Scan (For Testing)
           </Button>
           
+          {/* The capture="environment" tells the browser to use the environment-facing camera (rear camera on mobile) */}
           <input 
             type="file" 
             accept="image/*" 
