@@ -1,13 +1,23 @@
+
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<"admin" | "cleaner" | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Fetch user session and role
   const { data: session } = useQuery({
@@ -39,27 +49,35 @@ const Index = () => {
     redirectUser();
   }, [session, navigate]);
 
-  const handleAdminClick = async () => {
-    try {
-      // Sign in as admin with predefined credentials
-      const { error } = await supabase.auth.signInWithPassword({
-        email: 'admin@example.com',
-        password: 'admin123'
-      });
+  const handleRoleClick = (role: "admin" | "cleaner") => {
+    setSelectedRole(role);
+    setAuthDialogOpen(true);
+  };
 
-      if (error) {
-        // If signing in fails, try to create the admin account
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: 'admin@example.com',
-          password: 'admin123',
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      if (isSignUp) {
+        // Sign up flow
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
           options: {
             data: {
-              role: 'admin'
+              role: selectedRole
             }
           }
         });
 
-        if (signUpError) throw signUpError;
+        if (error) throw error;
 
         if (data.user) {
           // Insert into profiles table
@@ -68,46 +86,70 @@ const Index = () => {
             .insert([
               {
                 id: data.user.id,
-                role: 'admin',
-                email: 'admin@example.com'
+                role: selectedRole,
+                email
               }
             ]);
 
           if (profileError) throw profileError;
-
-          // Sign in after creating account
+          
+          toast.success("Account created successfully");
+          
+          // Sign in automatically
           await supabase.auth.signInWithPassword({
-            email: 'admin@example.com',
-            password: 'admin123'
+            email,
+            password
           });
+          
+          if (selectedRole === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/cleaners/dashboard');
+          }
         }
-      }
+      } else {
+        // Sign in flow
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
 
-      // Navigate to admin dashboard
-      navigate('/admin/dashboard');
-      toast.success('Signed in as Admin');
+        if (error) throw error;
+        
+        toast.success("Signed in successfully");
+        setAuthDialogOpen(false);
+        
+        // Redirect happens through the useEffect
+      }
     } catch (error: any) {
       console.error('Error:', error);
       toast.error(`Authentication error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleCleanerClick = async () => {
+  const handleQuickAccess = async (role: "admin" | "cleaner") => {
+    const email = role === "admin" ? "admin@example.com" : "cleaner@example.com";
+    const password = role === "admin" ? "admin123" : "cleaner123";
+    
+    setIsLoading(true);
+    
     try {
-      // Sign in as cleaner with predefined credentials
+      // Sign in with predefined credentials
       const { error } = await supabase.auth.signInWithPassword({
-        email: 'cleaner@example.com',
-        password: 'cleaner123'
+        email,
+        password
       });
 
       if (error) {
-        // If signing in fails, try to create the cleaner account
+        // If signing in fails, try to create the account
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email: 'cleaner@example.com',
-          password: 'cleaner123',
+          email,
+          password,
           options: {
             data: {
-              role: 'cleaner'
+              role
             }
           }
         });
@@ -121,27 +163,29 @@ const Index = () => {
             .insert([
               {
                 id: data.user.id,
-                role: 'cleaner',
-                email: 'cleaner@example.com'
+                role,
+                email
               }
             ]);
 
           if (profileError) throw profileError;
-
+          
           // Sign in after creating account
           await supabase.auth.signInWithPassword({
-            email: 'cleaner@example.com',
-            password: 'cleaner123'
+            email,
+            password
           });
         }
       }
 
-      // Navigate to cleaner dashboard
-      navigate('/cleaners/dashboard');
-      toast.success('Signed in as Cleaner');
+      // Navigate to dashboard
+      navigate(role === 'admin' ? '/admin/dashboard' : '/cleaners/dashboard');
+      toast.success(`Signed in as ${role === 'admin' ? 'Admin' : 'Cleaner'}`);
     } catch (error: any) {
       console.error('Error:', error);
       toast.error(`Authentication error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -189,25 +233,103 @@ const Index = () => {
         >
           {!session ? (
             <>
-              <Button 
-                size="lg" 
-                className="rounded-full px-8 py-6 shadow-md"
-                onClick={handleAdminClick}
-              >
-                Admin
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="rounded-full px-8 py-6"
-                onClick={handleCleanerClick}
-              >
-                Cleaners
-              </Button>
+              <div className="space-y-4">
+                <Button 
+                  size="lg" 
+                  className="rounded-full px-8 py-6 shadow-md w-full sm:w-auto"
+                  onClick={() => handleRoleClick("admin")}
+                >
+                  Login as Admin
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="rounded-full px-8 py-6 w-full sm:w-auto"
+                  onClick={() => handleRoleClick("cleaner")}
+                >
+                  Login as Cleaner
+                </Button>
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-gray-200 sm:border-t-0 sm:border-l sm:pl-6 sm:mt-0 sm:pt-0">
+                <p className="mb-2 text-sm text-muted-foreground">Quick Access:</p>
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => handleQuickAccess("admin")}
+                    disabled={isLoading}
+                  >
+                    Demo as Admin
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => handleQuickAccess("cleaner")}
+                    disabled={isLoading}
+                  >
+                    Demo as Cleaner
+                  </Button>
+                </div>
+              </div>
             </>
           ) : null}
         </motion.div>
       </motion.div>
+      
+      {/* Authentication Dialog */}
+      <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {isSignUp ? "Create a new account" : "Sign in to your account"}
+              {selectedRole ? ` as ${selectedRole}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSignIn} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="flex justify-between items-center pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsSignUp(!isSignUp)}
+              >
+                {isSignUp ? "Have an account? Sign in" : "Need an account? Sign up"}
+              </Button>
+              
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Processing..." : isSignUp ? "Sign Up" : "Sign In"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
