@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { X, Camera } from "lucide-react";
+import { X, Camera, Scan } from "lucide-react";
 
 interface QRCodeScannerProps {
   onScanSuccess: (decodedText: string) => void;
@@ -14,6 +14,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTakingPicture, setIsTakingPicture] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [simulationActive, setSimulationActive] = useState(false);
+  const [simulationProgress, setSimulationProgress] = useState(0);
+  
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = "qr-scanner-container";
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,11 +43,40 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     }
   }, [scannerRef.current]);
 
+  // Simulation effect for when we don't have real QR codes
+  useEffect(() => {
+    let interval: number | undefined;
+    
+    if (simulationActive && simulationProgress < 100) {
+      interval = window.setInterval(() => {
+        setSimulationProgress(prev => {
+          const newProgress = prev + 5;
+          if (newProgress >= 100) {
+            clearInterval(interval);
+            // Simulate a successful scan after reaching 100%
+            setTimeout(() => {
+              // Generate a mock QR code data based on our use case
+              const mockData = `location=Conference Room ${Math.floor(Math.random() * 10) + 1}&timestamp=${Date.now()}`;
+              onScanSuccess(mockData);
+            }, 500);
+            return 100;
+          }
+          return newProgress;
+        });
+      }, 100);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [simulationActive, simulationProgress, onScanSuccess]);
+
   const startScanner = async () => {
     if (!scannerRef.current) return;
 
     setIsScanning(true);
     setError(null);
+    setCameraActive(true);
 
     try {
       const qrCodeSuccessCallback = (decodedText: string) => {
@@ -75,6 +108,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       );
     } catch (err) {
       setIsScanning(false);
+      setCameraActive(false);
       setError("Could not access the camera. Please ensure camera permissions are enabled.");
       console.error("Error starting QR scanner:", err);
     }
@@ -91,10 +125,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
   const handleTakePicture = () => {
     setIsTakingPicture(true);
-    // Trigger file input click
+    // For real environments, we would use the file input
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
+    
+    // For simulation (when no real QR code is available)
+    setSimulationActive(true);
+    setSimulationProgress(0);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,6 +173,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     }
   };
 
+  const handleManualSimulation = () => {
+    // This is for demonstration only - simulates a successful scan
+    setSimulationActive(true);
+    setSimulationProgress(0);
+  };
+
   return (
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
       <div className="absolute right-4 top-4 z-10">
@@ -150,8 +194,21 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         
         <div 
           id={scannerContainerId} 
-          className="w-full max-w-md h-80 rounded-lg overflow-hidden relative"
-        ></div>
+          className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-100'}`}
+        >
+          {simulationActive && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-white">
+              <Scan className="h-16 w-16 animate-pulse" />
+              <div className="w-64 bg-gray-700 rounded-full h-4 mt-4">
+                <div 
+                  className="bg-primary h-4 rounded-full transition-all duration-300" 
+                  style={{ width: `${simulationProgress}%` }}
+                />
+              </div>
+              <p className="mt-2 text-sm">Scanning QR code... {simulationProgress}%</p>
+            </div>
+          )}
+        </div>
         
         {error && (
           <div className="mt-4 text-destructive text-center">
@@ -159,15 +216,26 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
           </div>
         )}
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col gap-2">
           <Button 
             onClick={handleTakePicture} 
             className="flex items-center gap-2"
-            disabled={isTakingPicture}
+            disabled={isTakingPicture || simulationActive}
           >
             <Camera className="h-5 w-5" />
             {isTakingPicture ? "Processing..." : "Take Picture"}
           </Button>
+          
+          <Button 
+            onClick={handleManualSimulation} 
+            variant="outline" 
+            disabled={simulationActive}
+            className="flex items-center gap-2"
+          >
+            <Scan className="h-5 w-5" />
+            Simulate Scan (For Testing)
+          </Button>
+          
           <input 
             type="file" 
             accept="image/*" 
