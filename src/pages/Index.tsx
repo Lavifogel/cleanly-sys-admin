@@ -2,8 +2,60 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 
 const Index = () => {
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Fetch user session
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
+  });
+
+  // Fetch user profile to get role
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (data) {
+          setUserRole(data.role);
+        }
+      } else {
+        setUserRole(null);
+      }
+    };
+
+    fetchUserProfile();
+  }, [session]);
+
+  // Determine dashboard link based on user role
+  const getDashboardLink = () => {
+    if (!session) {
+      return null;
+    }
+
+    if (userRole === 'admin') {
+      return '/admin/dashboard';
+    } else if (userRole === 'cleaner') {
+      return '/cleaners/dashboard';
+    }
+
+    return null;
+  };
+
+  const dashboardLink = getDashboardLink();
+
   return (
     <div className="min-h-[calc(100vh-5rem)] flex flex-col items-center justify-center px-6">
       <motion.div 
@@ -46,12 +98,20 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
-            <Link to="/admin/dashboard">Admin Dashboard</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="rounded-full px-8 py-6">
-            <Link to="/cleaners/dashboard">Cleaner Dashboard</Link>
-          </Button>
+          {session ? (
+            <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
+              <Link to={dashboardLink || '/'}>Go to Dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild size="lg" className="rounded-full px-8 py-6 shadow-md">
+                <Link to="/admin/dashboard">Admin Dashboard</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-full px-8 py-6">
+                <Link to="/cleaners/dashboard">Cleaners Dashboard</Link>
+              </Button>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </div>

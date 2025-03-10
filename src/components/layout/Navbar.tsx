@@ -4,11 +4,44 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const location = useLocation();
+
+  // Fetch user session and role
+  const { data: session } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
+  });
+
+  // Fetch user profile to get role
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (data) {
+          setUserRole(data.role);
+        }
+      } else {
+        setUserRole(null);
+      }
+    };
+
+    fetchUserProfile();
+  }, [session]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,11 +55,38 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  const routes = [
-    { path: '/', label: 'Home' },
-    { path: '/admin/dashboard', label: 'Admin' },
-    { path: '/cleaners/dashboard', label: 'Cleaner' },
-  ];
+  // Define routes based on authentication status and role
+  const getRoutes = () => {
+    const commonRoutes = [
+      { path: '/', label: 'Home' }
+    ];
+
+    // If user is not logged in, show both dashboard options
+    if (!session) {
+      return [
+        ...commonRoutes,
+        { path: '/admin/dashboard', label: 'Admin' },
+        { path: '/cleaners/dashboard', label: 'Cleaners' },
+      ];
+    }
+
+    // If user is logged in, only show their relevant dashboard
+    if (userRole === 'admin') {
+      return [
+        ...commonRoutes,
+        { path: '/admin/dashboard', label: 'Dashboard' }
+      ];
+    } else if (userRole === 'cleaner') {
+      return [
+        ...commonRoutes,
+        { path: '/cleaners/dashboard', label: 'Dashboard' }
+      ];
+    }
+
+    return commonRoutes;
+  };
+
+  const routes = getRoutes();
 
   const isActive = (path: string) => {
     return location.pathname === path;
