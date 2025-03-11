@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { CleaningHistoryItem } from "@/types/cleaning";
 import { useEffect, useState } from "react";
 import { formatTime } from "@/utils/timeUtils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface CleaningItemProps {
   cleaning: CleaningHistoryItem & { 
@@ -31,6 +32,9 @@ const CleaningItem = ({ cleaning, onImageSelect }: CleaningItemProps) => {
       setTimeDisplay(formatTime(cleaning.elapsedTime));
     }
   }, [cleaning.isActive, cleaning.elapsedTime]);
+
+  const hasImages = cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0;
+  const firstImageUrl = hasImages ? cleaning.imageUrls![0] : '';
 
   return (
     <div className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
@@ -81,15 +85,22 @@ const CleaningItem = ({ cleaning, onImageSelect }: CleaningItemProps) => {
           )}
         </div>
         
-        {cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0 && (
+        {hasImages && (
           <Button 
             variant="ghost" 
             size="sm" 
-            className="p-0 h-8" 
-            onClick={() => onImageSelect(cleaning.imageUrls![0])}
+            className="p-0 h-8 flex items-center" 
+            onClick={() => onImageSelect(firstImageUrl)}
           >
-            <Image className="h-4 w-4 mr-1" />
-            <span>{cleaning.images} {cleaning.images === 1 ? 'image' : 'images'}</span>
+            <div className="flex items-center">
+              <Avatar className="h-6 w-6 mr-1.5">
+                <AvatarImage src={firstImageUrl} alt="Cleaning image" className="object-cover" />
+                <AvatarFallback>
+                  <Image className="h-3 w-3" />
+                </AvatarFallback>
+              </Avatar>
+              <span>{cleaning.images} {cleaning.images === 1 ? 'image' : 'images'}</span>
+            </div>
           </Button>
         )}
       </div>
