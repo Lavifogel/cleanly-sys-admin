@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -57,29 +58,23 @@ const Navbar = () => {
 
   // Define routes based on authentication status and role
   const getRoutes = () => {
-    const commonRoutes = [
-      { path: '/', label: 'Home' }
-    ];
-
-    // If user is not logged in, don't show any dashboard links
+    // If user is not logged in, don't show any routes
     if (!session) {
-      return commonRoutes;
+      return [];
     }
 
     // If user is logged in, only show their relevant dashboard
     if (userRole === 'admin') {
       return [
-        ...commonRoutes,
         { path: '/admin/dashboard', label: 'Dashboard' }
       ];
     } else if (userRole === 'cleaner') {
       return [
-        ...commonRoutes,
         { path: '/cleaners/dashboard', label: 'Dashboard' }
       ];
     }
 
-    return commonRoutes;
+    return [];
   };
 
   const routes = getRoutes();
