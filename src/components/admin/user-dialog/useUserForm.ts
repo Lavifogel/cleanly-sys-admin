@@ -1,9 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormValues, userSchema, getNames, UserDialogProps } from "./userFormSchema";
+
+// Define the response type from create_cleaner_user function
+type CreateCleanerResponse = {
+  success: boolean;
+  message: string;
+};
 
 export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogProps) => {
   const { toast } = useToast();
@@ -75,7 +82,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         
         console.log("Creating new user with ID:", newUserId);
         
-        const { data: result, error: fnError } = await supabase.rpc(
+        const { data: result, error: fnError } = await supabase.rpc<CreateCleanerResponse>(
           'create_cleaner_user',
           {
             user_id: newUserId,
