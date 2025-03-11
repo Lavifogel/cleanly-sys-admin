@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,48 +70,31 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           description: "User information has been updated successfully",
         });
       } else {
-        // Create new user
+        // Create new user using the create_cleaner_user database function
         const newUserId = crypto.randomUUID();
         
         console.log("Creating new user with ID:", newUserId);
         
-        // Use separate transactions to create profile and cleaner records
-        // First create the profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: newUserId,
+        const { data: result, error: fnError } = await supabase.rpc(
+          'create_cleaner_user',
+          {
+            user_id: newUserId,
             first_name: data.firstName,
             last_name: data.lastName,
             email: data.email,
-            role: 'cleaner'
-          });
-          
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-          throw profileError;
+            phone_number: data.phoneNumber,
+            start_date: data.startDate,
+            is_active: data.isActive
+          }
+        );
+        
+        if (fnError) {
+          console.error("Error creating user:", fnError);
+          throw fnError;
         }
         
-        // Then create the cleaner record
-        const { error: cleanerError } = await supabase
-          .from('cleaners')
-          .insert({
-            id: newUserId,
-            phone: data.phoneNumber,
-            start_date: data.startDate,
-            active: data.isActive
-          });
-          
-        if (cleanerError) {
-          console.error("Error creating cleaner:", cleanerError);
-          
-          // If cleaner creation fails, delete the profile to avoid orphaned records
-          await supabase
-            .from('profiles')
-            .delete()
-            .eq('id', newUserId);
-            
-          throw cleanerError;
+        if (!result?.success) {
+          throw new Error(result?.message || 'Failed to create user');
         }
         
         toast({
@@ -128,7 +110,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
       console.error('Error saving user:', error);
       toast({
         title: "Operation Failed",
-        description: "Could not save user information. Please try again.",
+        description: `Could not save user information: ${error.message}`,
         variant: "destructive",
       });
     } finally {
