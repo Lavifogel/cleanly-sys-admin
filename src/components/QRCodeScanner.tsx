@@ -28,11 +28,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
     // Clean up when component unmounts
     return () => {
-      if (scannerRef.current && isScanning) {
-        scannerRef.current.stop().catch(error => {
-          console.error("Error stopping scanner:", error);
-        });
-      }
+      stopCamera();
     };
   }, []);
 
@@ -42,6 +38,36 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       startScanner();
     }
   }, [scannerRef.current]);
+
+  // Clean up function to stop camera
+  const stopCamera = async () => {
+    try {
+      if (scannerRef.current && isScanning) {
+        await scannerRef.current.stop();
+        console.log("Camera stopped successfully");
+      }
+      
+      // Additional cleanup to ensure all camera resources are released
+      const videoElements = document.querySelectorAll('video');
+      videoElements.forEach(video => {
+        if (video.srcObject) {
+          const stream = video.srcObject as MediaStream;
+          if (stream) {
+            stream.getTracks().forEach(track => {
+              track.stop();
+              console.log("Track stopped:", track.kind);
+            });
+          }
+          video.srcObject = null;
+        }
+      });
+      
+      setIsScanning(false);
+      setCameraActive(false);
+    } catch (error) {
+      console.error("Error stopping camera:", error);
+    }
+  };
 
   // Simulation effect for when we don't have real QR codes
   useEffect(() => {
@@ -74,6 +100,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   const startScanner = async () => {
     if (!scannerRef.current) return;
 
+    // First, make sure any existing camera is stopped
+    await stopCamera();
+
     setIsScanning(true);
     setError(null);
     setCameraActive(true);
@@ -84,11 +113,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         onScanSuccess(decodedText);
         
         // Stop scanning after successful scan
-        if (scannerRef.current) {
-          scannerRef.current.stop().catch(error => {
-            console.error("Error stopping scanner after success:", error);
-          });
-        }
+        stopCamera();
       };
 
       const config = {
@@ -115,11 +140,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   };
 
   const handleClose = () => {
-    if (scannerRef.current && isScanning) {
-      scannerRef.current.stop().catch(error => {
-        console.error("Error stopping scanner on close:", error);
-      });
-    }
+    stopCamera();
     onClose();
   };
 
@@ -148,8 +169,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       if (scannerRef.current) {
         // Stop live scanning if it's active
         if (isScanning) {
-          await scannerRef.current.stop();
-          setIsScanning(false);
+          await stopCamera();
         }
 
         // Scan the QR code from the image

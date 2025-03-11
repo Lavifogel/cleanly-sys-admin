@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { useShift } from "@/hooks/useShift";
@@ -53,6 +53,26 @@ const CleanerDashboard = () => {
     setShowConfirmDialog,
     showConfirmationDialog
   } = useConfirmation();
+
+  // Monitor when the QR scanner is closed and ensure camera is properly released
+  useEffect(() => {
+    if (!showQRScanner) {
+      // Ensure any lingering video tracks are stopped
+      const videoElements = document.querySelectorAll('video');
+      videoElements.forEach(video => {
+        if (video.srcObject) {
+          const stream = video.srcObject as MediaStream;
+          if (stream) {
+            stream.getTracks().forEach(track => {
+              track.stop();
+              console.log("Stopping track on QR scanner close:", track.kind);
+            });
+          }
+          video.srcObject = null;
+        }
+      });
+    }
+  }, [showQRScanner]);
 
   // Handle scanning QR code
   const handleQRScan = (decodedText: string) => {
@@ -167,14 +187,7 @@ const CleanerDashboard = () => {
       {showQRScanner && (
         <QRCodeScanner 
           onScanSuccess={handleQRScan}
-          onClose={() => {
-            closeScanner();
-            // Ensure camera is released when closing scanner
-            const stream = document.querySelector('video')?.srcObject as MediaStream;
-            if (stream) {
-              stream.getTracks().forEach(track => track.stop());
-            }
-          }}
+          onClose={closeScanner}
         />
       )}
 

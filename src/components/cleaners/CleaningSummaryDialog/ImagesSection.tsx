@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, X, Loader2 } from "lucide-react";
@@ -16,6 +16,14 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Effect to trigger the camera input when showCamera becomes true
+  useEffect(() => {
+    if (showCamera && inputRef.current) {
+      inputRef.current.click();
+    }
+  }, [showCamera]);
   
   const openCamera = () => {
     if (images.length >= maxImages) {
@@ -26,7 +34,25 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
       });
       return;
     }
-    setShowCamera(true);
+    
+    // First check if camera is in use by looking for active video elements
+    const videoElements = document.querySelectorAll('video');
+    let cameraInUse = false;
+    
+    videoElements.forEach(video => {
+      if (video.srcObject) {
+        cameraInUse = true;
+        toast({
+          title: "Camera in use",
+          description: "Please close the QR scanner before taking photos.",
+          variant: "destructive",
+        });
+      }
+    });
+    
+    if (!cameraInUse) {
+      setShowCamera(true);
+    }
   };
 
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,8 +86,9 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
     } finally {
       setIsUploading(false);
       // Reset the input value
-      const input = document.getElementById('photo-input') as HTMLInputElement;
-      if (input) input.value = '';
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
     }
   };
 
@@ -115,20 +142,18 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
         )}
       </Button>
       
-      {showCamera && (
-        <input
-          id="photo-input"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleCapture}
-          onClick={(e) => {
-            // Reset the input value to allow selecting the same file again
-            (e.target as HTMLInputElement).value = '';
-          }}
-        />
-      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleCapture}
+        onClick={(e) => {
+          // Reset the input value to allow selecting the same file again
+          (e.target as HTMLInputElement).value = '';
+        }}
+      />
     </div>
   );
 };
