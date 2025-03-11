@@ -7,6 +7,7 @@ import { CleaningSummary } from "@/types/cleaning";
 import CleaningDetails from "./CleaningSummaryDialog/CleaningDetails";
 import NotesSection from "./CleaningSummaryDialog/NotesSection";
 import ImagesSection from "./CleaningSummaryDialog/ImagesSection";
+import { useToast } from "@/hooks/use-toast";
 
 interface CleaningSummaryDialogProps {
   open: boolean;
@@ -29,35 +30,50 @@ const CleaningSummaryDialog = ({
   onRemoveImage,
   onCompleteSummary,
 }: CleaningSummaryDialogProps) => {
+  const { toast } = useToast();
+
+  const handleCompleteSummary = () => {
+    if (cleaningSummary.images.length === 0) {
+      toast({
+        title: "No images added",
+        description: "Please add at least one image before completing the cleaning summary.",
+        variant: "destructive",
+      });
+      return;
+    }
+    onCompleteSummary();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Cleaning Summary</DialogTitle>
           <DialogDescription>
-            Complete your cleaning record
+            Take photos and add notes to complete your cleaning record
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <CleaningDetails cleaningSummary={cleaningSummary} />
           
-          <NotesSection 
-            summaryNotes={summaryNotes}
-            onSummaryNotesChange={onSummaryNotesChange}
-          />
-          
           <ImagesSection 
             images={cleaningSummary.images}
             onAddImage={onAddImage}
             onRemoveImage={onRemoveImage}
+            maxImages={3}
+          />
+
+          <NotesSection 
+            summaryNotes={summaryNotes}
+            onSummaryNotesChange={onSummaryNotesChange}
           />
         </div>
         
         <DialogFooter>
           <Button 
             type="button" 
-            onClick={onCompleteSummary} 
+            onClick={handleCompleteSummary} 
             className="w-full"
           >
             Complete Cleaning

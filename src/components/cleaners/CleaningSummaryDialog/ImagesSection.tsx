@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, X, Loader2 } from "lucide-react";
@@ -9,21 +9,29 @@ interface ImagesSectionProps {
   images: string[];
   onAddImage: (file: File) => Promise<void>;
   onRemoveImage: (index: number) => void;
+  maxImages: number;
 }
 
-const ImagesSection = ({ images, onAddImage, onRemoveImage }: ImagesSectionProps) => {
+const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesSectionProps) => {
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
     
-    const file = files[0];
+    if (images.length >= maxImages) {
+      toast({
+        title: "Maximum images reached",
+        description: `You can only upload up to ${maxImages} images.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Invalid File Type",
+        title: "Invalid file type",
         description: "Please select an image file.",
         variant: "destructive",
       });
@@ -31,40 +39,33 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage }: ImagesSectionProps
     }
     
     setIsUploading(true);
-    console.log("Selected file:", file.name, "type:", file.type, "size:", file.size);
-    
     try {
       await onAddImage(file);
       toast({
-        title: "Image Uploaded",
+        title: "Image uploaded",
         description: "Your image has been successfully uploaded.",
       });
     } catch (error) {
       console.error("Error uploading image:", error);
       toast({
-        title: "Upload Failed",
+        title: "Upload failed",
         description: "There was a problem uploading your image. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
-      
-      // Reset the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
-        <label className="text-sm font-medium">Images (Optional)</label>
-        <span className="text-xs text-muted-foreground">{images.length}/5</span>
+        <label className="text-sm font-medium">Photos (Required)</label>
+        <span className="text-xs text-muted-foreground">{images.length}/{maxImages}</span>
       </div>
       
-      {images.length > 0 ? (
-        <div className="grid grid-cols-3 gap-2">
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 mb-2">
           {images.map((img, index) => (
             <div key={index} className="aspect-square bg-muted rounded-md flex items-center justify-center relative">
               <Avatar className="w-full h-full rounded-md">
@@ -84,22 +85,14 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage }: ImagesSectionProps
             </div>
           ))}
         </div>
-      ) : (
-        <div className="text-center py-4 border rounded-md text-sm text-muted-foreground">
-          No images added
-        </div>
       )}
       
       <Button 
         variant="outline" 
         size="sm" 
-        className="w-full mt-2"
-        onClick={() => {
-          if (fileInputRef.current) {
-            fileInputRef.current.click();
-          }
-        }}
-        disabled={images.length >= 5 || isUploading}
+        className="w-full"
+        disabled={images.length >= maxImages || isUploading}
+        onClick={() => document.getElementById('photo-input')?.click()}
       >
         {isUploading ? (
           <>
@@ -115,12 +108,16 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage }: ImagesSectionProps
       </Button>
       
       <input
+        id="photo-input"
         type="file"
-        ref={fileInputRef}
         accept="image/*"
         capture="environment"
         className="hidden"
         onChange={handleFileSelect}
+        onClick={(e) => {
+          // Reset the input value to allow selecting the same file again
+          (e.target as HTMLInputElement).value = '';
+        }}
       />
     </div>
   );

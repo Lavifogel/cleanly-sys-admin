@@ -8,8 +8,8 @@ export function useCleaningImages(
   setCleaningSummary: (summary: CleaningSummary) => void
 ) {
   const addImage = async (file: File) => {
-    if (cleaningSummary.images.length >= 5) {
-      return;
+    if (cleaningSummary.images.length >= 3) {
+      throw new Error("Maximum number of images reached");
     }
     
     try {
