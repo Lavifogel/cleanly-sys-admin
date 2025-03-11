@@ -8,10 +8,12 @@ import { useState } from "react";
 import UserManagement from "@/components/admin/UserManagement";
 import QrCodeGenerator from "@/components/admin/QrCodeGenerator";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminDashboardData } from "@/hooks/useAdminDashboardData";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { toast } = useToast();
+  const { stats, loading, refreshData } = useAdminDashboardData();
 
   return (
     <div className="container mx-auto p-4 md:p-6">
@@ -70,7 +72,7 @@ const AdminDashboard = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">8</div>
+                  <div className="text-2xl font-bold">{loading ? "..." : stats.activeCleaners}</div>
                   <p className="text-xs text-muted-foreground">Currently on shift</p>
                 </CardContent>
               </Card>
@@ -80,7 +82,7 @@ const AdminDashboard = () => {
                   <ClipboardList className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">12</div>
+                  <div className="text-2xl font-bold">{loading ? "..." : stats.areasCleaned}</div>
                   <p className="text-xs text-muted-foreground">+2 from yesterday</p>
                 </CardContent>
               </Card>
@@ -90,7 +92,7 @@ const AdminDashboard = () => {
                   <ClipboardList className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">5</div>
+                  <div className="text-2xl font-bold">{loading ? "..." : stats.areasPending}</div>
                   <p className="text-xs text-muted-foreground">Not cleaned yet</p>
                 </CardContent>
               </Card>
@@ -111,7 +113,7 @@ const AdminDashboard = () => {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">32m</div>
+                  <div className="text-2xl font-bold">{loading ? "..." : `${stats.avgCleaningTime}m`}</div>
                   <p className="text-xs text-muted-foreground">Per area</p>
                 </CardContent>
               </Card>
@@ -131,6 +133,7 @@ const AdminDashboard = () => {
                       <div>Status</div>
                     </div>
                     <div className="divide-y">
+                      {/* Recent activities would be fetched from Supabase in a more complete implementation */}
                       <div className="grid grid-cols-3 p-4">
                         <div>Conference Room A</div>
                         <div>Jane Smith</div>
@@ -236,6 +239,7 @@ const AdminDashboard = () => {
                     <div>Status</div>
                   </div>
                   <div className="divide-y">
+                    {/* Activities log would be fetched from Supabase in a more complete implementation */}
                     <div className="grid grid-cols-5 p-4">
                       <div>Aug 15, 2023</div>
                       <div>Conference Room A</div>
