@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,22 +19,18 @@ import {
   Check,
   Download
 } from "lucide-react";
-import QRCode from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react"; // Correct import using named exports
 import { supabase } from "@/integrations/supabase/client";
 
 const QrCodeGenerator = () => {
   const { toast } = useToast();
   const [areaName, setAreaName] = useState("");
   const [qrType, setQrType] = useState("Cleaning");
-  const [generatedQrCodes, setGeneratedQrCodes] = useState([
-    { id: "1", areaName: "Conference Room A", type: "Cleaning", areaId: "conference-room-a-1234abcd" },
-    { id: "2", areaName: "Main Office", type: "Cleaning", areaId: "main-office-5678efgh" },
-    { id: "3", areaName: "Main Entrance", type: "Shift", areaId: "main-entrance-9012ijkl" },
-  ]);
+  const [generatedQrCodes, setGeneratedQrCodes] = useState([]);
   const [showQrCode, setShowQrCode] = useState(false);
-  const [currentQrCode, setCurrentQrCode] = useState<{ id: string; areaName: string; type: string; areaId: string } | null>(null);
+  const [currentQrCode, setCurrentQrCode] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const qrCodeRef = useRef<HTMLDivElement>(null);
+  const qrCodeRef = useRef(null);
 
   const fetchQrCodes = async () => {
     try {
@@ -63,6 +60,7 @@ const QrCodeGenerator = () => {
     }
   };
 
+  // Fetch QR codes on component mount with useEffect
   useEffect(() => {
     fetchQrCodes();
   }, []);
@@ -87,12 +85,29 @@ const QrCodeGenerator = () => {
 
       const areaId = functionData || `${areaName.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
       
+      // Generate QR code as a data URL
+      const tempCanvas = document.createElement('canvas');
+      QRCodeCanvas({
+        value: JSON.stringify({
+          areaId: areaId,
+          areaName: areaName,
+          type: qrType
+        }),
+        size: 200,
+        level: "H",
+        includeMargin: true
+      }, tempCanvas);
+      
+      const qrCodeImageUrl = tempCanvas.toDataURL('image/png');
+      
+      // Save to database with the image URL
       const { data, error } = await supabase
         .from('qr_codes')
         .insert({
           area_name: areaName,
           type: qrType,
-          area_id: areaId
+          area_id: areaId,
+          qr_code_image_url: qrCodeImageUrl
         })
         .select()
         .single();
@@ -103,7 +118,8 @@ const QrCodeGenerator = () => {
         id: data.id,
         areaName: data.area_name,
         type: data.type,
-        areaId: data.area_id
+        areaId: data.area_id,
+        qrCodeImageUrl: data.qr_code_image_url
       };
 
       setGeneratedQrCodes([newQrCode, ...generatedQrCodes]);
@@ -158,13 +174,17 @@ const QrCodeGenerator = () => {
                   }
                   h2 { margin-bottom: 8px; }
                   p { color: #666; margin-bottom: 20px; }
+                  img { max-width: 100%; }
                 </style>
               </head>
               <body>
                 <div class="qr-container">
                   <h2>${qrCode.areaName}</h2>
                   <p>Type: ${qrCode.type}</p>
-                  ${qrCodeRef.current.innerHTML}
+                  ${qrCode.qrCodeImageUrl 
+                    ? `<img src="${qrCode.qrCodeImageUrl}" alt="QR Code" />`
+                    : qrCodeRef.current.innerHTML
+                  }
                 </div>
                 <script>
                   window.onload = function() { window.print(); window.close(); }
@@ -186,13 +206,18 @@ const QrCodeGenerator = () => {
   const handleDownloadQR = () => {
     if (!currentQrCode) return;
     
-    const canvas = document.querySelector('#qr-code-display canvas') as HTMLCanvasElement;
-    if (!canvas) return;
+    // Use the stored image URL if available, otherwise get it from the canvas
+    let imageUrl = currentQrCode.qrCodeImageUrl;
     
-    const url = canvas.toDataURL('image/png');
+    if (!imageUrl) {
+      const canvas = document.querySelector('#qr-code-display canvas') as HTMLCanvasElement;
+      if (!canvas) return;
+      imageUrl = canvas.toDataURL('image/png');
+    }
+    
     const link = document.createElement('a');
     link.download = `qrcode-${currentQrCode.areaName.toLowerCase().replace(/\s+/g, '-')}.png`;
-    link.href = url;
+    link.href = imageUrl;
     link.click();
 
     toast({
@@ -259,16 +284,24 @@ const QrCodeGenerator = () => {
               className="flex flex-col items-center justify-center mb-6"
               id="qr-code-display"
             >
-              <QRCode 
-                value={JSON.stringify({
-                  areaId: currentQrCode.areaId,
-                  areaName: currentQrCode.areaName,
-                  type: currentQrCode.type
-                })}
-                size={200}
-                level="H"
-                includeMargin
-              />
+              {currentQrCode.qrCodeImageUrl ? (
+                <img 
+                  src={currentQrCode.qrCodeImageUrl} 
+                  alt="QR Code" 
+                  className="w-48 h-48 object-contain"
+                />
+              ) : (
+                <QRCodeCanvas 
+                  value={JSON.stringify({
+                    areaId: currentQrCode.areaId,
+                    areaName: currentQrCode.areaName,
+                    type: currentQrCode.type
+                  })}
+                  size={200}
+                  level="H"
+                  includeMargin
+                />
+              )}
               <p className="mt-4 text-center text-sm text-muted-foreground">
                 {currentQrCode.areaName} ({currentQrCode.type})
               </p>
@@ -306,7 +339,15 @@ const QrCodeGenerator = () => {
             >
               <div className="flex items-center space-x-4">
                 <div className="bg-primary/10 p-3 rounded-lg">
-                  <QrCode className="h-8 w-8 text-primary" />
+                  {qrCode.qrCodeImageUrl ? (
+                    <img 
+                      src={qrCode.qrCodeImageUrl} 
+                      alt="QR Code" 
+                      className="h-8 w-8 object-contain"
+                    />
+                  ) : (
+                    <QrCode className="h-8 w-8 text-primary" />
+                  )}
                 </div>
                 <div>
                   <h4 className="font-medium">{qrCode.areaName}</h4>
