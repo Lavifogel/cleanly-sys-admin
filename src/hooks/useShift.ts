@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -45,11 +44,6 @@ export function useShift() {
 
   // Handle startShift
   const startShift = (qrData: string) => {
-    toast({
-      title: "Shift Started",
-      description: "Your shift has been started successfully after scanning the QR code.",
-    });
-    
     const newShiftId = `shift-${Date.now()}`;
     
     setActiveShift({
@@ -62,11 +56,6 @@ export function useShift() {
 
   // Handle endShift
   const endShift = (withScan: boolean, qrData?: string) => {
-    toast({
-      title: "Shift Ended",
-      description: `Your shift has been ended ${withScan ? 'with' : 'without'} a scan.`,
-    });
-
     const newShift = {
       id: (shiftsHistory.length + 1).toString(),
       date: new Date().toISOString().split('T')[0],

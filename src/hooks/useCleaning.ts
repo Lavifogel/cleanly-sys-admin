@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Cleaning {
@@ -33,7 +31,6 @@ export interface CleaningSummary {
 }
 
 export function useCleaning(activeShiftId: string | undefined) {
-  const { toast } = useToast();
   const [activeCleaning, setActiveCleaning] = useState<null | Cleaning>(null);
   const [cleaningElapsedTime, setCleaningElapsedTime] = useState(0);
   const [cleaningSummary, setCleaningSummary] = useState<CleaningSummary>({
@@ -73,16 +70,10 @@ export function useCleaning(activeShiftId: string | undefined) {
     },
   ]);
 
-  // Start cleaning
   const startCleaning = (qrData: string) => {
     const locationFromQR = qrData.includes("location=") 
       ? qrData.split("location=")[1].split("&")[0] 
       : "Conference Room B";
-
-    toast({
-      title: "Cleaning Started",
-      description: "Your cleaning task has been started after scanning the QR code.",
-    });
 
     setActiveCleaning({
       location: locationFromQR,
@@ -93,7 +84,6 @@ export function useCleaning(activeShiftId: string | undefined) {
     setCleaningElapsedTime(0);
   };
 
-  // Toggle pause/resume cleaning
   const togglePauseCleaning = () => {
     if (!activeCleaning) return;
 
@@ -101,14 +91,8 @@ export function useCleaning(activeShiftId: string | undefined) {
       ...activeCleaning,
       paused: !activeCleaning.paused,
     });
-
-    toast({
-      title: activeCleaning.paused ? "Cleaning Resumed" : "Cleaning Paused",
-      description: activeCleaning.paused ? "You have resumed the cleaning." : "You have paused the cleaning.",
-    });
   };
 
-  // Prepare cleaning summary
   const prepareSummary = (withScan: boolean, qrData?: string) => {
     if (!activeCleaning) return;
     
@@ -125,7 +109,6 @@ export function useCleaning(activeShiftId: string | undefined) {
     setShowSummary(true);
   };
 
-  // Complete cleaning with summary
   const completeSummary = () => {
     if (!activeCleaning) return;
     
@@ -147,22 +130,11 @@ export function useCleaning(activeShiftId: string | undefined) {
     setCleaningElapsedTime(0);
     setShowSummary(false);
     
-    toast({
-      title: "Cleaning Completed",
-      description: "Your cleaning summary has been saved.",
-    });
-    
     return true;
   };
 
-  // Handle image upload
   const addImage = async (file: File) => {
     if (cleaningSummary.images.length >= 5) {
-      toast({
-        title: "Maximum Images Reached",
-        description: "You can only add up to 5 images per cleaning.",
-        variant: "destructive",
-      });
       return;
     }
     
@@ -183,37 +155,21 @@ export function useCleaning(activeShiftId: string | undefined) {
         .from('cleaning-images')
         .getPublicUrl(fileName);
       
-      console.log("Uploaded image URL:", publicUrl);
-      
       setCleaningSummary({
         ...cleaningSummary,
         images: [...cleaningSummary.images, publicUrl]
       });
-      
-      toast({
-        title: "Image Added",
-        description: "Your image has been added to the cleaning summary.",
-      });
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast({
-        title: "Upload Failed",
-        description: "There was a problem uploading your image. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
-  // Handle image removal
   const removeImage = (index: number) => {
     const newImages = [...cleaningSummary.images];
-    
     const imageToRemove = newImages[index];
-    
     const filePath = imageToRemove.split('/').pop();
     
     if (filePath) {
-      console.log("Removing file:", filePath);
       supabase.storage
         .from('cleaning-images')
         .remove([filePath])
@@ -225,19 +181,12 @@ export function useCleaning(activeShiftId: string | undefined) {
     }
     
     newImages.splice(index, 1);
-    
     setCleaningSummary({
       ...cleaningSummary,
       images: newImages
     });
-    
-    toast({
-      title: "Image Removed",
-      description: "The image has been removed from the cleaning summary.",
-    });
   };
 
-  // Timer effect for tracking cleaning time
   useEffect(() => {
     let interval: number | null = null;
     
@@ -252,7 +201,6 @@ export function useCleaning(activeShiftId: string | undefined) {
     };
   }, [activeCleaning]);
 
-  // Helper for formatting time
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
