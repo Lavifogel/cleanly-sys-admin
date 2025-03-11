@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Menu, User } from "lucide-react";
+import { User } from "lucide-react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/useCleaning";
@@ -158,7 +158,7 @@ const CleanerDashboard = () => {
                 className="mt-2 md:mt-0"
                 onClick={() => setProfileOpen(true)}
               >
-                <Menu className="h-5 w-5" />
+                <User className="h-5 w-5" />
               </Button>
             </div>
 
