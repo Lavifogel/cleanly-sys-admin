@@ -37,7 +37,6 @@ const HomeTab = ({
         elapsedTime={elapsedTime}
         onEndShiftWithScan={onEndShiftWithScan}
         onEndShiftWithoutScan={onEndShiftWithoutScan}
-        onStartCleaning={onStartCleaning}
       />
 
       <RecentCleaningsCard 
@@ -45,6 +44,7 @@ const HomeTab = ({
         currentShiftId={activeShift.id}
         activeCleaning={activeCleaning}
         cleaningElapsedTime={cleaningElapsedTime}
+        onStartCleaning={onStartCleaning}
       />
     </div>
   );

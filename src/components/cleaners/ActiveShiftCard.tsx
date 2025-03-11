@@ -9,7 +9,6 @@ interface ActiveShiftCardProps {
   elapsedTime: number;
   onEndShiftWithScan: () => void;
   onEndShiftWithoutScan: () => void;
-  onStartCleaning: () => void;
 }
 
 const ActiveShiftCard = ({
@@ -17,7 +16,6 @@ const ActiveShiftCard = ({
   elapsedTime,
   onEndShiftWithScan,
   onEndShiftWithoutScan,
-  onStartCleaning,
 }: ActiveShiftCardProps) => {
   return (
     <Card>
@@ -49,13 +47,6 @@ const ActiveShiftCard = ({
             className="w-full"
           >
             End Shift without Scan
-          </Button>
-          <Button
-            onClick={onStartCleaning}
-            className="w-full mt-4"
-          >
-            <Scan className="mr-2 h-4 w-4" />
-            Scan to Start Cleaning
           </Button>
         </div>
       </CardContent>

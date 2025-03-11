@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { CleaningHistoryItem } from "@/types/cleaning";
 import CleaningItem from "./cleaningComponents/CleaningItem";
 import ImagePreview from "./cleaningComponents/ImagePreview";
 import { formatTime } from "@/utils/timeUtils";
-import { Timer } from "lucide-react";
+import { Scan } from "lucide-react";
 
 interface RecentCleaningsCardProps {
   cleaningsHistory: CleaningHistoryItem[];
@@ -16,13 +17,15 @@ interface RecentCleaningsCardProps {
     startTime: Date;
   } | null;
   cleaningElapsedTime?: number;
+  onStartCleaning?: () => void;
 }
 
 const RecentCleaningsCard = ({ 
   cleaningsHistory, 
   currentShiftId,
   activeCleaning,
-  cleaningElapsedTime = 0
+  cleaningElapsedTime = 0,
+  onStartCleaning
 }: RecentCleaningsCardProps) => {
   // State to store cleanings with image URLs
   const [cleaningsWithImages, setCleaningsWithImages] = useState<CleaningHistoryItem[]>([]);
@@ -136,6 +139,17 @@ const RecentCleaningsCard = ({
             )}
           </div>
         </CardContent>
+        {onStartCleaning && (
+          <CardFooter className="flex justify-center pt-4 pb-6">
+            <Button
+              onClick={onStartCleaning}
+              className="w-full"
+            >
+              <Scan className="mr-2 h-4 w-4" />
+              Scan to Start Cleaning
+            </Button>
+          </CardFooter>
+        )}
       </Card>
 
       {/* Image Preview Dialog */}
