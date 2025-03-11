@@ -7,16 +7,6 @@ import QRCodeScanner from "@/components/QRCodeScanner";
 import { formatTime } from "@/utils/timeUtils";
 import { supabase } from "@/integrations/supabase/client";
 
-// Import necessary components
-import StartShiftCard from "@/components/cleaners/StartShiftCard";
-import ActiveShiftCard from "@/components/cleaners/ActiveShiftCard";
-import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
-import RecentCleaningsCard from "@/components/cleaners/RecentCleaningsCard";
-import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
-import ProfileCard from "@/components/cleaners/ProfileCard";
-import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
-import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
-
 const CleanerDashboard = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("home");
@@ -119,19 +109,25 @@ const CleanerDashboard = () => {
     
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `cleaning-images/${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from('cleaning-images')
-        .upload(fileName, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
       
       if (error) {
+        console.error("Upload error details:", error);
         throw error;
       }
       
       const { data: { publicUrl } } = supabase.storage
         .from('cleaning-images')
         .getPublicUrl(fileName);
+      
+      console.log("Uploaded image URL:", publicUrl);
       
       setCleaningSummary({
         ...cleaningSummary,
@@ -156,7 +152,7 @@ const CleanerDashboard = () => {
     }
   };
 
-  const handleAddImage = async () => {
+  const handleAddImage = (imageUrl?: string) => {
     if (cleaningSummary.images.length >= 5) {
       toast({
         title: "Maximum Images Reached",
@@ -164,6 +160,13 @@ const CleanerDashboard = () => {
         variant: "destructive",
       });
       return;
+    }
+    
+    if (imageUrl) {
+      setCleaningSummary({
+        ...cleaningSummary,
+        images: [...cleaningSummary.images, imageUrl]
+      });
     }
   };
 
@@ -174,7 +177,8 @@ const CleanerDashboard = () => {
     
     const filePath = imageToRemove.split('/').pop();
     
-    if (filePath && filePath.startsWith('cleaning-images/')) {
+    if (filePath) {
+      console.log("Removing file:", filePath);
       supabase.storage
         .from('cleaning-images')
         .remove([filePath])

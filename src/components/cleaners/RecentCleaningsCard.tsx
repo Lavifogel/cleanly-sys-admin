@@ -15,13 +15,13 @@ interface CleaningHistoryItem {
   status: string;
   images: number;
   notes: string;
-  shiftId?: string; // Added shiftId to track which shift this cleaning belongs to
-  imageUrls?: string[]; // Added to store image URLs
+  shiftId?: string; 
+  imageUrls?: string[];
 }
 
 interface RecentCleaningsCardProps {
   cleaningsHistory: CleaningHistoryItem[];
-  currentShiftId?: string; // Added to filter cleanings by current shift
+  currentShiftId?: string;
 }
 
 const RecentCleaningsCard = ({ 
@@ -39,46 +39,51 @@ const RecentCleaningsCard = ({
   // Fetch images for cleanings when the component mounts or history changes
   useEffect(() => {
     const fetchCleaningImages = async () => {
-      // Create a copy of cleanings history with image URLs
-      const updatedCleanings = await Promise.all(
-        cleaningsHistory.map(async (cleaning) => {
-          if (cleaning.images > 0) {
-            try {
-              // In a real app, you would fetch the actual image URLs from your database
-              // Here we're simulating it by listing files from the bucket
-              const { data, error } = await supabase.storage
-                .from('cleaning-images')
-                .list();
-              
-              if (error) {
-                console.error("Error fetching images:", error);
-                return { ...cleaning, imageUrls: [] };
+      try {
+        // List all files in the storage bucket
+        const { data: files, error } = await supabase.storage
+          .from('cleaning-images')
+          .list();
+          
+        if (error) {
+          console.error("Error fetching images from storage:", error);
+          setCleaningsWithImages(cleaningsHistory);
+          return;
+        }
+          
+        console.log("Available files in storage:", files);
+          
+        // Create a copy of cleanings history with image URLs
+        const updatedCleanings = cleaningsHistory.map(cleaning => {
+          if (cleaning.images > 0 && cleaning.imageUrls) {
+            // If imageUrls are already set, use them
+            return cleaning;
+          } else if (cleaning.images > 0) {
+            // Simulate image URLs - in a real app, you would have a relation 
+            // between cleanings and their images in the database
+            const mockImageUrls = Array.from({ length: cleaning.images }).map((_, i) => {
+              if (files && files.length > i) {
+                const { data: { publicUrl } } = supabase.storage
+                  .from('cleaning-images')
+                  .getPublicUrl(files[i].name);
+                return publicUrl;
               }
+              return '';
+            }).filter(url => url !== '');
               
-              // Get public URLs for the first N images based on cleaning.images count
-              const imageUrls = data
-                .slice(0, cleaning.images)
-                .map(file => {
-                  const { data: { publicUrl } } = supabase.storage
-                    .from('cleaning-images')
-                    .getPublicUrl(file.name);
-                  return publicUrl;
-                });
-              
-              return { ...cleaning, imageUrls };
-            } catch (error) {
-              console.error("Error processing images:", error);
-              return { ...cleaning, imageUrls: [] };
-            }
+            return { ...cleaning, imageUrls: mockImageUrls };
           } else {
-            return { ...cleaning, imageUrls: [] };
+            return cleaning;
           }
-        })
-      );
-      
-      setCleaningsWithImages(updatedCleanings);
+        });
+          
+        setCleaningsWithImages(updatedCleanings);
+      } catch (error) {
+        console.error("Error processing storage data:", error);
+        setCleaningsWithImages(cleaningsHistory);
+      }
     };
-    
+      
     fetchCleaningImages();
   }, [cleaningsHistory]);
 

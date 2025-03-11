@@ -60,24 +60,32 @@ const CleaningSummaryDialog = ({
       // Generate a unique file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `cleaning-images/${fileName}`;
       
       // Upload to Supabase Storage
+      // Note: 'cleaning-images/' prefix in storage path was causing the issue
+      // Just use the file name directly since we're already in the bucket
       const { data, error } = await supabase.storage
         .from('cleaning-images')
-        .upload(filePath, file);
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
       
       if (error) {
+        console.error("Upload error details:", error);
         throw error;
       }
       
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('cleaning-images')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
+      
+      console.log("Uploaded image URL:", publicUrl);
       
       // Add the image URL to the cleaning summary
-      onAddImage();
+      const updatedImages = [...cleaningSummary.images, publicUrl];
+      onAddImage(publicUrl); // Pass the URL to the parent component
       
       toast({
         title: "Image Uploaded",
