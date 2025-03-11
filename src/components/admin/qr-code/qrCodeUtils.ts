@@ -1,12 +1,7 @@
 
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
-
-interface QrCodeData {
-  areaId: string;
-  areaName: string;
-  type: string;
-}
+import { QrCodeData, SaveQrCodeParams, QrCode } from "@/types/qrCode";
 
 /**
  * Generates a QR code image as a data URL
@@ -52,12 +47,7 @@ export const generateAreaId = async (areaName: string): Promise<string> => {
 /**
  * Saves QR code to database
  */
-export const saveQrCode = async (params: {
-  areaName: string;
-  type: string;
-  areaId: string;
-  qrCodeImageUrl: string;
-}) => {
+export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
   const { areaName, type, areaId, qrCodeImageUrl } = params;
   
   console.log("Attempting to insert QR code into database...");
@@ -85,14 +75,15 @@ export const saveQrCode = async (params: {
     areaName: data.area_name,
     type: data.type,
     areaId: data.area_id,
-    qrCodeImageUrl: data.qr_code_image_url
+    qrCodeImageUrl: data.qr_code_image_url,
+    createdAt: data.created_at
   };
 };
 
 /**
  * Fetches QR codes from database
  */
-export const fetchQrCodes = async () => {
+export const fetchQrCodes = async (): Promise<QrCode[]> => {
   const { data, error } = await supabase
     .from('qr_codes')
     .select('*')
@@ -106,7 +97,8 @@ export const fetchQrCodes = async () => {
       areaName: qr.area_name,
       type: qr.type,
       areaId: qr.area_id,
-      qrCodeImageUrl: qr.qr_code_image_url
+      qrCodeImageUrl: qr.qr_code_image_url,
+      createdAt: qr.created_at
     }));
   }
   

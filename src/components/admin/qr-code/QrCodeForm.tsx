@@ -10,15 +10,11 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-
-interface QrCodeFormProps {
-  onGenerateQR: (areaName: string, qrType: string) => void;
-  isLoading: boolean;
-}
+import { QrCodeFormProps, QrCodeType } from "@/types/qrCode";
 
 const QrCodeForm = ({ onGenerateQR, isLoading }: QrCodeFormProps) => {
   const [areaName, setAreaName] = useState("");
-  const [qrType, setQrType] = useState("Cleaning");
+  const [qrType, setQrType] = useState<QrCodeType>("Cleaning");
 
   const handleSubmit = () => {
     onGenerateQR(areaName, qrType);
@@ -44,7 +40,7 @@ const QrCodeForm = ({ onGenerateQR, isLoading }: QrCodeFormProps) => {
           <Label htmlFor="qr-type" className="text-right">
             QR Code Type
           </Label>
-          <Select value={qrType} onValueChange={setQrType}>
+          <Select value={qrType} onValueChange={(value: QrCodeType) => setQrType(value)}>
             <SelectTrigger className="col-span-3">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>

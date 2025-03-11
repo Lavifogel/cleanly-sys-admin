@@ -4,20 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Printer, Download, X } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "@/hooks/use-toast";
-
-interface QrCode {
-  id: string;
-  areaName: string;
-  type: string;
-  areaId: string;
-  qrCodeImageUrl?: string;
-}
-
-interface QrCodePreviewModalProps {
-  qrCode: QrCode;
-  onClose: () => void;
-  onPrint: (qrCode: QrCode) => void;
-}
+import { QrCodePreviewModalProps, QrCodeData } from "@/types/qrCode";
 
 const QrCodePreviewModal = ({ qrCode, onClose, onPrint }: QrCodePreviewModalProps) => {
   const { toast } = useToast();
@@ -43,6 +30,13 @@ const QrCodePreviewModal = ({ qrCode, onClose, onPrint }: QrCodePreviewModalProp
     });
   };
 
+  // Prepare QR code data for dynamic generation if needed
+  const qrCodeData: QrCodeData = {
+    areaId: qrCode.areaId,
+    areaName: qrCode.areaName,
+    type: qrCode.type
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
@@ -66,11 +60,7 @@ const QrCodePreviewModal = ({ qrCode, onClose, onPrint }: QrCodePreviewModalProp
             />
           ) : (
             <QRCodeCanvas 
-              value={JSON.stringify({
-                areaId: qrCode.areaId,
-                areaName: qrCode.areaName,
-                type: qrCode.type
-              })}
+              value={JSON.stringify(qrCodeData)}
               size={200}
               level="H"
               includeMargin

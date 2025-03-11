@@ -10,14 +10,7 @@ import {
   generateQrCodeDataUrl, 
   saveQrCode 
 } from "./qr-code/qrCodeUtils";
-
-interface QrCode {
-  id: string;
-  areaName: string;
-  type: string;
-  areaId: string;
-  qrCodeImageUrl?: string;
-}
+import { QrCode, QrCodeType } from "@/types/qrCode";
 
 const QrCodeGenerator = () => {
   const { toast } = useToast();
@@ -45,7 +38,7 @@ const QrCodeGenerator = () => {
     }
   };
 
-  const handleGenerateQR = async (areaName: string, qrType: string) => {
+  const handleGenerateQR = async (areaName: string, qrType: QrCodeType) => {
     if (!areaName) {
       toast({
         title: "Error",
@@ -83,7 +76,7 @@ const QrCodeGenerator = () => {
         title: "QR Code Generated",
         description: `QR code for ${areaName} has been created successfully`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating QR code:", error);
       toast({
         title: "Error",

@@ -2,20 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { QrCode, Printer, Eye } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
-
-interface QrCodeItem {
-  id: string;
-  areaName: string;
-  type: string;
-  areaId: string;
-  qrCodeImageUrl?: string;
-}
-
-interface QrCodeListProps {
-  qrCodes: QrCodeItem[];
-  onShowQR: (qrCode: QrCodeItem) => void;
-  onPrintQR: (qrCode: QrCodeItem) => void;
-}
+import { QrCodeListProps, QrCode as QrCodeType } from "@/types/qrCode";
 
 const QrCodeList = ({ qrCodes, onShowQR, onPrintQR }: QrCodeListProps) => {
   if (qrCodes.length === 0) {
