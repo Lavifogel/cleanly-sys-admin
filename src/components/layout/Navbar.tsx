@@ -87,14 +87,14 @@ const Navbar = () => {
   // Handle profile icon click
   const handleProfileClick = () => {
     if (location.pathname.includes('/cleaners/dashboard')) {
-      // Already on dashboard, set tab to profile
+      // Already on dashboard, dispatch event to show profile tab
       const event = new CustomEvent('set-profile-tab');
       window.dispatchEvent(event);
     } else {
-      // Navigate to dashboard (if cleaner)
+      // Navigate to dashboard with profile tab
       if (userRole === 'cleaner') {
         navigate('/cleaners/dashboard');
-        // Need a small delay to ensure component is mounted before trying to set tab
+        // Need a delay to ensure component is mounted before trying to set tab
         setTimeout(() => {
           const event = new CustomEvent('set-profile-tab');
           window.dispatchEvent(event);
