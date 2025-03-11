@@ -95,7 +95,7 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
   return (
     <div>
       <div className="flex justify-between items-center mb-2">
-        <label className="text-sm font-medium">Photos (Required)</label>
+        <label className="text-sm font-medium">Photos (Optional)</label>
         <span className="text-xs text-muted-foreground">{images.length}/{maxImages}</span>
       </div>
       

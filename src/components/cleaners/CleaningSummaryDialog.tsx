@@ -1,4 +1,3 @@
-
 import { useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowRight } from "lucide-react";
@@ -7,7 +6,6 @@ import { CleaningSummary } from "@/types/cleaning";
 import CleaningDetails from "./CleaningSummaryDialog/CleaningDetails";
 import NotesSection from "./CleaningSummaryDialog/NotesSection";
 import ImagesSection from "./CleaningSummaryDialog/ImagesSection";
-import { useToast } from "@/hooks/use-toast";
 
 interface CleaningSummaryDialogProps {
   open: boolean;
@@ -30,20 +28,6 @@ const CleaningSummaryDialog = ({
   onRemoveImage,
   onCompleteSummary,
 }: CleaningSummaryDialogProps) => {
-  const { toast } = useToast();
-
-  const handleCompleteSummary = () => {
-    if (cleaningSummary.images.length === 0) {
-      toast({
-        title: "No images added",
-        description: "Please add at least one image before completing the cleaning summary.",
-        variant: "destructive",
-      });
-      return;
-    }
-    onCompleteSummary();
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -73,7 +57,7 @@ const CleaningSummaryDialog = ({
         <DialogFooter>
           <Button 
             type="button" 
-            onClick={handleCompleteSummary} 
+            onClick={onCompleteSummary} 
             className="w-full"
           >
             Complete Cleaning
