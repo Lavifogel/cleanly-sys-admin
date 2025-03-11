@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Menu, User } from "lucide-react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/useCleaning";
@@ -10,9 +11,18 @@ import NoShiftView from "@/components/cleaners/dashboard/NoShiftView";
 import DashboardTabs from "@/components/cleaners/dashboard/DashboardTabs";
 import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
 import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import ProfileTab from "@/components/cleaners/dashboard/ProfileTab";
 
 const CleanerDashboard = () => {
   const [activeTab, setActiveTab] = useState("home");
+  const [profileOpen, setProfileOpen] = useState(false);
   
   // Use our custom hooks
   const {
@@ -142,6 +152,14 @@ const CleanerDashboard = () => {
                   Manage your shifts and cleaning tasks
                 </p>
               </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="mt-2 md:mt-0"
+                onClick={() => setProfileOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
             </div>
 
             <DashboardTabs 
@@ -163,6 +181,21 @@ const CleanerDashboard = () => {
           </>
         )}
       </motion.div>
+
+      {/* Profile Drawer */}
+      <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="flex items-center">
+              <User className="h-5 w-5 mr-2" />
+              Profile
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-6">
+            <ProfileTab shiftsHistory={shiftsHistory} />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {showQRScanner && (
         <QRCodeScanner 

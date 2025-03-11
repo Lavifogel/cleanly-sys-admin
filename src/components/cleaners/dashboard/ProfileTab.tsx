@@ -16,9 +16,9 @@ interface ProfileTabProps {
 
 const ProfileTab = ({ shiftsHistory }: ProfileTabProps) => {
   return (
-    <div className="space-y-4">
-      <ShiftHistoryCard shiftsHistory={shiftsHistory} />
+    <div className="space-y-6">
       <ProfileCard />
+      <ShiftHistoryCard shiftsHistory={shiftsHistory} />
     </div>
   );
 };

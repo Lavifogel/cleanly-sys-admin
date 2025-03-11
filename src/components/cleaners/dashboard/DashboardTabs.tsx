@@ -1,9 +1,8 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, ClipboardCheck, User } from "lucide-react";
+import { Clock, ClipboardCheck } from "lucide-react";
 import HomeTab from "./HomeTab";
 import CleaningTab from "./CleaningTab";
-import ProfileTab from "./ProfileTab";
 import { CleaningHistoryItem } from "@/types/cleaning";
 
 interface DashboardTabsProps {
@@ -48,7 +47,7 @@ const DashboardTabs = ({
 }: DashboardTabsProps) => {
   return (
     <Tabs defaultValue="home" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="home">
           <Clock className="h-4 w-4 mr-2" />
           <span className="hidden sm:inline">Shift</span>
@@ -56,10 +55,6 @@ const DashboardTabs = ({
         <TabsTrigger value="cleaning" disabled={!activeCleaning}>
           <ClipboardCheck className="h-4 w-4 mr-2" />
           <span className="hidden sm:inline">Cleaning</span>
-        </TabsTrigger>
-        <TabsTrigger value="profile">
-          <User className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Profile</span>
         </TabsTrigger>
       </TabsList>
 
@@ -84,10 +79,6 @@ const DashboardTabs = ({
           onEndCleaningWithScan={handleEndCleaningWithScan}
           onEndCleaningWithoutScan={handleEndCleaningWithoutScan}
         />
-      </TabsContent>
-
-      <TabsContent value="profile">
-        <ProfileTab shiftsHistory={shiftsHistory} />
       </TabsContent>
     </Tabs>
   );
