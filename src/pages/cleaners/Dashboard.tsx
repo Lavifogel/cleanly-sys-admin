@@ -167,7 +167,14 @@ const CleanerDashboard = () => {
       {showQRScanner && (
         <QRCodeScanner 
           onScanSuccess={handleQRScan}
-          onClose={closeScanner}
+          onClose={() => {
+            closeScanner();
+            // Ensure camera is released when closing scanner
+            const stream = document.querySelector('video')?.srcObject as MediaStream;
+            if (stream) {
+              stream.getTracks().forEach(track => track.stop());
+            }
+          }}
         />
       )}
 

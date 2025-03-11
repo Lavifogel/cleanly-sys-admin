@@ -15,11 +15,9 @@ interface ImagesSectionProps {
 const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesSectionProps) => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
+  const openCamera = () => {
     if (images.length >= maxImages) {
       toast({
         title: "Maximum images reached",
@@ -28,6 +26,13 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
       });
       return;
     }
+    setShowCamera(true);
+  };
+
+  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setShowCamera(false);
+    const file = e.target.files?.[0];
+    if (!file) return;
     
     if (!file.type.startsWith('image/')) {
       toast({
@@ -54,6 +59,9 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
       });
     } finally {
       setIsUploading(false);
+      // Reset the input value
+      const input = document.getElementById('photo-input') as HTMLInputElement;
+      if (input) input.value = '';
     }
   };
 
@@ -92,7 +100,7 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
         size="sm" 
         className="w-full"
         disabled={images.length >= maxImages || isUploading}
-        onClick={() => document.getElementById('photo-input')?.click()}
+        onClick={openCamera}
       >
         {isUploading ? (
           <>
@@ -107,18 +115,20 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
         )}
       </Button>
       
-      <input
-        id="photo-input"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFileSelect}
-        onClick={(e) => {
-          // Reset the input value to allow selecting the same file again
-          (e.target as HTMLInputElement).value = '';
-        }}
-      />
+      {showCamera && (
+        <input
+          id="photo-input"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handleCapture}
+          onClick={(e) => {
+            // Reset the input value to allow selecting the same file again
+            (e.target as HTMLInputElement).value = '';
+          }}
+        />
+      )}
     </div>
   );
 };
