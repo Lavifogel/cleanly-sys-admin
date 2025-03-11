@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -6,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import Logo from '@/components/ui/logo';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -96,11 +96,8 @@ const Navbar = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link 
-          to="/" 
-          className="text-foreground font-semibold text-xl tracking-tight transition-opacity hover:opacity-80"
-        >
-          CleanSys
+        <Link to="/" className="transition-opacity hover:opacity-80">
+          <Logo size="md" variant="default" />
         </Link>
 
         {/* Desktop Navigation */}
