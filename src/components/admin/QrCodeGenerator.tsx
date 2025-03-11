@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,7 @@ import {
   Check,
   Download
 } from "lucide-react";
-import { QRCodeCanvas } from "qrcode.react"; // Using named import
+import { QRCodeCanvas } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 
 const QrCodeGenerator = () => {
@@ -60,7 +59,6 @@ const QrCodeGenerator = () => {
     }
   };
 
-  // Fetch QR codes on component mount with useEffect
   useEffect(() => {
     fetchQrCodes();
   }, []);
@@ -85,7 +83,6 @@ const QrCodeGenerator = () => {
 
       const areaId = functionData || `${areaName.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
       
-      // Generate QR code as a data URL
       const tempCanvas = document.createElement('canvas');
       const qrData = JSON.stringify({
         areaId: areaId,
@@ -93,17 +90,16 @@ const QrCodeGenerator = () => {
         type: qrType
       });
       
-      // Create QR code on the canvas - fix here: render to canvas directly
-      QRCodeCanvas({
+      const qr = new QRCodeCanvas({
         value: qrData,
         size: 200,
         level: "H",
         includeMargin: true
-      }, tempCanvas);
+      });
+      qr.toCanvas(tempCanvas);
       
       const qrCodeImageUrl = tempCanvas.toDataURL('image/png');
       
-      // Save to database with the image URL
       const { data, error } = await supabase
         .from('qr_codes')
         .insert({
@@ -209,7 +205,6 @@ const QrCodeGenerator = () => {
   const handleDownloadQR = () => {
     if (!currentQrCode) return;
     
-    // Use the stored image URL if available, otherwise get it from the canvas
     let imageUrl = currentQrCode.qrCodeImageUrl;
     
     if (!imageUrl) {
