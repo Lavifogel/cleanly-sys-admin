@@ -1,14 +1,16 @@
 
 import { useToast } from "@/hooks/use-toast";
+import { ScannerPurpose } from "@/hooks/useQRScanner";
 
 type ScanHandlerProps = {
   activeShift: any;
   activeCleaning: any;
+  scannerPurpose: ScannerPurpose; // Add scannerPurpose as a prop
   startShift: (qrData: string) => void;
   endShift: (withScan: boolean, qrData?: string) => void;
   startCleaning: (qrData: string) => void;
   prepareSummary: (withScan: boolean, qrData?: string) => void;
-  openScanner: (purpose: string) => void;
+  openScanner: (purpose: ScannerPurpose) => void;
   setActiveTab: (tab: string) => void;
   showConfirmationDialog: (title: string, description: string, action: () => void) => void;
 };
@@ -16,6 +18,7 @@ type ScanHandlerProps = {
 export function useQRScannerHandlers({
   activeShift,
   activeCleaning,
+  scannerPurpose, // Add scannerPurpose to the destructured props
   startShift,
   endShift,
   startCleaning,
