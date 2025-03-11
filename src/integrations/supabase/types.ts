@@ -211,6 +211,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          qr_code_image_url: string | null
           type: string
         }
         Insert: {
@@ -219,6 +220,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          qr_code_image_url?: string | null
           type: string
         }
         Update: {
@@ -227,6 +229,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          qr_code_image_url?: string | null
           type?: string
         }
         Relationships: [
@@ -359,6 +362,12 @@ export type Database = {
           is_active: boolean
         }
         Returns: Json
+      }
+      generate_area_id: {
+        Args: {
+          area_name: string
+        }
+        Returns: string
       }
     }
     Enums: {
