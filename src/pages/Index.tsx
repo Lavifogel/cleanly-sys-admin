@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -94,30 +95,7 @@ const Index = () => {
           </div>
         </motion.div>
         
-        <motion.div 
-          className="flex flex-col sm:flex-row gap-4 justify-center md:hidden"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7, duration: 0.5 }}
-        >
-          <Button 
-            size="lg" 
-            className="rounded-full px-8 py-6 shadow-md w-full sm:w-auto group"
-            onClick={handleAdminClick}
-          >
-            Admin Portal
-            <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
-          <Button 
-            size="lg" 
-            variant="outline" 
-            className="rounded-full px-8 py-6 w-full sm:w-auto group"
-            onClick={handleCleanerClick}
-          >
-            Cleaner Portal
-            <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
-        </motion.div>
+        {/* Removed the redundant buttons that were previously shown on mobile */}
       </motion.div>
     </div>
   );

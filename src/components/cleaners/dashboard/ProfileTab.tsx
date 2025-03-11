@@ -2,16 +2,18 @@
 import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
 import ProfileCard from "@/components/cleaners/ProfileCard";
 
+export interface ShiftHistoryItem {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  duration: string;
+  status: string;
+  cleanings: number;
+}
+
 interface ProfileTabProps {
-  shiftsHistory: {
-    id: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-    duration: string;
-    status: string;
-    cleanings: number;
-  }[];
+  shiftsHistory: ShiftHistoryItem[];
 }
 
 const ProfileTab = ({ shiftsHistory }: ProfileTabProps) => {
