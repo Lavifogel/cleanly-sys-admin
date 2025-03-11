@@ -10,12 +10,24 @@ import Logo from '@/components/ui/logo';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import ProfileTab from '@/components/cleaners/dashboard/ProfileTab';
 
+// Define a simple type for shift history to avoid recursive type issues
+type ShiftHistoryItem = {
+  id: string;
+  created_at: string;
+  end_date: string | null;
+  end_time: string | null;
+  start_date: string;
+  start_time: string;
+  status: string;
+  [key: string]: any; // Allow other properties without causing type recursion
+};
+
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [shiftsHistory, setShiftsHistory] = useState<any[]>([]);
+  const [shiftsHistory, setShiftsHistory] = useState<ShiftHistoryItem[]>([]);
   const location = useLocation();
 
   // Fetch user session and role
@@ -55,11 +67,11 @@ const Navbar = () => {
         const { data } = await supabase
           .from('shifts')
           .select('*')
-          .eq('cleaner_id', session.user.id)
+          .eq('user_id', session.user.id)
           .order('created_at', { ascending: false });
         
         if (data) {
-          setShiftsHistory(data);
+          setShiftsHistory(data as ShiftHistoryItem[]);
         }
       }
     };
