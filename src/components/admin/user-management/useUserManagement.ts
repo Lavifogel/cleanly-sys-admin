@@ -15,10 +15,16 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching users data...");
       const { data: userData, error } = await supabase
         .rpc('get_full_user_info');
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error from get_full_user_info:", error);
+        throw error;
+      }
+
+      console.log("Users data received:", userData);
 
       if (userData) {
         const formattedUsers: CleanerUser[] = userData.map(user => ({
