@@ -1,103 +1,72 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, Camera, ClipboardCheck, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { formatTime } from "@/utils/timeUtils";
-import { supabase } from "@/integrations/supabase/client";
+import { useShift } from "@/hooks/useShift";
+import { useCleaning } from "@/hooks/useCleaning";
+import { useQRScanner, type ScannerPurpose } from "@/hooks/useQRScanner";
+import { useConfirmation } from "@/hooks/useConfirmation";
+import { useFileUpload } from "@/hooks/useFileUpload";
+
+// Import components
+import { StartShiftCard } from "@/components/cleaners/StartShiftCard";
+import { ActiveShiftCard } from "@/components/cleaners/ActiveShiftCard";
+import { ActiveCleaningCard } from "@/components/cleaners/ActiveCleaningCard";
+import { RecentCleaningsCard } from "@/components/cleaners/RecentCleaningsCard";
+import { ShiftHistoryCard } from "@/components/cleaners/ShiftHistoryCard";
+import { ProfileCard } from "@/components/cleaners/ProfileCard";
+import { CleaningSummaryDialog } from "@/components/cleaners/CleaningSummaryDialog";
+import { ConfirmationDialog } from "@/components/cleaners/ConfirmationDialog";
 
 const CleanerDashboard = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("home");
-  const [activeShift, setActiveShift] = useState<null | {
-    startTime: Date;
-    timer: number;
-    id: string;
-  }>(null);
-  const [activeCleaning, setActiveCleaning] = useState<null | {
-    location: string;
-    startTime: Date;
-    timer: number;
-    paused: boolean;
-  }>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [cleaningElapsedTime, setCleaningElapsedTime] = useState(0);
-  const [showSummary, setShowSummary] = useState(false);
-  const [cleaningSummary, setCleaningSummary] = useState({
-    location: "",
-    startTime: "",
-    endTime: "",
-    duration: "",
-    notes: "",
-    images: [] as string[]
-  });
-  const [summaryNotes, setSummaryNotes] = useState("");
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{
-    title: string;
-    description: string;
-    action: () => void;
-  } | null>(null);
   
-  const [showQRScanner, setShowQRScanner] = useState(false);
-  const [scannerPurpose, setScannerPurpose] = useState<"startShift" | "endShift" | "startCleaning" | "endCleaning">("startShift");
-
-  const [cleaningsHistory, setCleaningsHistory] = useState([
-    {
-      id: "1",
-      location: "Conference Room A",
-      date: "2023-08-15",
-      startTime: "09:30",
-      endTime: "10:05",
-      duration: "35m",
-      status: "finished with scan",
-      images: 2,
-      notes: "Cleaned and restocked supplies",
-      shiftId: "previous-shift-1",
-    },
-    {
-      id: "2",
-      location: "Main Office",
-      date: "2023-08-15",
-      startTime: "10:30",
-      endTime: "11:12",
-      duration: "42m",
-      status: "finished without scan",
-      images: 0,
-      notes: "",
-      shiftId: "previous-shift-1",
-    },
-  ]);
-
-  const [shiftsHistory, setShiftsHistory] = useState([
-    {
-      id: "1",
-      date: "2023-08-15",
-      startTime: "09:00",
-      endTime: "17:00",
-      duration: "8h",
-      status: "finished with scan",
-      cleanings: 5,
-    },
-    {
-      id: "2",
-      date: "2023-08-14",
-      startTime: "08:30",
-      endTime: "16:30",
-      duration: "8h",
-      status: "finished without scan",
-      cleanings: 4,
-    },
-  ]);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
+  // Use our custom hooks
+  const {
+    activeShift,
+    elapsedTime,
+    shiftsHistory,
+    startShift,
+    endShift
+  } = useShift();
+  
+  const {
+    activeCleaning,
+    cleaningElapsedTime,
+    cleaningsHistory,
+    cleaningSummary,
+    summaryNotes,
+    showSummary,
+    startCleaning,
+    togglePauseCleaning,
+    prepareSummary,
+    completeSummary,
+    addImage,
+    removeImage,
+    setSummaryNotes,
+    setShowSummary
+  } = useCleaning(activeShift?.id);
+  
+  const {
+    showQRScanner,
+    scannerPurpose,
+    openScanner,
+    closeScanner
+  } = useQRScanner();
+  
+  const {
+    showConfirmDialog,
+    confirmAction,
+    setShowConfirmDialog,
+    showConfirmationDialog
+  } = useConfirmation();
+  
+  const handleFileSelected = (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Invalid File Type",
@@ -107,123 +76,39 @@ const CleanerDashboard = () => {
       return;
     }
     
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      
-      const { data, error } = await supabase.storage
-        .from('cleaning-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        console.error("Upload error details:", error);
-        throw error;
-      }
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('cleaning-images')
-        .getPublicUrl(fileName);
-      
-      console.log("Uploaded image URL:", publicUrl);
-      
-      setCleaningSummary({
-        ...cleaningSummary,
-        images: [...cleaningSummary.images, publicUrl]
-      });
-      
-      toast({
-        title: "Image Added",
-        description: "Your image has been added to the cleaning summary.",
-      });
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      toast({
-        title: "Upload Failed",
-        description: "There was a problem uploading your image. Please try again.",
-        variant: "destructive",
-      });
-    }
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    addImage(file);
   };
+  
+  const {
+    fileInputRef,
+    handleFileSelect
+  } = useFileUpload(handleFileSelected);
 
-  const handleAddImage = (imageUrl?: string) => {
-    if (cleaningSummary.images.length >= 5) {
-      toast({
-        title: "Maximum Images Reached",
-        description: "You can only add up to 5 images per cleaning.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (imageUrl) {
-      setCleaningSummary({
-        ...cleaningSummary,
-        images: [...cleaningSummary.images, imageUrl]
-      });
-    }
-  };
-
-  const handleRemoveImage = (index: number) => {
-    const newImages = [...cleaningSummary.images];
-    
-    const imageToRemove = newImages[index];
-    
-    const filePath = imageToRemove.split('/').pop();
-    
-    if (filePath) {
-      console.log("Removing file:", filePath);
-      supabase.storage
-        .from('cleaning-images')
-        .remove([filePath])
-        .then(({ error }) => {
-          if (error) {
-            console.error("Error deleting image:", error);
-          }
-        });
-    }
-    
-    newImages.splice(index, 1);
-    
-    setCleaningSummary({
-      ...cleaningSummary,
-      images: newImages
-    });
-    
-    toast({
-      title: "Image Removed",
-      description: "The image has been removed from the cleaning summary.",
-    });
-  };
-
+  // Handle scanning QR code
   const handleQRScan = (decodedText: string) => {
     console.log("QR Code scanned:", decodedText);
-    setShowQRScanner(false);
+    closeScanner();
 
     switch (scannerPurpose) {
       case "startShift":
-        completeStartShift(decodedText);
+        startShift(decodedText);
         break;
       case "endShift":
-        completeEndShift(true, decodedText);
+        endShift(true, decodedText);
         break;
       case "startCleaning":
-        completeStartCleaning(decodedText);
+        startCleaning(decodedText);
+        setActiveTab("cleaning");
         break;
       case "endCleaning":
-        prepareCleaningSummary(true, decodedText);
+        prepareSummary(true, decodedText);
         break;
       default:
         break;
     }
   };
 
+  // Handle starting a shift
   const handleStartShift = () => {
     if (activeShift) {
       toast({
@@ -234,26 +119,10 @@ const CleanerDashboard = () => {
       return;
     }
     
-    setScannerPurpose("startShift");
-    setShowQRScanner(true);
+    openScanner("startShift");
   };
 
-  const completeStartShift = (qrData: string) => {
-    toast({
-      title: "Shift Started",
-      description: "Your shift has been started successfully after scanning the QR code.",
-    });
-    
-    const newShiftId = `shift-${Date.now()}`;
-    
-    setActiveShift({
-      startTime: new Date(),
-      timer: 0,
-      id: newShiftId,
-    });
-    setElapsedTime(0);
-  };
-
+  // Handle ending a shift
   const handleEndShift = (withScan = true) => {
     if (!activeShift) {
       toast({
@@ -277,35 +146,14 @@ const CleanerDashboard = () => {
       showConfirmationDialog(
         "End Shift Without Scan",
         "Are you sure you want to end your shift without scanning? This action cannot be undone.",
-        () => completeEndShift(withScan)
+        () => endShift(withScan)
       );
     } else {
-      setScannerPurpose("endShift");
-      setShowQRScanner(true);
+      openScanner("endShift");
     }
   };
 
-  const completeEndShift = (withScan: boolean, qrData?: string) => {
-    toast({
-      title: "Shift Ended",
-      description: `Your shift has been ended ${withScan ? 'with' : 'without'} a scan.`,
-    });
-
-    const newShift = {
-      id: (shiftsHistory.length + 1).toString(),
-      date: new Date().toISOString().split('T')[0],
-      startTime: activeShift!.startTime.toTimeString().slice(0, 5),
-      endTime: new Date().toTimeString().slice(0, 5),
-      duration: `${Math.floor(elapsedTime / 3600)}h ${Math.floor((elapsedTime % 3600) / 60)}m`,
-      status: withScan ? "finished with scan" : "finished without scan",
-      cleanings: 0,
-    };
-
-    setShiftsHistory([newShift, ...shiftsHistory]);
-    setActiveShift(null);
-    setElapsedTime(0);
-  };
-
+  // Handle starting a cleaning
   const handleStartCleaning = () => {
     if (!activeShift) {
       toast({
@@ -325,44 +173,10 @@ const CleanerDashboard = () => {
       return;
     }
 
-    setScannerPurpose("startCleaning");
-    setShowQRScanner(true);
+    openScanner("startCleaning");
   };
 
-  const completeStartCleaning = (qrData: string) => {
-    const locationFromQR = qrData.includes("location=") 
-      ? qrData.split("location=")[1].split("&")[0] 
-      : "Conference Room B";
-
-    toast({
-      title: "Cleaning Started",
-      description: "Your cleaning task has been started after scanning the QR code.",
-    });
-
-    setActiveCleaning({
-      location: locationFromQR,
-      startTime: new Date(),
-      timer: 0,
-      paused: false,
-    });
-    setCleaningElapsedTime(0);
-    setActiveTab("cleaning");
-  };
-
-  const handlePauseCleaning = () => {
-    if (!activeCleaning) return;
-
-    setActiveCleaning({
-      ...activeCleaning,
-      paused: !activeCleaning.paused,
-    });
-
-    toast({
-      title: activeCleaning.paused ? "Cleaning Resumed" : "Cleaning Paused",
-      description: activeCleaning.paused ? "You have resumed the cleaning." : "You have paused the cleaning.",
-    });
-  };
-
+  // Handle ending a cleaning
   const handleEndCleaning = (withScan = true) => {
     if (!activeCleaning) {
       toast({
@@ -377,89 +191,18 @@ const CleanerDashboard = () => {
       showConfirmationDialog(
         "End Cleaning Without Scan",
         "Are you sure you want to end this cleaning without scanning? This action cannot be undone.",
-        () => prepareCleaningSummary(withScan)
+        () => prepareSummary(withScan)
       );
     } else {
-      setScannerPurpose("endCleaning");
-      setShowQRScanner(true);
+      openScanner("endCleaning");
     }
   };
 
-  const prepareCleaningSummary = (withScan: boolean, qrData?: string) => {
-    setCleaningSummary({
-      location: activeCleaning!.location,
-      startTime: activeCleaning!.startTime.toLocaleTimeString(),
-      endTime: new Date().toLocaleTimeString(),
-      duration: formatTime(cleaningElapsedTime),
-      notes: "",
-      images: []
-    });
-    
-    setSummaryNotes("");
-    setShowSummary(true);
-  };
-
+  // Handle completing a cleaning summary
   const handleCompleteSummary = () => {
-    const newCleaning = {
-      id: (cleaningsHistory.length + 1).toString(),
-      location: activeCleaning!.location,
-      date: new Date().toISOString().split('T')[0],
-      startTime: activeCleaning!.startTime.toTimeString().slice(0, 5),
-      endTime: new Date().toTimeString().slice(0, 5),
-      duration: `${Math.floor(cleaningElapsedTime / 60)}m`,
-      status: `finished with scan`,
-      images: cleaningSummary.images.length,
-      notes: summaryNotes,
-      shiftId: activeShift?.id,
-    };
-
-    setCleaningsHistory([newCleaning, ...cleaningsHistory]);
-    setActiveCleaning(null);
-    setCleaningElapsedTime(0);
-    setShowSummary(false);
-    setActiveTab("home");
-    
-    toast({
-      title: "Cleaning Completed",
-      description: "Your cleaning summary has been saved.",
-    });
-  };
-
-  useEffect(() => {
-    let interval: number | null = null;
-    
-    if (activeShift && !interval) {
-      interval = window.setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
+    if (completeSummary()) {
+      setActiveTab("home");
     }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeShift]);
-
-  useEffect(() => {
-    let interval: number | null = null;
-    
-    if (activeCleaning && !activeCleaning.paused && !interval) {
-      interval = window.setInterval(() => {
-        setCleaningElapsedTime((prev) => prev + 1);
-      }, 1000);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeCleaning]);
-
-  const showConfirmationDialog = (title: string, description: string, action: () => void) => {
-    setConfirmAction({
-      title,
-      description,
-      action
-    });
-    setShowConfirmDialog(true);
   };
 
   return (
@@ -524,7 +267,7 @@ const CleanerDashboard = () => {
                     startTime={activeCleaning.startTime}
                     cleaningElapsedTime={cleaningElapsedTime}
                     isPaused={activeCleaning.paused}
-                    onPauseCleaning={handlePauseCleaning}
+                    onPauseCleaning={togglePauseCleaning}
                     onEndCleaningWithScan={() => handleEndCleaning(true)}
                     onEndCleaningWithoutScan={() => handleEndCleaning(false)}
                   />
@@ -543,7 +286,7 @@ const CleanerDashboard = () => {
       {showQRScanner && (
         <QRCodeScanner 
           onScanSuccess={handleQRScan}
-          onClose={() => setShowQRScanner(false)}
+          onClose={closeScanner}
         />
       )}
 
@@ -553,8 +296,8 @@ const CleanerDashboard = () => {
         cleaningSummary={cleaningSummary}
         summaryNotes={summaryNotes}
         onSummaryNotesChange={setSummaryNotes}
-        onAddImage={handleAddImage}
-        onRemoveImage={handleRemoveImage}
+        onAddImage={() => fileInputRef.current?.click()}
+        onRemoveImage={removeImage}
         onCompleteSummary={handleCompleteSummary}
       />
 
