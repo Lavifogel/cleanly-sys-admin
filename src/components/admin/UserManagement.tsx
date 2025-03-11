@@ -28,34 +28,44 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // Fixed query to properly join cleaners and profiles tables
-      const { data: cleaners, error } = await supabase
+      // Get cleaners and profiles separately and join them in JavaScript
+      const { data: cleaners, error: cleanersError } = await supabase
         .from('cleaners')
-        .select(`
-          id,
-          phone,
-          active,
-          start_date,
-          profiles!profiles_id_fkey (first_name, last_name, email, role)
-        `)
+        .select('*')
         .order('start_date', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
+      if (cleanersError) throw cleanersError;
 
-      if (cleaners) {
-        const formattedUsers: CleanerUser[] = cleaners.map(cleaner => ({
-          id: cleaner.id,
-          phoneNumber: cleaner.phone || '',
-          name: cleaner.profiles ? 
-            `${cleaner.profiles.first_name || ''} ${cleaner.profiles.last_name || ''}`.trim() : 
-            'Unknown',
-          role: cleaner.profiles?.role || 'Cleaner',
-          startDate: cleaner.start_date || '',
-          status: cleaner.active ? "active" : "inactive",
-          email: cleaner.profiles?.email || ''
-        }));
+      // Fetch all profiles to manually join with cleaners
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (profilesError) throw profilesError;
+
+      if (cleaners && profiles) {
+        // Create a map of profiles by ID for efficient lookup
+        const profilesMap = profiles.reduce((map, profile) => {
+          map[profile.id] = profile;
+          return map;
+        }, {});
+
+        // Join cleaners with their profiles
+        const formattedUsers: CleanerUser[] = cleaners.map(cleaner => {
+          const profile = profilesMap[cleaner.id];
+          return {
+            id: cleaner.id,
+            phoneNumber: cleaner.phone || '',
+            name: profile ? 
+              `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 
+              'Unknown',
+            role: profile?.role || 'Cleaner',
+            startDate: cleaner.start_date || '',
+            status: cleaner.active ? "active" : "inactive",
+            email: profile?.email || ''
+          };
+        });
+        
         setUsers(formattedUsers);
       }
     } catch (error) {

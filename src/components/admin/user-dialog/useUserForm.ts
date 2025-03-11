@@ -43,7 +43,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     
     try {
       if (user?.id) {
-        // Update existing user
+        // Update existing user - create separate transactions for profiles and cleaners
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
@@ -76,23 +76,44 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         
         console.log("Creating new user with ID:", newUserId);
         
-        // Using RPC function to ensure transaction atomicity
-        const { data: result, error } = await supabase.rpc('create_cleaner_user', {
-          user_id: newUserId,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email,
-          phone_number: data.phoneNumber,
-          start_date: data.startDate,
-          is_active: data.isActive
-        });
-        
-        if (error) {
-          console.error("Error creating user via RPC:", error);
-          throw error;
+        // Use separate transactions to create profile and cleaner records
+        // First create the profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: newUserId,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            email: data.email,
+            role: 'cleaner'
+          });
+          
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          throw profileError;
         }
         
-        console.log("User created successfully:", result);
+        // Then create the cleaner record
+        const { error: cleanerError } = await supabase
+          .from('cleaners')
+          .insert({
+            id: newUserId,
+            phone: data.phoneNumber,
+            start_date: data.startDate,
+            active: data.isActive
+          });
+          
+        if (cleanerError) {
+          console.error("Error creating cleaner:", cleanerError);
+          
+          // If cleaner creation fails, delete the profile to avoid orphaned records
+          await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', newUserId);
+            
+          throw cleanerError;
+        }
         
         toast({
           title: "User Created",
