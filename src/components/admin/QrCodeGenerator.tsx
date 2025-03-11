@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,7 @@ import {
   Check,
   Download
 } from "lucide-react";
-import { QRCode } from "qrcode.react"; // Changed to named import
+import QRCode from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 
 const QrCodeGenerator = () => {
@@ -64,8 +63,7 @@ const QrCodeGenerator = () => {
     }
   };
 
-  // Fetch QR codes on component mount
-  useState(() => {
+  useEffect(() => {
     fetchQrCodes();
   }, []);
 
@@ -82,7 +80,6 @@ const QrCodeGenerator = () => {
     setIsLoading(true);
 
     try {
-      // Call the function to generate a unique area_id
       const { data: functionData, error: functionError } = await supabase
         .rpc('generate_area_id', { area_name: areaName });
 
@@ -90,7 +87,6 @@ const QrCodeGenerator = () => {
 
       const areaId = functionData || `${areaName.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
       
-      // Save to database
       const { data, error } = await supabase
         .from('qr_codes')
         .insert({
@@ -139,7 +135,6 @@ const QrCodeGenerator = () => {
   const handlePrintQR = (qrCode) => {
     setCurrentQrCode(qrCode);
     
-    // Use setTimeout to ensure the QR code is rendered before printing
     setTimeout(() => {
       if (qrCodeRef.current) {
         const printWindow = window.open('', '_blank');
@@ -191,7 +186,7 @@ const QrCodeGenerator = () => {
   const handleDownloadQR = () => {
     if (!currentQrCode) return;
     
-    const canvas = document.querySelector('#qr-code-display canvas');
+    const canvas = document.querySelector('#qr-code-display canvas') as HTMLCanvasElement;
     if (!canvas) return;
     
     const url = canvas.toDataURL('image/png');
