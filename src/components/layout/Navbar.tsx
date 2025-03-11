@@ -15,7 +15,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [shiftsHistory, setShiftsHistory] = useState([]);
+  const [shiftsHistory, setShiftsHistory] = useState<any[]>([]);
   const location = useLocation();
 
   // Fetch user session and role
@@ -114,9 +114,23 @@ const Navbar = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="transition-opacity hover:opacity-80">
-          <Logo size="md" variant="default" />
-        </Link>
+        <div className="flex items-center space-x-2">
+          <Link to="/" className="transition-opacity hover:opacity-80">
+            <Logo size="md" variant="default" />
+          </Link>
+          
+          {session && (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setProfileOpen(true)}
+              className="ml-2"
+              aria-label="Profile"
+            >
+              <User className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
 
         {/* Desktop Navigation */}
         <div className="flex items-center space-x-1">
@@ -136,18 +150,6 @@ const Navbar = () => {
               </Link>
             ))}
           </nav>
-
-          {session && (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setProfileOpen(true)}
-              className="ml-2"
-              aria-label="Profile"
-            >
-              <User className="h-5 w-5" />
-            </Button>
-          )}
           
           {/* Mobile Menu Button */}
           <Button
