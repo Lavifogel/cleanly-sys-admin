@@ -47,7 +47,8 @@ const QrCodeGenerator = () => {
           id: qr.id,
           areaName: qr.area_name,
           type: qr.type,
-          areaId: qr.area_id
+          areaId: qr.area_id,
+          qrCodeImageUrl: qr.qr_code_image_url
         }));
         setGeneratedQrCodes(formattedQrCodes);
       }
@@ -78,10 +79,14 @@ const QrCodeGenerator = () => {
     setIsLoading(true);
 
     try {
+      // Generate area_id using the database function or fallback to local generation
       const { data: functionData, error: functionError } = await supabase
         .rpc('generate_area_id', { area_name: areaName });
 
-      if (functionError) throw functionError;
+      if (functionError) {
+        console.error("Error generating area ID:", functionError);
+        // Fallback to local generation if RPC fails
+      }
 
       const areaId = functionData || `${areaName.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
       
@@ -91,7 +96,7 @@ const QrCodeGenerator = () => {
         type: qrType
       });
       
-      // Use the QRCode library to generate QR code as a data URL
+      // Generate QR code as data URL
       const qrCodeImageUrl = await new Promise((resolve, reject) => {
         QRCode.toDataURL(qrData, {
           errorCorrectionLevel: 'H',
@@ -107,6 +112,9 @@ const QrCodeGenerator = () => {
         });
       });
       
+      console.log("Attempting to insert QR code into database...");
+      
+      // Insert the QR code into the database
       const { data, error } = await supabase
         .from('qr_codes')
         .insert({
@@ -118,7 +126,12 @@ const QrCodeGenerator = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
+
+      console.log("QR code inserted successfully:", data);
 
       const newQrCode = {
         id: data.id,
@@ -141,7 +154,7 @@ const QrCodeGenerator = () => {
       console.error("Error generating QR code:", error);
       toast({
         title: "Error",
-        description: "Failed to generate QR code",
+        description: `Failed to generate QR code: ${error.message || error}`,
         variant: "destructive",
       });
     } finally {
