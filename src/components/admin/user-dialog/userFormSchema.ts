@@ -8,7 +8,8 @@ export const userSchema = z.object({
   email: z.string().email("Invalid email address"),
   phoneNumber: z.string().min(1, "Phone number is required"),
   startDate: z.string().min(1, "Start date is required"),
-  isActive: z.boolean().default(true)
+  isActive: z.boolean().default(true),
+  role: z.enum(["admin", "cleaner"]).default("cleaner")
 });
 
 export type UserFormValues = z.infer<typeof userSchema>;
@@ -23,6 +24,7 @@ export interface UserDialogProps {
     email?: string;
     startDate?: string;
     status?: string;
+    role?: string;
   } | null;
   onSuccess: () => void;
 }

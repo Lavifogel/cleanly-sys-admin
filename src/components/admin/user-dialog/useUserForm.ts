@@ -20,7 +20,8 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
       startDate: user?.startDate || new Date().toISOString().split('T')[0],
-      isActive: user?.status !== "inactive"
+      isActive: user?.status !== "inactive",
+      role: (user?.role as "admin" | "cleaner") || "cleaner"
     }
   });
 
@@ -33,7 +34,8 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         email: user?.email || "",
         phoneNumber: user?.phoneNumber || "",
         startDate: user?.startDate || new Date().toISOString().split('T')[0],
-        isActive: user?.status !== "inactive"
+        isActive: user?.status !== "inactive",
+        role: (user?.role as "admin" | "cleaner") || "cleaner"
       });
     }
   }, [open, user, reset]);
@@ -50,66 +52,102 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             first_name: data.firstName,
             last_name: data.lastName,
             email: data.email,
-            user_name: data.phoneNumber // Use phoneNumber as user_name
+            user_name: data.phoneNumber, // Use phoneNumber as user_name
+            role: data.role
           })
           .eq('id', user.id);
         
         if (profileError) throw profileError;
         
-        const { error: cleanerError } = await supabase
-          .from('cleaners')
-          .update({
-            phone: data.phoneNumber,
-            start_date: data.startDate,
-            active: data.isActive,
-          })
-          .eq('id', user.id);
-        
-        if (cleanerError) throw cleanerError;
+        // Update either admin or cleaner table based on role
+        if (data.role === 'cleaner') {
+          const { error: cleanerError } = await supabase
+            .from('cleaners')
+            .update({
+              phone: data.phoneNumber,
+              start_date: data.startDate,
+              active: data.isActive,
+            })
+            .eq('id', user.id);
+          
+          if (cleanerError) throw cleanerError;
+        } else {
+          // If role is admin, make sure there's an entry in the admins table
+          const { error: adminError } = await supabase
+            .from('admins')
+            .upsert({
+              id: user.id,
+              updated_at: new Date().toISOString()
+            });
+          
+          if (adminError) throw adminError;
+        }
         
         toast({
           title: "User Updated",
           description: "User information has been updated successfully",
         });
       } else {
-        // Create new user using the create_cleaner_user database function
+        // Create new user using a direct approach instead of the function
         const newUserId = crypto.randomUUID();
         
         console.log("Creating new user with data:", {
-          user_id: newUserId,
+          id: newUserId,
           first_name: data.firstName,
           last_name: data.lastName,
           email: data.email,
-          phone_number: data.phoneNumber,
-          start_date: data.startDate,
-          is_active: data.isActive
+          role: data.role,
+          user_name: data.phoneNumber
         });
         
-        // Call the database function to create a new user
-        const { data: response, error } = await supabase.rpc('create_cleaner_user', {
-          user_id: newUserId,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email,
-          phone_number: data.phoneNumber,
-          start_date: data.startDate,
-          is_active: data.isActive
-        });
+        // First insert into profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: newUserId,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            email: data.email,
+            role: data.role,
+            user_name: data.phoneNumber
+          });
         
-        if (error) {
-          console.error("Error creating user:", error);
-          throw error;
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          throw profileError;
         }
         
-        console.log("User creation response:", response);
-        
-        if (!response || !response.success) {
-          throw new Error(response?.message || 'Failed to create user');
+        // Based on role, insert into either cleaners or admins table
+        if (data.role === 'cleaner') {
+          const { error: cleanerError } = await supabase
+            .from('cleaners')
+            .insert({
+              id: newUserId,
+              phone: data.phoneNumber,
+              start_date: data.startDate,
+              active: data.isActive
+            });
+          
+          if (cleanerError) {
+            console.error("Error creating cleaner:", cleanerError);
+            throw cleanerError;
+          }
+        } else {
+          const { error: adminError } = await supabase
+            .from('admins')
+            .insert({
+              id: newUserId
+            });
+          
+          if (adminError) {
+            console.error("Error creating admin:", adminError);
+            throw adminError;
+          }
         }
         
         toast({
           title: "User Created",
-          description: "New user has been created successfully",
+          description: `New ${data.role} has been created successfully`,
         });
       }
       
@@ -129,6 +167,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
   };
 
   const isActiveValue = watch("isActive");
+  const roleValue = watch("role");
 
   return {
     register,
@@ -136,6 +175,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     errors,
     isSubmitting,
     isActiveValue,
+    roleValue,
     onSubmit,
     setValue
   };

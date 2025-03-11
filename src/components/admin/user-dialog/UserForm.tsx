@@ -6,6 +6,13 @@ import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
 import { useUserForm } from "./useUserForm";
 import { UserDialogProps } from "./userFormSchema";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const UserForm = (props: UserDialogProps) => {
   const { 
@@ -15,7 +22,8 @@ const UserForm = (props: UserDialogProps) => {
     isSubmitting, 
     isActiveValue, 
     onSubmit,
-    setValue
+    setValue,
+    roleValue
   } = useUserForm(props);
 
   return (
@@ -80,6 +88,25 @@ const UserForm = (props: UserDialogProps) => {
         />
         {errors.startDate && (
           <p className="text-sm text-red-500">{errors.startDate.message}</p>
+        )}
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="role">Role</Label>
+        <Select 
+          value={roleValue} 
+          onValueChange={(value) => setValue("role", value as "admin" | "cleaner")}
+        >
+          <SelectTrigger id="role">
+            <SelectValue placeholder="Select a role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="cleaner">Cleaner</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.role && (
+          <p className="text-sm text-red-500">{errors.role.message}</p>
         )}
       </div>
       
