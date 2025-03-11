@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { ArrowRight, ShieldCheck, Users } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          Cleaning Management System
+          Welcome to CleanersCheck
         </motion.div>
         
         <motion.h1 
@@ -37,7 +38,7 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          Streamlined Cleaning Operations
+          Smart Cleaning Management
         </motion.h1>
         
         <motion.p 
@@ -46,33 +47,56 @@ const Index = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          An elegantly designed system for managing cleaning departments with
-          intuitive interfaces for both cleaners and administrators.
+          Simplify your cleaning operations with our intuitive platform.
+          Track tasks, manage schedules, and improve efficiency all in one place.
         </motion.p>
+        
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 text-left"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          <div className="flex flex-col bg-card/50 p-6 rounded-xl border border-border/50">
+            <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Admin Portal</h3>
+            <p className="text-muted-foreground mb-4">Manage cleaning teams, track performance, and optimize workflows from a central dashboard.</p>
+          </div>
+          
+          <div className="flex flex-col bg-card/50 p-6 rounded-xl border border-border/50">
+            <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Cleaner Interface</h3>
+            <p className="text-muted-foreground mb-4">View assignments, track completed tasks, and manage your cleaning schedule with ease.</p>
+          </div>
+        </motion.div>
         
         <motion.div 
           className="flex flex-col sm:flex-row gap-4 justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
         >
-          <div className="space-y-4">
-            <Button 
-              size="lg" 
-              className="rounded-full px-8 py-6 shadow-md w-full sm:w-auto"
-              onClick={handleAdminClick}
-            >
-              Enter as Admin
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="rounded-full px-8 py-6 w-full sm:w-auto"
-              onClick={handleCleanerClick}
-            >
-              Enter as Cleaner
-            </Button>
-          </div>
+          <Button 
+            size="lg" 
+            className="rounded-full px-8 py-6 shadow-md w-full sm:w-auto group"
+            onClick={handleAdminClick}
+          >
+            Admin Portal
+            <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Button>
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="rounded-full px-8 py-6 w-full sm:w-auto group"
+            onClick={handleCleanerClick}
+          >
+            Cleaner Portal
+            <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Button>
         </motion.div>
       </motion.div>
     </div>
