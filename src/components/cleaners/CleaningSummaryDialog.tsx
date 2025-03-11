@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -54,9 +53,14 @@ const CleaningSummaryDialog = ({
     }
     
     setIsUploading(true);
+    console.log("Selected file:", file.name, "type:", file.type, "size:", file.size);
     
     try {
       await onAddImage(file);
+      toast({
+        title: "Image Uploaded",
+        description: "Your image has been successfully uploaded.",
+      });
     } catch (error) {
       console.error("Error uploading image:", error);
       toast({

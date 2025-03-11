@@ -140,22 +140,35 @@ export function useCleaning(activeShiftId: string | undefined) {
     }
     
     try {
+      // Generate a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
+      console.log("Uploading file:", fileName, "to bucket: cleaning-images");
+      
+      // Create a copy of the file with a proper name
+      const fileToUpload = new File([file], fileName, { type: file.type });
+      
+      // Upload the file to Supabase storage
       const { data, error } = await supabase.storage
         .from('cleaning-images')
-        .upload(fileName, file);
+        .upload(fileName, fileToUpload);
       
       if (error) {
         console.error("Upload error details:", error);
         throw error;
       }
       
+      console.log("Upload successful:", data);
+      
+      // Get the public URL for the uploaded file
       const { data: { publicUrl } } = supabase.storage
         .from('cleaning-images')
         .getPublicUrl(fileName);
       
+      console.log("Generated public URL:", publicUrl);
+      
+      // Update the state with the new image URL
       setCleaningSummary({
         ...cleaningSummary,
         images: [...cleaningSummary.images, publicUrl]
@@ -169,19 +182,27 @@ export function useCleaning(activeShiftId: string | undefined) {
   const removeImage = (index: number) => {
     const newImages = [...cleaningSummary.images];
     const imageToRemove = newImages[index];
+    
+    // Extract the filename from the URL
     const filePath = imageToRemove.split('/').pop();
     
     if (filePath) {
+      console.log("Removing file:", filePath);
+      
+      // Delete the file from Supabase storage
       supabase.storage
         .from('cleaning-images')
         .remove([filePath])
         .then(({ error }) => {
           if (error) {
             console.error("Error deleting image:", error);
+          } else {
+            console.log("File deleted successfully");
           }
         });
     }
     
+    // Update the state
     newImages.splice(index, 1);
     setCleaningSummary({
       ...cleaningSummary,
