@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Calendar, Clock, Timer, FileText, ImageIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface CleaningHistoryItem {
   id: string;
@@ -75,9 +76,19 @@ const RecentCleaningsCard = ({
                   </div>
                 )}
                 {cleaning.images > 0 && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <ImageIcon className="h-3 w-3 mr-1" />
-                    {cleaning.images} images
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {Array.from({ length: cleaning.images }).map((_, index) => (
+                      <Avatar key={index} className="h-16 w-16 rounded-md">
+                        <AvatarImage 
+                          src={`/path/to/cleaning/image/${cleaning.id}/${index}`} 
+                          alt={`Cleaning image ${index + 1}`}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="rounded-md bg-muted">
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
                   </div>
                 )}
               </div>
