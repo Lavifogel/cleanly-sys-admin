@@ -65,24 +65,6 @@ const CleanerDashboard = () => {
     showConfirmationDialog
   } = useConfirmation();
   
-  const handleFileSelected = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please select an image file.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    addImage(file);
-  };
-  
-  const {
-    fileInputRef,
-    handleFileSelect
-  } = useFileUpload(handleFileSelected);
-
   // Handle scanning QR code
   const handleQRScan = (decodedText: string) => {
     console.log("QR Code scanned:", decodedText);
@@ -295,7 +277,7 @@ const CleanerDashboard = () => {
         cleaningSummary={cleaningSummary}
         summaryNotes={summaryNotes}
         onSummaryNotesChange={setSummaryNotes}
-        onAddImage={() => fileInputRef.current?.click()}
+        onAddImage={addImage}
         onRemoveImage={removeImage}
         onCompleteSummary={handleCompleteSummary}
       />
@@ -306,15 +288,6 @@ const CleanerDashboard = () => {
         title={confirmAction?.title || ""}
         description={confirmAction?.description || ""}
         onConfirm={() => confirmAction?.action && confirmAction.action()}
-      />
-
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFileSelect}
       />
     </div>
   );

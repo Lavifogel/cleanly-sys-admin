@@ -167,9 +167,11 @@ export function useCleaning(activeShiftId: string | undefined) {
     }
     
     try {
+      console.log("Starting file upload to Supabase");
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
+      // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('cleaning-images')
         .upload(fileName, file);
@@ -179,16 +181,20 @@ export function useCleaning(activeShiftId: string | undefined) {
         throw error;
       }
       
+      console.log("File uploaded successfully:", data);
+      
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('cleaning-images')
         .getPublicUrl(fileName);
       
       console.log("Uploaded image URL:", publicUrl);
       
-      setCleaningSummary({
-        ...cleaningSummary,
-        images: [...cleaningSummary.images, publicUrl]
-      });
+      // Update the cleaning summary with the new image URL
+      setCleaningSummary(prev => ({
+        ...prev,
+        images: [...prev.images, publicUrl]
+      }));
       
       toast({
         title: "Image Added",

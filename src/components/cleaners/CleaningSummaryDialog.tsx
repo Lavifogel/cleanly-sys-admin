@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -5,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Clock, Timer, Camera, X, ArrowRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 interface CleaningSummaryDialogProps {
   open: boolean;
@@ -20,7 +21,7 @@ interface CleaningSummaryDialogProps {
   };
   summaryNotes: string;
   onSummaryNotesChange: (notes: string) => void;
-  onAddImage: () => void;
+  onAddImage: (file: File) => Promise<void>;
   onRemoveImage: (index: number) => void;
   onCompleteSummary: () => void;
 }
@@ -36,14 +37,9 @@ const CleaningSummaryDialog = ({
   onCompleteSummary,
 }: CleaningSummaryDialogProps) => {
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
+  const handleFileSelected = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Invalid File Type",
@@ -56,54 +52,20 @@ const CleaningSummaryDialog = ({
     setIsUploading(true);
     
     try {
-      // Generate a unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('cleaning-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        console.error("Upload error details:", error);
-        throw error;
-      }
-      
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('cleaning-images')
-        .getPublicUrl(fileName);
-      
-      console.log("Uploaded image URL:", publicUrl);
-      
-      // Add the image URL to the cleaning summary
-      const updatedImages = [...cleaningSummary.images, publicUrl];
-      onAddImage(); // Fix: Removed the argument here
-      
-      toast({
-        title: "Image Uploaded",
-        description: "Your image has been added to the cleaning summary.",
-      });
+      await onAddImage(file);
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error in file upload handler:", error);
       toast({
         title: "Upload Failed",
-        description: "There was a problem uploading your image. Please try again.",
+        description: "There was a problem uploading your image.",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
-      
-      // Reset the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
+  
+  const { fileInputRef, triggerFileSelect, handleFileSelect } = useFileUpload(handleFileSelected);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -189,11 +151,7 @@ const CleaningSummaryDialog = ({
               variant="outline" 
               size="sm" 
               className="w-full mt-2"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.click();
-                }
-              }}
+              onClick={triggerFileSelect}
               disabled={cleaningSummary.images.length >= 5 || isUploading}
             >
               {isUploading ? (
