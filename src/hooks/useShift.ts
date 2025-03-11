@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export interface Shift {
   startTime: Date;
@@ -19,6 +21,7 @@ export interface ShiftHistoryItem {
 
 export function useShift() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeShift, setActiveShift] = useState<null | Shift>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [shiftsHistory, setShiftsHistory] = useState<ShiftHistoryItem[]>([
@@ -69,6 +72,18 @@ export function useShift() {
     setShiftsHistory([newShift, ...shiftsHistory]);
     setActiveShift(null);
     setElapsedTime(0);
+    
+    // Show success toast
+    toast({
+      title: "Shift Ended",
+      description: "Your shift has been successfully completed.",
+      duration: 3000,
+    });
+    
+    // Redirect to the login page
+    setTimeout(() => {
+      navigate("/");
+    }, 1500);
   };
 
   // Timer effect for tracking shift time
