@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Cleaning, CleaningHistoryItem, CleaningSummary } from "@/types/cleaning";
 import { useCleaningImages } from "./useCleaningImages";
@@ -44,7 +45,7 @@ export function useCleaning(activeShiftId: string | undefined) {
     },
   ]);
 
-  const { addImage, removeImage } = useCleaningImages(cleaningSummary, setCleaningSummary);
+  const { addImage, removeImage, isUploading } = useCleaningImages(cleaningSummary, setCleaningSummary);
   
   useCleaningTimer(activeCleaning, setCleaningElapsedTime);
 
@@ -118,6 +119,7 @@ export function useCleaning(activeShiftId: string | undefined) {
     cleaningSummary,
     summaryNotes,
     showSummary,
+    isUploading,
     startCleaning,
     togglePauseCleaning,
     prepareSummary,

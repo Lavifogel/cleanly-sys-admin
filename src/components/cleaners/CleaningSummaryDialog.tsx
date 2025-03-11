@@ -1,3 +1,4 @@
+
 import { useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowRight } from "lucide-react";
@@ -16,6 +17,7 @@ interface CleaningSummaryDialogProps {
   onAddImage: (file: File) => Promise<void>;
   onRemoveImage: (index: number) => void;
   onCompleteSummary: () => void;
+  isUploading?: boolean;
 }
 
 const CleaningSummaryDialog = ({
@@ -27,6 +29,7 @@ const CleaningSummaryDialog = ({
   onAddImage,
   onRemoveImage,
   onCompleteSummary,
+  isUploading = false,
 }: CleaningSummaryDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,6 +49,7 @@ const CleaningSummaryDialog = ({
             onAddImage={onAddImage}
             onRemoveImage={onRemoveImage}
             maxImages={3}
+            isUploading={isUploading}
           />
 
           <NotesSection 
@@ -59,6 +63,7 @@ const CleaningSummaryDialog = ({
             type="button" 
             onClick={onCompleteSummary} 
             className="w-full"
+            disabled={isUploading}
           >
             Complete Cleaning
             <ArrowRight className="ml-2 h-4 w-4" />

@@ -10,11 +10,17 @@ interface ImagesSectionProps {
   onAddImage: (file: File) => Promise<void>;
   onRemoveImage: (index: number) => void;
   maxImages: number;
+  isUploading?: boolean;
 }
 
-const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesSectionProps) => {
+const ImagesSection = ({ 
+  images, 
+  onAddImage, 
+  onRemoveImage, 
+  maxImages,
+  isUploading = false
+}: ImagesSectionProps) => {
   const { toast } = useToast();
-  const [isUploading, setIsUploading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -69,22 +75,12 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
       return;
     }
     
-    setIsUploading(true);
     try {
       await onAddImage(file);
-      toast({
-        title: "Image uploaded",
-        description: "Your image has been successfully uploaded.",
-      });
     } catch (error) {
-      console.error("Error uploading image:", error);
-      toast({
-        title: "Upload failed",
-        description: "There was a problem uploading your image. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Error handling file:", error);
+      // Error is already handled in the hook with toast
     } finally {
-      setIsUploading(false);
       // Reset the input value
       if (inputRef.current) {
         inputRef.current.value = '';
@@ -114,6 +110,7 @@ const ImagesSection = ({ images, onAddImage, onRemoveImage, maxImages }: ImagesS
                 size="icon" 
                 className="absolute top-1 right-1 h-5 w-5 rounded-full"
                 onClick={() => onRemoveImage(index)}
+                disabled={isUploading}
               >
                 <X className="h-3 w-3" />
               </Button>
