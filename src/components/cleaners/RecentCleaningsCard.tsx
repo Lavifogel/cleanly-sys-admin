@@ -119,6 +119,19 @@ const RecentCleaningsCard = ({
               : "Your cleaning history"}
           </CardDescription>
         </CardHeader>
+        
+        {onStartCleaning && (
+          <div className="px-6 pb-4">
+            <Button
+              onClick={onStartCleaning}
+              className="w-full"
+            >
+              <Scan className="mr-2 h-4 w-4" />
+              Scan to Start Cleaning
+            </Button>
+          </div>
+        )}
+        
         <CardContent>
           <div className="space-y-4">
             {allCleanings.length > 0 ? (
@@ -139,17 +152,6 @@ const RecentCleaningsCard = ({
             )}
           </div>
         </CardContent>
-        {onStartCleaning && (
-          <CardFooter className="flex justify-center pt-4 pb-6">
-            <Button
-              onClick={onStartCleaning}
-              className="w-full"
-            >
-              <Scan className="mr-2 h-4 w-4" />
-              Scan to Start Cleaning
-            </Button>
-          </CardFooter>
-        )}
       </Card>
 
       {/* Image Preview Dialog */}
