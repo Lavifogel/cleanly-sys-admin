@@ -18,7 +18,8 @@ const Navbar = () => {
   // Check if current page is login or index page
   const isLoginPage = location.pathname === '/login';
   const isIndexPage = location.pathname === '/';
-  const shouldHideProfileIcon = isLoginPage || isIndexPage || userRole === 'admin';
+  const isAdminPage = location.pathname.includes('/admin');
+  const shouldHideProfileIcon = isLoginPage || isIndexPage || isAdminPage || userRole === 'admin';
 
   // Fetch user session and role
   const { data: session } = useQuery({
