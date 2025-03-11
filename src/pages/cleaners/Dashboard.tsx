@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Clock, Camera, ClipboardCheck, User } from "lucide-react";
@@ -7,22 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { formatTime } from "@/utils/timeUtils";
 
-// Imported Components
-import StartShiftCard from "@/components/cleaners/StartShiftCard";
-import ActiveShiftCard from "@/components/cleaners/ActiveShiftCard";
-import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
-import RecentCleaningsCard from "@/components/cleaners/RecentCleaningsCard";
-import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
-import ProfileCard from "@/components/cleaners/ProfileCard";
-import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
-import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
-
 const CleanerDashboard = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("home");
   const [activeShift, setActiveShift] = useState<null | {
     startTime: Date;
     timer: number;
+    id: string;
   }>(null);
   const [activeCleaning, setActiveCleaning] = useState<null | {
     location: string;
@@ -63,6 +53,7 @@ const CleanerDashboard = () => {
       status: "finished with scan",
       images: 2,
       notes: "Cleaned and restocked supplies",
+      shiftId: "previous-shift-1",
     },
     {
       id: "2",
@@ -74,6 +65,7 @@ const CleanerDashboard = () => {
       status: "finished without scan",
       images: 0,
       notes: "",
+      shiftId: "previous-shift-1",
     },
   ]);
 
@@ -210,9 +202,13 @@ const CleanerDashboard = () => {
       description: "Your shift has been started successfully after scanning the QR code.",
     });
     
+    // Generate a unique ID for the new shift
+    const newShiftId = `shift-${Date.now()}`;
+    
     setActiveShift({
       startTime: new Date(),
       timer: 0,
+      id: newShiftId,
     });
     setElapsedTime(0);
   };
@@ -383,6 +379,7 @@ const CleanerDashboard = () => {
       status: `finished with scan`,
       images: cleaningSummary.images.length,
       notes: summaryNotes,
+      shiftId: activeShift?.id,
     };
 
     setCleaningsHistory([newCleaning, ...cleaningsHistory]);
@@ -471,7 +468,10 @@ const CleanerDashboard = () => {
                   onStartCleaning={handleStartCleaning}
                 />
 
-                <RecentCleaningsCard cleaningsHistory={cleaningsHistory} />
+                <RecentCleaningsCard 
+                  cleaningsHistory={cleaningsHistory} 
+                  currentShiftId={activeShift.id}
+                />
               </TabsContent>
 
               <TabsContent value="cleaning" className="space-y-4">
@@ -523,7 +523,6 @@ const CleanerDashboard = () => {
         onConfirm={() => confirmAction?.action && confirmAction.action()}
       />
 
-      {/* Hidden file input for image upload */}
       <input
         type="file"
         ref={fileInputRef}

@@ -12,23 +12,38 @@ interface CleaningHistoryItem {
   status: string;
   images: number;
   notes: string;
+  shiftId?: string; // Added shiftId to track which shift this cleaning belongs to
 }
 
 interface RecentCleaningsCardProps {
   cleaningsHistory: CleaningHistoryItem[];
+  currentShiftId?: string; // Added to filter cleanings by current shift
 }
 
-const RecentCleaningsCard = ({ cleaningsHistory }: RecentCleaningsCardProps) => {
+const RecentCleaningsCard = ({ 
+  cleaningsHistory, 
+  currentShiftId 
+}: RecentCleaningsCardProps) => {
+  
+  // Filter cleanings to only show those from the current shift if a shift is active
+  const filteredCleanings = currentShiftId 
+    ? cleaningsHistory.filter(cleaning => cleaning.shiftId === currentShiftId) 
+    : cleaningsHistory;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recent Cleanings</CardTitle>
-        <CardDescription>Your cleaning history</CardDescription>
+        <CardDescription>
+          {currentShiftId 
+            ? "Cleanings completed in your current shift" 
+            : "Your cleaning history"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {cleaningsHistory.length > 0 ? (
-            cleaningsHistory.map((cleaning) => (
+          {filteredCleanings.length > 0 ? (
+            filteredCleanings.map((cleaning) => (
               <div
                 key={cleaning.id}
                 className="border rounded-lg p-4 space-y-2"
@@ -69,7 +84,10 @@ const RecentCleaningsCard = ({ cleaningsHistory }: RecentCleaningsCardProps) => 
             ))
           ) : (
             <div className="text-center py-6 text-muted-foreground">
-              No cleaning history yet
+              {currentShiftId 
+                ? "No cleanings completed in this shift yet" 
+                : "No cleaning history yet"
+              }
             </div>
           )}
         </div>
