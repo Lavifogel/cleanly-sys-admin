@@ -1,27 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, Clock, Timer, FileText, ImageIcon, X, CheckCircle2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
-
-interface CleaningHistoryItem {
-  id: string;
-  location: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  duration: string;
-  status: string;
-  images: number;
-  notes: string;
-  shiftId?: string; 
-  imageUrls?: string[];
-}
+import { CleaningHistoryItem } from "@/types/cleaning";
+import CleaningItem from "./cleaningComponents/CleaningItem";
+import ImagePreview from "./cleaningComponents/ImagePreview";
 
 interface RecentCleaningsCardProps {
   cleaningsHistory: CleaningHistoryItem[];
@@ -131,76 +114,11 @@ const RecentCleaningsCard = ({
           <div className="space-y-4">
             {allCleanings.length > 0 ? (
               allCleanings.map((cleaning) => (
-                <div
-                  key={cleaning.id}
-                  className="border rounded-lg p-4 space-y-2"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-1 text-primary" />
-                        <h4 className="font-medium">{cleaning.location}</h4>
-                        {cleaning.status === "open" ? (
-                          <Badge variant="outline" className="ml-2 bg-green-50 text-green-600 border-green-200 hover:bg-green-50">
-                            OPEN
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="ml-2 bg-red-50 text-red-500 border-red-200 hover:bg-red-50">
-                            COMPLETE
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        <p>{cleaning.date}</p>
-                      </div>
-                      <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                        <Clock className="h-3 w-3 mr-1" />
-                        <p>{cleaning.startTime} - {cleaning.endTime}</p>
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium flex items-center bg-primary/10 px-2 py-1 rounded">
-                      <Timer className="h-3 w-3 mr-1 text-primary" />
-                      {cleaning.duration}
-                    </div>
-                  </div>
-                  {cleaning.notes && (
-                    <div className="flex items-center text-sm">
-                      <FileText className="h-3 w-3 mr-1 text-muted-foreground" />
-                      <p className="text-sm">{cleaning.notes}</p>
-                    </div>
-                  )}
-                  {cleaning.imageUrls && cleaning.imageUrls.length > 0 ? (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {cleaning.imageUrls.map((imageUrl, index) => (
-                        <Avatar 
-                          key={index} 
-                          className="h-16 w-16 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setSelectedImage(imageUrl)}
-                        >
-                          <AvatarImage 
-                            src={imageUrl} 
-                            alt={`Cleaning image ${index + 1}`}
-                            className="object-cover"
-                          />
-                          <AvatarFallback className="rounded-md bg-muted">
-                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                    </div>
-                  ) : cleaning.images > 0 ? (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {Array.from({ length: cleaning.images }).map((_, index) => (
-                        <Avatar key={index} className="h-16 w-16 rounded-md">
-                          <AvatarFallback className="rounded-md bg-muted">
-                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
+                <CleaningItem 
+                  key={cleaning.id} 
+                  cleaning={cleaning} 
+                  onImageSelect={setSelectedImage} 
+                />
               ))
             ) : (
               <div className="text-center py-6 text-muted-foreground">
@@ -215,25 +133,10 @@ const RecentCleaningsCard = ({
       </Card>
 
       {/* Image Preview Dialog */}
-      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
-        <DialogContent className="sm:max-w-md p-0 overflow-hidden bg-transparent border-none">
-          <div className="relative w-full h-full">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full"
-              onClick={() => setSelectedImage(null)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
-            <img 
-              src={selectedImage || ''} 
-              alt="Enlarged view" 
-              className="w-full h-auto max-h-[80vh] object-contain rounded-lg" 
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ImagePreview 
+        selectedImage={selectedImage} 
+        onClose={() => setSelectedImage(null)} 
+      />
     </>
   );
 };

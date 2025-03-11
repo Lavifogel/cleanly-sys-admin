@@ -17,6 +17,7 @@ export interface CleaningHistoryItem {
   images: number;
   notes: string;
   shiftId?: string;
+  imageUrls?: string[];
 }
 
 export interface CleaningSummary {
