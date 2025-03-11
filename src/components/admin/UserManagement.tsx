@@ -28,6 +28,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
+      // Fixed query to properly join cleaners and profiles tables
       const { data: cleaners, error } = await supabase
         .from('cleaners')
         .select(`
@@ -35,7 +36,7 @@ const UserManagement = () => {
           phone,
           active,
           start_date,
-          profiles:id(first_name, last_name, email, role)
+          profiles!profiles_id_fkey (first_name, last_name, email, role)
         `)
         .order('start_date', { ascending: false });
 
