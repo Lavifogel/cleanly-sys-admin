@@ -15,7 +15,7 @@ const AdminDashboard = () => {
         transition={{ duration: 0.5 }}
       >
         <DashboardHeader />
-        <DashboardTabs stats={stats} loading={loading} />
+        <DashboardTabs stats={stats} loading={loading} refreshData={refreshData} />
       </motion.div>
     </div>
   );

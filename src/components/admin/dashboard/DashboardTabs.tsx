@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Users, QrCode, ClipboardList } from "lucide-react";
@@ -13,9 +12,10 @@ import { DashboardStats } from "@/hooks/useAdminDashboardData";
 interface DashboardTabsProps {
   stats: DashboardStats;
   loading: boolean;
+  refreshData?: () => void;
 }
 
-const DashboardTabs = ({ stats, loading }: DashboardTabsProps) => {
+const DashboardTabs = ({ stats, loading, refreshData }: DashboardTabsProps) => {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
