@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { X, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Fetch user session and role
   const { data: session } = useQuery({
@@ -83,6 +84,25 @@ const Navbar = () => {
     return location.pathname === path;
   };
 
+  // Handle profile icon click
+  const handleProfileClick = () => {
+    if (location.pathname.includes('/cleaners/dashboard')) {
+      // Already on dashboard, set tab to profile
+      const event = new CustomEvent('set-profile-tab');
+      window.dispatchEvent(event);
+    } else {
+      // Navigate to dashboard (if cleaner)
+      if (userRole === 'cleaner') {
+        navigate('/cleaners/dashboard');
+        // Need a small delay to ensure component is mounted before trying to set tab
+        setTimeout(() => {
+          const event = new CustomEvent('set-profile-tab');
+          window.dispatchEvent(event);
+        }, 100);
+      }
+    }
+  };
+
   return (
     <header
       className={cn(
@@ -113,19 +133,15 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Profile Button (was Mobile Menu Button) */}
+        {/* Profile Button */}
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle menu"
+          className="md:flex"
+          onClick={handleProfileClick}
+          aria-label="Profile"
         >
-          {isMobileMenuOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <UserRound className="h-5 w-5" />
-          )}
+          <UserRound className="h-5 w-5" />
         </Button>
       </div>
 
