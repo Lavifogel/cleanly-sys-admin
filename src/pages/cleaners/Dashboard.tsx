@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Clock, Camera, ClipboardCheck, User } from "lucide-react";
@@ -6,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { formatTime } from "@/utils/timeUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import necessary components
 import StartShiftCard from "@/components/cleaners/StartShiftCard";
@@ -103,7 +103,7 @@ const CleanerDashboard = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
@@ -117,58 +117,85 @@ const CleanerDashboard = () => {
       return;
     }
     
-    const imageUrl = URL.createObjectURL(file);
-    
-    setCleaningSummary({
-      ...cleaningSummary,
-      images: [...cleaningSummary.images, imageUrl]
-    });
-    
-    toast({
-      title: "Image Added",
-      description: "Your image has been added to the cleaning summary.",
-    });
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `cleaning-images/${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('cleaning-images')
+        .upload(fileName, file);
+      
+      if (error) {
+        throw error;
+      }
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('cleaning-images')
+        .getPublicUrl(fileName);
+      
+      setCleaningSummary({
+        ...cleaningSummary,
+        images: [...cleaningSummary.images, publicUrl]
+      });
+      
+      toast({
+        title: "Image Added",
+        description: "Your image has been added to the cleaning summary.",
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Upload Failed",
+        description: "There was a problem uploading your image. Please try again.",
+        variant: "destructive",
+      });
+    }
     
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  useEffect(() => {
-    let interval: number | null = null;
+  const handleAddImage = async () => {
+    if (cleaningSummary.images.length >= 5) {
+      toast({
+        title: "Maximum Images Reached",
+        description: "You can only add up to 5 images per cleaning.",
+        variant: "destructive",
+      });
+      return;
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const newImages = [...cleaningSummary.images];
     
-    if (activeShift && !interval) {
-      interval = window.setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
+    const imageToRemove = newImages[index];
+    
+    const filePath = imageToRemove.split('/').pop();
+    
+    if (filePath && filePath.startsWith('cleaning-images/')) {
+      supabase.storage
+        .from('cleaning-images')
+        .remove([filePath])
+        .then(({ error }) => {
+          if (error) {
+            console.error("Error deleting image:", error);
+          }
+        });
     }
     
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeShift]);
-
-  useEffect(() => {
-    let interval: number | null = null;
+    newImages.splice(index, 1);
     
-    if (activeCleaning && !activeCleaning.paused && !interval) {
-      interval = window.setInterval(() => {
-        setCleaningElapsedTime((prev) => prev + 1);
-      }, 1000);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeCleaning]);
-
-  const showConfirmationDialog = (title: string, description: string, action: () => void) => {
-    setConfirmAction({
-      title,
-      description,
-      action
+    setCleaningSummary({
+      ...cleaningSummary,
+      images: newImages
     });
-    setShowConfirmDialog(true);
+    
+    toast({
+      title: "Image Removed",
+      description: "The image has been removed from the cleaning summary.",
+    });
   };
 
   const handleQRScan = (decodedText: string) => {
@@ -213,7 +240,6 @@ const CleanerDashboard = () => {
       description: "Your shift has been started successfully after scanning the QR code.",
     });
     
-    // Generate a unique ID for the new shift
     const newShiftId = `shift-${Date.now()}`;
     
     setActiveShift({
@@ -370,16 +396,6 @@ const CleanerDashboard = () => {
   };
 
   const handleCompleteSummary = () => {
-    setCleaningSummary({
-      ...cleaningSummary,
-      notes: summaryNotes
-    });
-
-    toast({
-      title: "Cleaning Completed",
-      description: "Your cleaning summary has been saved.",
-    });
-
     const newCleaning = {
       id: (cleaningsHistory.length + 1).toString(),
       location: activeCleaning!.location,
@@ -398,36 +414,48 @@ const CleanerDashboard = () => {
     setCleaningElapsedTime(0);
     setShowSummary(false);
     setActiveTab("home");
-  };
-
-  const handleAddImage = () => {
-    if (cleaningSummary.images.length >= 5) {
-      toast({
-        title: "Maximum Images Reached",
-        description: "You can only add up to 5 images per cleaning.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleRemoveImage = (index: number) => {
-    const newImages = [...cleaningSummary.images];
-    newImages.splice(index, 1);
-    
-    setCleaningSummary({
-      ...cleaningSummary,
-      images: newImages
-    });
     
     toast({
-      title: "Image Removed",
-      description: "The image has been removed from the cleaning summary.",
+      title: "Cleaning Completed",
+      description: "Your cleaning summary has been saved.",
     });
+  };
+
+  useEffect(() => {
+    let interval: number | null = null;
+    
+    if (activeShift && !interval) {
+      interval = window.setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeShift]);
+
+  useEffect(() => {
+    let interval: number | null = null;
+    
+    if (activeCleaning && !activeCleaning.paused && !interval) {
+      interval = window.setInterval(() => {
+        setCleaningElapsedTime((prev) => prev + 1);
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [activeCleaning]);
+
+  const showConfirmationDialog = (title: string, description: string, action: () => void) => {
+    setConfirmAction({
+      title,
+      description,
+      action
+    });
+    setShowConfirmDialog(true);
   };
 
   return (

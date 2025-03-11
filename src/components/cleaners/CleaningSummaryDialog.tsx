@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Clock, Timer, Camera, X, ArrowRight } from "lucide-react";
+import { MapPin, Clock, Timer, Camera, X, ArrowRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CleaningSummaryDialogProps {
   open: boolean;
@@ -37,8 +38,9 @@ const CleaningSummaryDialog = ({
 }: CleaningSummaryDialogProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
@@ -52,24 +54,49 @@ const CleaningSummaryDialog = ({
       return;
     }
     
-    // Reset the file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleAddImage = () => {
-    if (cleaningSummary.images.length >= 5) {
+    setIsUploading(true);
+    
+    try {
+      // Generate a unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `cleaning-images/${fileName}`;
+      
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('cleaning-images')
+        .upload(filePath, file);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('cleaning-images')
+        .getPublicUrl(filePath);
+      
+      // Add the image URL to the cleaning summary
+      onAddImage();
+      
       toast({
-        title: "Maximum Images Reached",
-        description: "You can only add up to 5 images per cleaning.",
+        title: "Image Uploaded",
+        description: "Your image has been added to the cleaning summary.",
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Upload Failed",
+        description: "There was a problem uploading your image. Please try again.",
         variant: "destructive",
       });
-      return;
-    }
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+    } finally {
+      setIsUploading(false);
+      
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -157,11 +184,24 @@ const CleaningSummaryDialog = ({
               variant="outline" 
               size="sm" 
               className="w-full mt-2"
-              onClick={onAddImage}
-              disabled={cleaningSummary.images.length >= 5}
+              onClick={() => {
+                if (fileInputRef.current) {
+                  fileInputRef.current.click();
+                }
+              }}
+              disabled={cleaningSummary.images.length >= 5 || isUploading}
             >
-              <Camera className="h-4 w-4 mr-2" />
-              Take Photo
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Camera className="h-4 w-4 mr-2" />
+                  Take Photo
+                </>
+              )}
             </Button>
             
             <input
@@ -176,7 +216,12 @@ const CleaningSummaryDialog = ({
         </div>
         
         <DialogFooter>
-          <Button type="button" onClick={onCompleteSummary} className="w-full">
+          <Button 
+            type="button" 
+            onClick={onCompleteSummary} 
+            className="w-full"
+            disabled={isUploading}
+          >
             Complete Cleaning
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
