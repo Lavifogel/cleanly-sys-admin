@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -81,9 +82,9 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         
         console.log("Creating new user with ID:", newUserId);
         
-        const { data: response, error: fnError } = await supabase.rpc<CreateCleanerResponse>(
-          'create_cleaner_user',
-          {
+        // Use explicit typing to avoid TypeScript errors
+        const { data: response, error: fnError } = await supabase
+          .rpc('create_cleaner_user', {
             user_id: newUserId,
             first_name: data.firstName,
             last_name: data.lastName,
@@ -91,16 +92,18 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             phone_number: data.phoneNumber,
             start_date: data.startDate,
             is_active: data.isActive
-          }
-        );
+          });
         
         if (fnError) {
           console.error("Error creating user:", fnError);
           throw fnError;
         }
         
-        if (!response?.success) {
-          throw new Error(response?.message || 'Failed to create user');
+        // Cast the response to the expected type
+        const typedResponse = response as unknown as CreateCleanerResponse;
+        
+        if (!typedResponse.success) {
+          throw new Error(typedResponse.message || 'Failed to create user');
         }
         
         toast({
