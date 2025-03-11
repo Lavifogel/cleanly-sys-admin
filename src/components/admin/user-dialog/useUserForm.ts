@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +11,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
   
   const { firstName, lastName } = getNames(user?.name);
   
-  // Set up form with default values
   const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -25,7 +23,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     }
   });
 
-  // Reset form when dialog opens or user changes
   useEffect(() => {
     if (open) {
       const { firstName, lastName } = getNames(user?.name);
@@ -45,7 +42,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     
     try {
       if (user?.id) {
-        // Update existing user
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
@@ -73,22 +69,11 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           description: "User information has been updated successfully",
         });
       } else {
-        // For new users, we need to perform operations carefully
-        // Generate a unique ID that we'll use for both tables
         const newUserId = crypto.randomUUID();
         
-        // Log the data we're about to insert for debugging
         console.log("Creating new user with ID:", newUserId);
-        console.log("Profile data:", {
-          id: newUserId,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          email: data.email,
-          role: 'cleaner'
-        });
         
         try {
-          // Insert both records in a single transaction to ensure consistency
           const { data: result, error } = await supabase.rpc('create_cleaner_user', {
             user_id: newUserId,
             first_name: data.firstName,
@@ -112,47 +97,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           });
         } catch (transactionError) {
           console.error("Transaction error:", transactionError);
-          
-          // Fallback approach: try inserting records one by one
-          console.log("Falling back to separate inserts approach");
-          
-          // First, profiles insert
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: newUserId,
-              first_name: data.firstName,
-              last_name: data.lastName,
-              email: data.email,
-              role: 'cleaner'
-            });
-          
-          if (profileError) {
-            console.error("Fallback profile insert error:", profileError);
-            throw profileError;
-          }
-          
-          // Then cleaners insert, if profile succeeded
-          const { error: cleanerError } = await supabase
-            .from('cleaners')
-            .insert({
-              id: newUserId,
-              phone: data.phoneNumber,
-              start_date: data.startDate,
-              active: data.isActive,
-            });
-          
-          if (cleanerError) {
-            console.error("Fallback cleaner insert error:", cleanerError);
-            // If cleaner insert fails, try to clean up the profile we just created
-            await supabase.from('profiles').delete().eq('id', newUserId);
-            throw cleanerError;
-          }
-          
-          toast({
-            title: "User Created",
-            description: "New user has been created successfully",
-          });
+          throw transactionError;
         }
       }
       
@@ -171,7 +116,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     }
   };
 
-  // Watch the isActive value
   const isActiveValue = watch("isActive");
 
   return {

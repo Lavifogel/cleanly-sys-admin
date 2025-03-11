@@ -348,7 +348,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_cleaner_user: {
+        Args: {
+          user_id: string
+          first_name: string
+          last_name: string
+          email: string
+          phone_number: string
+          start_date: string
+          is_active: boolean
+        }
+        Returns: Json
+      }
     }
     Enums: {
       user_role: "admin" | "cleaner"
