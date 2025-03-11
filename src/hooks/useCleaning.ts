@@ -1,35 +1,8 @@
-
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-
-export interface Cleaning {
-  location: string;
-  startTime: Date;
-  timer: number;
-  paused: boolean;
-}
-
-export interface CleaningHistoryItem {
-  id: string;
-  location: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  duration: string;
-  status: string;
-  images: number;
-  notes: string;
-  shiftId?: string;
-}
-
-export interface CleaningSummary {
-  location: string;
-  startTime: string;
-  endTime: string;
-  duration: string;
-  notes: string;
-  images: string[];
-}
+import { useState } from "react";
+import { Cleaning, CleaningHistoryItem, CleaningSummary } from "@/types/cleaning";
+import { useCleaningImages } from "./useCleaningImages";
+import { useCleaningTimer } from "./useCleaningTimer";
+import { formatTime } from "@/utils/timeUtils";
 
 export function useCleaning(activeShiftId: string | undefined) {
   const [activeCleaning, setActiveCleaning] = useState<null | Cleaning>(null);
@@ -70,6 +43,10 @@ export function useCleaning(activeShiftId: string | undefined) {
       shiftId: "previous-shift-1",
     },
   ]);
+
+  const { addImage, removeImage } = useCleaningImages(cleaningSummary, setCleaningSummary);
+  
+  useCleaningTimer(activeCleaning, setCleaningElapsedTime);
 
   const startCleaning = (qrData: string) => {
     const locationFromQR = qrData.includes("location=") 
@@ -132,103 +109,6 @@ export function useCleaning(activeShiftId: string | undefined) {
     setShowSummary(false);
     
     return true;
-  };
-
-  const addImage = async (file: File) => {
-    if (cleaningSummary.images.length >= 5) {
-      return;
-    }
-    
-    try {
-      // Generate a unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      
-      console.log("Uploading file:", fileName, "to bucket: cleaning-images");
-      
-      // Create a copy of the file with a proper name
-      const fileToUpload = new File([file], fileName, { type: file.type });
-      
-      // Upload the file to Supabase storage
-      const { data, error } = await supabase.storage
-        .from('cleaning-images')
-        .upload(fileName, fileToUpload);
-      
-      if (error) {
-        console.error("Upload error details:", error);
-        throw error;
-      }
-      
-      console.log("Upload successful:", data);
-      
-      // Get the public URL for the uploaded file
-      const { data: { publicUrl } } = supabase.storage
-        .from('cleaning-images')
-        .getPublicUrl(fileName);
-      
-      console.log("Generated public URL:", publicUrl);
-      
-      // Update the state with the new image URL
-      setCleaningSummary({
-        ...cleaningSummary,
-        images: [...cleaningSummary.images, publicUrl]
-      });
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      throw error;
-    }
-  };
-
-  const removeImage = (index: number) => {
-    const newImages = [...cleaningSummary.images];
-    const imageToRemove = newImages[index];
-    
-    // Extract the filename from the URL
-    const filePath = imageToRemove.split('/').pop();
-    
-    if (filePath) {
-      console.log("Removing file:", filePath);
-      
-      // Delete the file from Supabase storage
-      supabase.storage
-        .from('cleaning-images')
-        .remove([filePath])
-        .then(({ error }) => {
-          if (error) {
-            console.error("Error deleting image:", error);
-          } else {
-            console.log("File deleted successfully");
-          }
-        });
-    }
-    
-    // Update the state
-    newImages.splice(index, 1);
-    setCleaningSummary({
-      ...cleaningSummary,
-      images: newImages
-    });
-  };
-
-  useEffect(() => {
-    let interval: number | null = null;
-    
-    if (activeCleaning && !activeCleaning.paused && !interval) {
-      interval = window.setInterval(() => {
-        setCleaningElapsedTime((prev) => prev + 1);
-      }, 1000);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeCleaning]);
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return {
