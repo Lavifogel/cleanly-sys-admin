@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -62,8 +61,6 @@ const CleaningSummaryDialog = ({
       const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
       
       // Upload to Supabase Storage
-      // Note: 'cleaning-images/' prefix in storage path was causing the issue
-      // Just use the file name directly since we're already in the bucket
       const { data, error } = await supabase.storage
         .from('cleaning-images')
         .upload(fileName, file, {
@@ -85,7 +82,7 @@ const CleaningSummaryDialog = ({
       
       // Add the image URL to the cleaning summary
       const updatedImages = [...cleaningSummary.images, publicUrl];
-      onAddImage(publicUrl); // Pass the URL to the parent component
+      onAddImage(); // Fix: Removed the argument here
       
       toast({
         title: "Image Uploaded",

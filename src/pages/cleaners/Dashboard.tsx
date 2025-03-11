@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, Camera, ClipboardCheck, User } from "lucide-react";
@@ -13,14 +12,14 @@ import { useConfirmation } from "@/hooks/useConfirmation";
 import { useFileUpload } from "@/hooks/useFileUpload";
 
 // Import components
-import { StartShiftCard } from "@/components/cleaners/StartShiftCard";
-import { ActiveShiftCard } from "@/components/cleaners/ActiveShiftCard";
-import { ActiveCleaningCard } from "@/components/cleaners/ActiveCleaningCard";
-import { RecentCleaningsCard } from "@/components/cleaners/RecentCleaningsCard";
-import { ShiftHistoryCard } from "@/components/cleaners/ShiftHistoryCard";
-import { ProfileCard } from "@/components/cleaners/ProfileCard";
-import { CleaningSummaryDialog } from "@/components/cleaners/CleaningSummaryDialog";
-import { ConfirmationDialog } from "@/components/cleaners/ConfirmationDialog";
+import StartShiftCard from "@/components/cleaners/StartShiftCard";
+import ActiveShiftCard from "@/components/cleaners/ActiveShiftCard";
+import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
+import RecentCleaningsCard from "@/components/cleaners/RecentCleaningsCard";
+import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
+import ProfileCard from "@/components/cleaners/ProfileCard";
+import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
+import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
 
 const CleanerDashboard = () => {
   const { toast } = useToast();
