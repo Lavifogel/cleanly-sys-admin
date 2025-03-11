@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Users, QrCode, ClipboardList } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import UserManagement from "@/components/admin/UserManagement";
+import UserManagement from "@/components/admin/user-management/UserManagement";
 import QrCodeGenerator from "@/components/admin/QrCodeGenerator";
 import StatCards from "./StatCards";
 import RecentActivitiesCard from "./RecentActivitiesCard";
