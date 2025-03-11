@@ -19,7 +19,7 @@ import {
   Check,
   Download
 } from "lucide-react";
-import { QRCodeCanvas } from "qrcode.react"; // Correct import using named exports
+import { QRCodeCanvas } from "qrcode.react"; // Using named import
 import { supabase } from "@/integrations/supabase/client";
 
 const QrCodeGenerator = () => {
@@ -87,12 +87,15 @@ const QrCodeGenerator = () => {
       
       // Generate QR code as a data URL
       const tempCanvas = document.createElement('canvas');
+      const qrData = JSON.stringify({
+        areaId: areaId,
+        areaName: areaName,
+        type: qrType
+      });
+      
+      // Create QR code on the canvas - fix here: render to canvas directly
       QRCodeCanvas({
-        value: JSON.stringify({
-          areaId: areaId,
-          areaName: areaName,
-          type: qrType
-        }),
+        value: qrData,
         size: 200,
         level: "H",
         includeMargin: true
