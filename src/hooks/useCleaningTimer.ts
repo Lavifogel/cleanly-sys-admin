@@ -4,7 +4,7 @@ import { Cleaning } from "@/types/cleaning";
 
 export function useCleaningTimer(
   activeCleaning: Cleaning | null,
-  setCleaningElapsedTime: (time: number) => void
+  setCleaningElapsedTime: (time: number | ((prev: number) => number)) => void
 ) {
   useEffect(() => {
     let interval: number | null = null;
