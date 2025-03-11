@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -74,6 +75,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         console.log("Creating new user with ID:", newUserId);
         
         try {
+          // Use the properly typed RPC call
           const { data: result, error } = await supabase.rpc('create_cleaner_user', {
             user_id: newUserId,
             first_name: data.firstName,
