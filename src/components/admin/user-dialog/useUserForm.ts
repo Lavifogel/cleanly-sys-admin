@@ -45,7 +45,8 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     
     try {
       if (user?.id) {
-        // Update existing user - create separate transactions for profiles and cleaners
+        // Update existing user
+        // First update the profiles table
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
@@ -59,7 +60,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         
         if (profileError) throw profileError;
         
-        // Update either admin or cleaner table based on role
+        // If role is cleaner, update the cleaners table
         if (data.role === 'cleaner') {
           const { error: cleanerError } = await supabase
             .from('cleaners')
@@ -71,7 +72,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             .eq('id', user.id);
           
           if (cleanerError) throw cleanerError;
-        } else {
+        } else if (data.role === 'admin') {
           // If role is admin, make sure there's an entry in the admins table
           const { error: adminError } = await supabase
             .from('admins')
@@ -88,9 +89,8 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           description: "User information has been updated successfully",
         });
       } else {
-        // Create new user using a direct approach instead of the function
+        // Create new user
         const newUserId = crypto.randomUUID();
-        
         console.log("Creating new user with data:", {
           id: newUserId,
           first_name: data.firstName,
@@ -100,7 +100,8 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           user_name: data.phoneNumber
         });
         
-        // First insert into profiles table
+        // Direct insertion approach without the database function
+        // First, insert into profiles
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -117,7 +118,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           throw profileError;
         }
         
-        // Based on role, insert into either cleaners or admins table
+        // Then, based on role, insert into either cleaners or admins
         if (data.role === 'cleaner') {
           const { error: cleanerError } = await supabase
             .from('cleaners')
@@ -132,7 +133,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             console.error("Error creating cleaner:", cleanerError);
             throw cleanerError;
           }
-        } else {
+        } else if (data.role === 'admin') {
           const { error: adminError } = await supabase
             .from('admins')
             .insert({
