@@ -73,11 +73,23 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           description: "User information has been updated successfully",
         });
       } else {
-        // Create new user and profile
-        // Generate a unique ID for both tables
+        // Instead of directly inserting, we'll insert to both tables as separate operations
+        // Generate a unique ID that we'll use for both tables
         const newUserId = crypto.randomUUID();
         
-        // First create a profile
+        // First insert into cleaners table (no foreign key constraint)
+        const { error: cleanerError } = await supabase
+          .from('cleaners')
+          .insert({
+            id: newUserId,
+            phone: data.phoneNumber,
+            start_date: data.startDate,
+            active: data.isActive,
+          });
+        
+        if (cleanerError) throw cleanerError;
+        
+        // Then insert into profiles table
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -89,18 +101,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           });
         
         if (profileError) throw profileError;
-        
-        // Then create the cleaner record
-        const { error: cleanerError } = await supabase
-          .from('cleaners')
-          .insert({
-            id: newUserId,
-            phone: data.phoneNumber,
-            start_date: data.startDate,
-            active: data.isActive,
-          });
-        
-        if (cleanerError) throw cleanerError;
         
         toast({
           title: "User Created",
