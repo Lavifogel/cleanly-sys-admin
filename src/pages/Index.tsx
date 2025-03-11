@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -58,24 +57,45 @@ const Index = () => {
           transition={{ delay: 0.6, duration: 0.5 }}
         >
           <div className="flex flex-col bg-card/50 p-6 rounded-xl border border-border/50">
-            <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
-              <ShieldCheck className="h-5 w-5 text-primary" />
+            <div className="flex justify-between items-start mb-4">
+              <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+              <Button 
+                size="sm" 
+                className="rounded-full shadow-md group"
+                onClick={handleAdminClick}
+              >
+                Admin Portal
+                <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
             </div>
             <h3 className="text-xl font-semibold mb-2">Admin Portal</h3>
-            <p className="text-muted-foreground mb-4">Manage cleaning teams, track performance, and optimize workflows from a central dashboard.</p>
+            <p className="text-muted-foreground">Manage cleaning teams, track performance, and optimize workflows from a central dashboard.</p>
           </div>
           
           <div className="flex flex-col bg-card/50 p-6 rounded-xl border border-border/50">
-            <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
-              <Users className="h-5 w-5 text-primary" />
+            <div className="flex justify-between items-start mb-4">
+              <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="rounded-full group"
+                onClick={handleCleanerClick}
+              >
+                Cleaner Portal
+                <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
             </div>
             <h3 className="text-xl font-semibold mb-2">Cleaner Interface</h3>
-            <p className="text-muted-foreground mb-4">View assignments, track completed tasks, and manage your cleaning schedule with ease.</p>
+            <p className="text-muted-foreground">View assignments, track completed tasks, and manage your cleaning schedule with ease.</p>
           </div>
         </motion.div>
         
         <motion.div 
-          className="flex flex-col sm:flex-row gap-4 justify-center"
+          className="flex flex-col sm:flex-row gap-4 justify-center md:hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7, duration: 0.5 }}
