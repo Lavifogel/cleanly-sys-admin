@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { User } from "lucide-react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/useCleaning";
@@ -11,18 +10,9 @@ import NoShiftView from "@/components/cleaners/dashboard/NoShiftView";
 import DashboardTabs from "@/components/cleaners/dashboard/DashboardTabs";
 import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
 import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import ProfileTab from "@/components/cleaners/dashboard/ProfileTab";
 
 const CleanerDashboard = () => {
   const [activeTab, setActiveTab] = useState("home");
-  const [profileOpen, setProfileOpen] = useState(false);
   
   // Use our custom hooks
   const {
@@ -145,21 +135,11 @@ const CleanerDashboard = () => {
           <NoShiftView onStartShift={handleStartShift} />
         ) : (
           <>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">Cleaner Dashboard</h1>
-                <p className="text-muted-foreground mt-1">
-                  Manage your shifts and cleaning tasks
-                </p>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="mt-2 md:mt-0"
-                onClick={() => setProfileOpen(true)}
-              >
-                <User className="h-5 w-5" />
-              </Button>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold tracking-tight">Cleaner Dashboard</h1>
+              <p className="text-muted-foreground mt-1">
+                Manage your shifts and cleaning tasks
+              </p>
             </div>
 
             <DashboardTabs 
@@ -181,21 +161,6 @@ const CleanerDashboard = () => {
           </>
         )}
       </motion.div>
-
-      {/* Profile Drawer */}
-      <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
-        <SheetContent className="w-full sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle className="flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Profile
-            </SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <ProfileTab shiftsHistory={shiftsHistory} />
-          </div>
-        </SheetContent>
-      </Sheet>
 
       {showQRScanner && (
         <QRCodeScanner 
