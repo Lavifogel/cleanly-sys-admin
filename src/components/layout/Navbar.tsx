@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { UserRound, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,11 +91,9 @@ const Navbar = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/" className="transition-opacity hover:opacity-80">
-            <Logo size="md" variant="default" />
-          </Link>
-        </div>
+        <Link to="/" className="transition-opacity hover:opacity-80">
+          <Logo size="md" variant="default" />
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1">
@@ -115,7 +113,7 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Profile Icon Button */}
+        {/* Mobile Menu Button */}
         <Button
           variant="ghost"
           size="icon"
@@ -126,7 +124,7 @@ const Navbar = () => {
           {isMobileMenuOpen ? (
             <X className="h-5 w-5" />
           ) : (
-            <UserRound className="h-5 w-5" />
+            <Menu className="h-5 w-5" />
           )}
         </Button>
       </div>
