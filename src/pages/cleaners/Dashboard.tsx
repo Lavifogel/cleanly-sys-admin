@@ -1,15 +1,13 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Clock, Camera, ClipboardCheck, User } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeScanner from "@/components/QRCodeScanner";
-import { formatTime } from "@/utils/timeUtils";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/useCleaning";
-import { useQRScanner, type ScannerPurpose } from "@/hooks/useQRScanner";
+import { useQRScanner } from "@/hooks/useQRScanner";
 import { useConfirmation } from "@/hooks/useConfirmation";
-import { useFileUpload } from "@/hooks/useFileUpload";
 
 // Import components
 import StartShiftCard from "@/components/cleaners/StartShiftCard";
@@ -20,6 +18,7 @@ import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
 import ProfileCard from "@/components/cleaners/ProfileCard";
 import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
 import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
+import { useToast } from "@/hooks/use-toast";
 
 const CleanerDashboard = () => {
   const { toast } = useToast();
@@ -64,24 +63,6 @@ const CleanerDashboard = () => {
     setShowConfirmDialog,
     showConfirmationDialog
   } = useConfirmation();
-  
-  const handleFileSelected = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please select an image file.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    addImage(file);
-  };
-  
-  const {
-    fileInputRef,
-    handleFileSelect
-  } = useFileUpload(handleFileSelected);
 
   // Handle scanning QR code
   const handleQRScan = (decodedText: string) => {
@@ -295,7 +276,7 @@ const CleanerDashboard = () => {
         cleaningSummary={cleaningSummary}
         summaryNotes={summaryNotes}
         onSummaryNotesChange={setSummaryNotes}
-        onAddImage={() => fileInputRef.current?.click()}
+        onAddImage={addImage}
         onRemoveImage={removeImage}
         onCompleteSummary={handleCompleteSummary}
       />
@@ -306,15 +287,6 @@ const CleanerDashboard = () => {
         title={confirmAction?.title || ""}
         description={confirmAction?.description || ""}
         onConfirm={() => confirmAction?.action && confirmAction.action()}
-      />
-
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFileSelect}
       />
     </div>
   );

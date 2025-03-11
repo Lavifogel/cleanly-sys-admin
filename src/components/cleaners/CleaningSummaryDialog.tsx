@@ -1,11 +1,11 @@
-import { useState, useRef } from "react";
+
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Clock, Timer, Camera, X, ArrowRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface CleaningSummaryDialogProps {
   open: boolean;
@@ -20,7 +20,7 @@ interface CleaningSummaryDialogProps {
   };
   summaryNotes: string;
   onSummaryNotesChange: (notes: string) => void;
-  onAddImage: () => void;
+  onAddImage: (file: File) => Promise<void>;
   onRemoveImage: (index: number) => void;
   onCompleteSummary: () => void;
 }
@@ -56,38 +56,7 @@ const CleaningSummaryDialog = ({
     setIsUploading(true);
     
     try {
-      // Generate a unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('cleaning-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        console.error("Upload error details:", error);
-        throw error;
-      }
-      
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('cleaning-images')
-        .getPublicUrl(fileName);
-      
-      console.log("Uploaded image URL:", publicUrl);
-      
-      // Add the image URL to the cleaning summary
-      const updatedImages = [...cleaningSummary.images, publicUrl];
-      onAddImage(); // Fix: Removed the argument here
-      
-      toast({
-        title: "Image Uploaded",
-        description: "Your image has been added to the cleaning summary.",
-      });
+      await onAddImage(file);
     } catch (error) {
       console.error("Error uploading image:", error);
       toast({

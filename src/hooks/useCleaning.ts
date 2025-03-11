@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -161,6 +162,7 @@ export function useCleaning(activeShiftId: string | undefined) {
       });
     } catch (error) {
       console.error("Error uploading image:", error);
+      throw error;
     }
   };
 
