@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -15,8 +14,10 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Check if current page is login page
+  // Check if current page is login or index page
   const isLoginPage = location.pathname === '/login';
+  const isIndexPage = location.pathname === '/';
+  const shouldHideProfileIcon = isLoginPage || isIndexPage;
 
   // Fetch user session and role
   const { data: session } = useQuery({
@@ -136,8 +137,8 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Profile Button - hidden on login page */}
-        {!isLoginPage && (
+        {/* Profile Button - hidden on login and index pages */}
+        {!shouldHideProfileIcon && (
           <Button
             variant="ghost"
             size="icon"
