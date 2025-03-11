@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,43 +27,21 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // Get cleaners and profiles separately and join them in JavaScript
-      const { data: cleaners, error: cleanersError } = await supabase
-        .from('cleaners')
-        .select('*')
-        .order('start_date', { ascending: false });
+      const { data: userData, error } = await supabase
+        .rpc('get_full_user_info');
 
-      if (cleanersError) throw cleanersError;
+      if (error) throw error;
 
-      // Fetch all profiles to manually join with cleaners
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-
-      if (profilesError) throw profilesError;
-
-      if (cleaners && profiles) {
-        // Create a map of profiles by ID for efficient lookup
-        const profilesMap = profiles.reduce((map, profile) => {
-          map[profile.id] = profile;
-          return map;
-        }, {});
-
-        // Join cleaners with their profiles
-        const formattedUsers: CleanerUser[] = cleaners.map(cleaner => {
-          const profile = profilesMap[cleaner.id];
-          return {
-            id: cleaner.id,
-            phoneNumber: cleaner.phone || '',
-            name: profile ? 
-              `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 
-              'Unknown',
-            role: profile?.role || 'Cleaner',
-            startDate: cleaner.start_date || '',
-            status: cleaner.active ? "active" : "inactive",
-            email: profile?.email || ''
-          };
-        });
+      if (userData) {
+        const formattedUsers: CleanerUser[] = userData.map(user => ({
+          id: user.id,
+          phoneNumber: user.phone || user.user_name || '',
+          name: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown',
+          role: user.role || 'Cleaner',
+          startDate: user.start_date || '',
+          status: user.status as "active" | "inactive",
+          email: user.email || ''
+        }));
         
         setUsers(formattedUsers);
       }
@@ -135,7 +112,6 @@ const UserManagement = () => {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    // In a real application, you should add a confirmation dialog here
     try {
       const { error } = await supabase
         .from('cleaners')

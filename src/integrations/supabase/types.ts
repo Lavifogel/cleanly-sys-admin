@@ -54,6 +54,7 @@ export type Database = {
           rating: number | null
           specialization: string | null
           start_date: string | null
+          status: string | null
           updated_at: string
         }
         Insert: {
@@ -65,6 +66,7 @@ export type Database = {
           rating?: number | null
           specialization?: string | null
           start_date?: string | null
+          status?: string | null
           updated_at?: string
         }
         Update: {
@@ -76,6 +78,7 @@ export type Database = {
           rating?: number | null
           specialization?: string | null
           start_date?: string | null
+          status?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -183,6 +186,7 @@ export type Database = {
           last_name: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
+          user_name: string | null
         }
         Insert: {
           created_at?: string
@@ -192,6 +196,7 @@ export type Database = {
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+          user_name?: string | null
         }
         Update: {
           created_at?: string
@@ -201,6 +206,7 @@ export type Database = {
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+          user_name?: string | null
         }
         Relationships: []
       }
@@ -368,6 +374,22 @@ export type Database = {
           area_name: string
         }
         Returns: string
+      }
+      get_full_user_info: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          user_name: string
+          first_name: string
+          last_name: string
+          full_name: string
+          email: string
+          role: string
+          start_date: string
+          created_at: string
+          status: string
+          phone: string
+        }[]
       }
     }
     Enums: {

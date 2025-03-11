@@ -56,6 +56,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             first_name: data.firstName,
             last_name: data.lastName,
             email: data.email,
+            user_name: data.phoneNumber // Use phoneNumber as user_name
           })
           .eq('id', user.id);
         
@@ -82,7 +83,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         
         console.log("Creating new user with ID:", newUserId);
         
-        // Fix: Use correct type parameters for the rpc call
+        // Fix: Use correct syntax for the rpc call without type parameters
         const { data: response, error: fnError } = await supabase
           .rpc('create_cleaner_user', {
             user_id: newUserId,
