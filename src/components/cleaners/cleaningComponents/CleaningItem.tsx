@@ -93,9 +93,9 @@ const CleaningItem = ({ cleaning, onImageSelect }: CleaningItemProps) => {
             onClick={() => onImageSelect(firstImageUrl)}
           >
             <div className="flex items-center">
-              <Avatar className="h-6 w-6 mr-1.5">
-                <AvatarImage src={firstImageUrl} alt="Cleaning image" className="object-cover" />
-                <AvatarFallback>
+              <Avatar className="h-6 w-6 mr-1.5 rounded-sm">
+                <AvatarImage src={firstImageUrl} alt="Cleaning image" className="object-cover rounded-sm" />
+                <AvatarFallback className="rounded-sm">
                   <Image className="h-3 w-3" />
                 </AvatarFallback>
               </Avatar>
