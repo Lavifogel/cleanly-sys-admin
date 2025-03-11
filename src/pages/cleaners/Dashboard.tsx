@@ -1,27 +1,17 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, Camera, ClipboardCheck, User } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/useCleaning";
 import { useQRScanner } from "@/hooks/useQRScanner";
 import { useConfirmation } from "@/hooks/useConfirmation";
-
-// Import components
-import StartShiftCard from "@/components/cleaners/StartShiftCard";
-import ActiveShiftCard from "@/components/cleaners/ActiveShiftCard";
-import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
-import RecentCleaningsCard from "@/components/cleaners/RecentCleaningsCard";
-import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
-import ProfileCard from "@/components/cleaners/ProfileCard";
+import NoShiftView from "@/components/cleaners/dashboard/NoShiftView";
+import DashboardTabs from "@/components/cleaners/dashboard/DashboardTabs";
 import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
 import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
-import { useToast } from "@/hooks/use-toast";
 
 const CleanerDashboard = () => {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("home");
   
   // Use our custom hooks
@@ -88,94 +78,43 @@ const CleanerDashboard = () => {
     }
   };
 
-  // Handle starting a shift
+  // Handler functions
   const handleStartShift = () => {
-    if (activeShift) {
-      toast({
-        title: "Shift Already Active",
-        description: "You already have an active shift.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    if (activeShift) return;
     openScanner("startShift");
   };
 
-  // Handle ending a shift
-  const handleEndShift = (withScan = true) => {
-    if (!activeShift) {
-      toast({
-        title: "No Active Shift",
-        description: "You don't have an active shift to end.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (activeCleaning) {
-      toast({
-        title: "Active Cleaning Detected",
-        description: "Please finish your current cleaning before ending your shift.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!withScan) {
-      showConfirmationDialog(
-        "End Shift Without Scan",
-        "Are you sure you want to end your shift without scanning? This action cannot be undone.",
-        () => endShift(withScan)
-      );
-    } else {
-      openScanner("endShift");
-    }
+  const handleEndShiftWithScan = () => {
+    if (!activeShift || activeCleaning) return;
+    openScanner("endShift");
   };
 
-  // Handle starting a cleaning
+  const handleEndShiftWithoutScan = () => {
+    if (!activeShift || activeCleaning) return;
+    showConfirmationDialog(
+      "End Shift Without Scan",
+      "Are you sure you want to end your shift without scanning? This action cannot be undone.",
+      () => endShift(false)
+    );
+  };
+
   const handleStartCleaning = () => {
-    if (!activeShift) {
-      toast({
-        title: "No Active Shift",
-        description: "You need to start a shift before you can begin cleaning.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (activeCleaning) {
-      toast({
-        title: "Cleaning Already Active",
-        description: "You already have an active cleaning. Please finish it first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    if (!activeShift || activeCleaning) return;
     openScanner("startCleaning");
   };
 
-  // Handle ending a cleaning
-  const handleEndCleaning = (withScan = true) => {
-    if (!activeCleaning) {
-      toast({
-        title: "No Active Cleaning",
-        description: "You don't have an active cleaning to end.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleEndCleaningWithScan = () => {
+    if (!activeCleaning) return;
+    openScanner("endCleaning");
+  };
 
-    if (!withScan) {
-      showConfirmationDialog(
-        "End Cleaning Without Scan",
-        "Are you sure you want to end this cleaning without scanning? This action cannot be undone.",
-        () => prepareSummary(withScan)
-      );
-    } else {
-      openScanner("endCleaning");
-    }
+  const handleEndCleaningWithoutScan = () => {
+    if (!activeCleaning) return;
+    showConfirmationDialog(
+      "End Cleaning Without Scan",
+      "Are you sure you want to end this cleaning without scanning? This action cannot be undone.",
+      () => prepareSummary(false)
+    );
   };
 
   // Handle completing a cleaning summary
@@ -193,11 +132,7 @@ const CleanerDashboard = () => {
         transition={{ duration: 0.5 }}
       >
         {!activeShift ? (
-          <div className="min-h-[80vh] flex flex-col justify-center items-center">
-            <div className="w-full max-w-md">
-              <StartShiftCard onStartShift={handleStartShift} />
-            </div>
-          </div>
+          <NoShiftView onStartShift={handleStartShift} />
         ) : (
           <>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
@@ -209,57 +144,22 @@ const CleanerDashboard = () => {
               </div>
             </div>
 
-            <Tabs defaultValue="home" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="home">
-                  <Clock className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Home</span>
-                </TabsTrigger>
-                <TabsTrigger value="cleaning" disabled={!activeCleaning}>
-                  <ClipboardCheck className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Cleaning</span>
-                </TabsTrigger>
-                <TabsTrigger value="profile">
-                  <User className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Profile</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="home" className="space-y-4">
-                <ActiveShiftCard 
-                  startTime={activeShift.startTime}
-                  elapsedTime={elapsedTime}
-                  onEndShiftWithScan={() => handleEndShift(true)}
-                  onEndShiftWithoutScan={() => handleEndShift(false)}
-                  onStartCleaning={handleStartCleaning}
-                />
-
-                <RecentCleaningsCard 
-                  cleaningsHistory={cleaningsHistory} 
-                  currentShiftId={activeShift.id}
-                  activeCleaning={activeCleaning}
-                />
-              </TabsContent>
-
-              <TabsContent value="cleaning" className="space-y-4">
-                {activeCleaning && (
-                  <ActiveCleaningCard 
-                    location={activeCleaning.location}
-                    startTime={activeCleaning.startTime}
-                    cleaningElapsedTime={cleaningElapsedTime}
-                    isPaused={activeCleaning.paused}
-                    onPauseCleaning={togglePauseCleaning}
-                    onEndCleaningWithScan={() => handleEndCleaning(true)}
-                    onEndCleaningWithoutScan={() => handleEndCleaning(false)}
-                  />
-                )}
-              </TabsContent>
-
-              <TabsContent value="profile" className="space-y-4">
-                <ShiftHistoryCard shiftsHistory={shiftsHistory} />
-                <ProfileCard />
-              </TabsContent>
-            </Tabs>
+            <DashboardTabs 
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              activeShift={activeShift}
+              elapsedTime={elapsedTime}
+              activeCleaning={activeCleaning}
+              cleaningElapsedTime={cleaningElapsedTime}
+              cleaningsHistory={cleaningsHistory}
+              shiftsHistory={shiftsHistory}
+              togglePauseCleaning={togglePauseCleaning}
+              handleEndShiftWithScan={handleEndShiftWithScan}
+              handleEndShiftWithoutScan={handleEndShiftWithoutScan}
+              handleStartCleaning={handleStartCleaning}
+              handleEndCleaningWithScan={handleEndCleaningWithScan}
+              handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
+            />
           </>
         )}
       </motion.div>
