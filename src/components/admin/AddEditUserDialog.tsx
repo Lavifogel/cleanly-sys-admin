@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,7 +66,7 @@ const AddEditUserDialog = ({
   const { firstName, lastName } = getNames();
   
   // Set up form with default values
-  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<UserFormValues>({
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       firstName,
@@ -79,7 +79,7 @@ const AddEditUserDialog = ({
   });
 
   // Reset form when dialog opens or user changes
-  useState(() => {
+  useEffect(() => {
     if (open) {
       reset({
         firstName,
@@ -90,7 +90,7 @@ const AddEditUserDialog = ({
         isActive: user?.status !== "inactive"
       });
     }
-  });
+  }, [open, user, firstName, lastName, reset]);
 
   const onSubmit = async (data: UserFormValues) => {
     setIsSubmitting(true);
@@ -177,6 +177,9 @@ const AddEditUserDialog = ({
     }
   };
 
+  // Watch the isActive value
+  const isActiveValue = watch("isActive");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -256,8 +259,7 @@ const AddEditUserDialog = ({
           <div className="flex items-center space-x-2">
             <Switch 
               id="isActive" 
-              {...register("isActive")}
-              checked={!!register("isActive").value}
+              checked={isActiveValue} 
               onCheckedChange={(checked) => setValue("isActive", checked)}
             />
             <Label htmlFor="isActive">Active Status</Label>

@@ -44,7 +44,7 @@ const UserManagement = () => {
       }
 
       if (cleaners) {
-        const formattedUsers = cleaners.map(cleaner => ({
+        const formattedUsers: CleanerUser[] = cleaners.map(cleaner => ({
           id: cleaner.id,
           phoneNumber: cleaner.phone || '',
           name: cleaner.profiles ? 
