@@ -73,45 +73,87 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           description: "User information has been updated successfully",
         });
       } else {
-        // For new users, we need to create profiles first, then cleaners
+        // For new users, we need to perform operations carefully
         // Generate a unique ID that we'll use for both tables
         const newUserId = crypto.randomUUID();
         
-        // First insert into profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: newUserId,
+        // Log the data we're about to insert for debugging
+        console.log("Creating new user with ID:", newUserId);
+        console.log("Profile data:", {
+          id: newUserId,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
+          role: 'cleaner'
+        });
+        
+        try {
+          // Insert both records in a single transaction to ensure consistency
+          const { data: result, error } = await supabase.rpc('create_cleaner_user', {
+            user_id: newUserId,
             first_name: data.firstName,
             last_name: data.lastName,
             email: data.email,
-            role: 'cleaner'
-          });
-        
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          throw profileError;
-        }
-        
-        // Then insert into cleaners table
-        const { error: cleanerError } = await supabase
-          .from('cleaners')
-          .insert({
-            id: newUserId,
-            phone: data.phoneNumber,
+            phone_number: data.phoneNumber,
             start_date: data.startDate,
-            active: data.isActive,
+            is_active: data.isActive
           });
-        
-        if (cleanerError) {
-          console.error('Error creating cleaner:', cleanerError);
-          throw cleanerError;
+          
+          if (error) {
+            console.error("Error creating user via RPC:", error);
+            throw error;
+          }
+          
+          console.log("User created successfully:", result);
+          
+          toast({
+            title: "User Created",
+            description: "New user has been created successfully",
+          });
+        } catch (transactionError) {
+          console.error("Transaction error:", transactionError);
+          
+          // Fallback approach: try inserting records one by one
+          console.log("Falling back to separate inserts approach");
+          
+          // First, profiles insert
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: newUserId,
+              first_name: data.firstName,
+              last_name: data.lastName,
+              email: data.email,
+              role: 'cleaner'
+            });
+          
+          if (profileError) {
+            console.error("Fallback profile insert error:", profileError);
+            throw profileError;
+          }
+          
+          // Then cleaners insert, if profile succeeded
+          const { error: cleanerError } = await supabase
+            .from('cleaners')
+            .insert({
+              id: newUserId,
+              phone: data.phoneNumber,
+              start_date: data.startDate,
+              active: data.isActive,
+            });
+          
+          if (cleanerError) {
+            console.error("Fallback cleaner insert error:", cleanerError);
+            // If cleaner insert fails, try to clean up the profile we just created
+            await supabase.from('profiles').delete().eq('id', newUserId);
+            throw cleanerError;
+          }
+          
+          toast({
+            title: "User Created",
+            description: "New user has been created successfully",
+          });
         }
-        
-        toast({
-          title: "User Created",
-          description: "New user has been created successfully",
-        });
       }
       
       onOpenChange(false);
