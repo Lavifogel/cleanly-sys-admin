@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Menu, X } from 'lucide-react';
+import { X, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -113,7 +113,7 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Mobile Menu Button */}
+        {/* Profile Button (was Mobile Menu Button) */}
         <Button
           variant="ghost"
           size="icon"
@@ -124,7 +124,7 @@ const Navbar = () => {
           {isMobileMenuOpen ? (
             <X className="h-5 w-5" />
           ) : (
-            <Menu className="h-5 w-5" />
+            <UserRound className="h-5 w-5" />
           )}
         </Button>
       </div>
