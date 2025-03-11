@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Clock, Camera, ClipboardCheck, User } from "lucide-react";
@@ -5,6 +6,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { formatTime } from "@/utils/timeUtils";
+
+// Import necessary components
+import StartShiftCard from "@/components/cleaners/StartShiftCard";
+import ActiveShiftCard from "@/components/cleaners/ActiveShiftCard";
+import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
+import RecentCleaningsCard from "@/components/cleaners/RecentCleaningsCard";
+import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
+import ProfileCard from "@/components/cleaners/ProfileCard";
+import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
+import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
 
 const CleanerDashboard = () => {
   const { toast } = useToast();
