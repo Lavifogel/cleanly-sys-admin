@@ -47,11 +47,11 @@ const DashboardTabs = ({
   handleEndCleaningWithoutScan
 }: DashboardTabsProps) => {
   return (
-    <Tabs defaultValue="shift" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+    <Tabs defaultValue="home" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="shift">
+        <TabsTrigger value="home">
           <Clock className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Shift</span>
+          <span className="hidden sm:inline">Home</span>
         </TabsTrigger>
         <TabsTrigger value="cleaning" disabled={!activeCleaning}>
           <ClipboardCheck className="h-4 w-4 mr-2" />
@@ -63,7 +63,7 @@ const DashboardTabs = ({
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="shift">
+      <TabsContent value="home">
         <HomeTab 
           activeShift={activeShift}
           elapsedTime={elapsedTime}

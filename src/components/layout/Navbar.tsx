@@ -57,23 +57,29 @@ const Navbar = () => {
 
   // Define routes based on authentication status and role
   const getRoutes = () => {
-    // If user is not logged in, don't show any links
+    const commonRoutes = [
+      { path: '/', label: 'Home' }
+    ];
+
+    // If user is not logged in, don't show any dashboard links
     if (!session) {
-      return [];
+      return commonRoutes;
     }
 
     // If user is logged in, only show their relevant dashboard
     if (userRole === 'admin') {
       return [
+        ...commonRoutes,
         { path: '/admin/dashboard', label: 'Dashboard' }
       ];
     } else if (userRole === 'cleaner') {
       return [
+        ...commonRoutes,
         { path: '/cleaners/dashboard', label: 'Dashboard' }
       ];
     }
 
-    return [];
+    return commonRoutes;
   };
 
   const routes = getRoutes();
