@@ -15,6 +15,9 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Check if current page is login page
+  const isLoginPage = location.pathname === '/login';
+
   // Fetch user session and role
   const { data: session } = useQuery({
     queryKey: ['session'],
@@ -133,16 +136,18 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Profile Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:flex"
-          onClick={handleProfileClick}
-          aria-label="Profile"
-        >
-          <UserRound className="h-5 w-5" />
-        </Button>
+        {/* Profile Button - hidden on login page */}
+        {!isLoginPage && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:flex"
+            onClick={handleProfileClick}
+            aria-label="Profile"
+          >
+            <UserRound className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       {/* Mobile Menu */}
