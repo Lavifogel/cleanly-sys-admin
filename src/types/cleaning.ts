@@ -18,6 +18,8 @@ export interface CleaningHistoryItem {
   notes: string;
   shiftId?: string;
   imageUrls?: string[];
+  isActive?: boolean;
+  elapsedTime?: number;
 }
 
 export interface CleaningSummary {

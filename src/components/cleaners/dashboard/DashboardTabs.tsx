@@ -51,7 +51,7 @@ const DashboardTabs = ({
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="home">
           <Clock className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Home</span>
+          <span className="hidden sm:inline">Shift</span>
         </TabsTrigger>
         <TabsTrigger value="cleaning" disabled={!activeCleaning}>
           <ClipboardCheck className="h-4 w-4 mr-2" />
@@ -68,6 +68,7 @@ const DashboardTabs = ({
           activeShift={activeShift}
           elapsedTime={elapsedTime}
           activeCleaning={activeCleaning}
+          cleaningElapsedTime={cleaningElapsedTime}
           cleaningsHistory={cleaningsHistory}
           onEndShiftWithScan={handleEndShiftWithScan}
           onEndShiftWithoutScan={handleEndShiftWithoutScan}

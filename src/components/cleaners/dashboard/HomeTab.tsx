@@ -13,6 +13,7 @@ interface HomeTabProps {
     location: string;
     startTime: Date;
   } | null;
+  cleaningElapsedTime: number;
   cleaningsHistory: CleaningHistoryItem[];
   onEndShiftWithScan: () => void;
   onEndShiftWithoutScan: () => void;
@@ -23,6 +24,7 @@ const HomeTab = ({
   activeShift,
   elapsedTime,
   activeCleaning,
+  cleaningElapsedTime,
   cleaningsHistory,
   onEndShiftWithScan,
   onEndShiftWithoutScan,
@@ -42,6 +44,7 @@ const HomeTab = ({
         cleaningsHistory={cleaningsHistory} 
         currentShiftId={activeShift.id}
         activeCleaning={activeCleaning}
+        cleaningElapsedTime={cleaningElapsedTime}
       />
     </div>
   );

@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { CleaningHistoryItem } from "@/types/cleaning";
 import CleaningItem from "./cleaningComponents/CleaningItem";
 import ImagePreview from "./cleaningComponents/ImagePreview";
+import { formatTime } from "@/utils/timeUtils";
+import { Timer } from "lucide-react";
 
 interface RecentCleaningsCardProps {
   cleaningsHistory: CleaningHistoryItem[];
@@ -13,12 +15,14 @@ interface RecentCleaningsCardProps {
     location: string;
     startTime: Date;
   } | null;
+  cleaningElapsedTime?: number;
 }
 
 const RecentCleaningsCard = ({ 
   cleaningsHistory, 
   currentShiftId,
-  activeCleaning
+  activeCleaning,
+  cleaningElapsedTime = 0
 }: RecentCleaningsCardProps) => {
   // State to store cleanings with image URLs
   const [cleaningsWithImages, setCleaningsWithImages] = useState<CleaningHistoryItem[]>([]);
@@ -38,11 +42,13 @@ const RecentCleaningsCard = ({
           date: new Date().toISOString().split('T')[0],
           startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
           endTime: "--:--",
-          duration: "In progress",
+          duration: formatTime(cleaningElapsedTime),
           status: "open",
           images: 0,
           notes: "",
           shiftId: currentShiftId,
+          isActive: true,
+          elapsedTime: cleaningElapsedTime
         },
         ...filteredCleanings
       ] 
