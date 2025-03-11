@@ -126,21 +126,19 @@ const AddEditUserDialog = ({
         });
       } else {
         // Create new user and profile
-        // Note: In a real application, you would need to handle authentication
-        // and use Supabase auth APIs to create users with passwords
+        // Generate a unique ID for both tables
+        const newUserId = crypto.randomUUID();
         
         // First create a profile
-        const { data: profileData, error: profileError } = await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .insert({
-            id: crypto.randomUUID(), // This is just a placeholder - in a real app, this would come from auth
+            id: newUserId,
             first_name: data.firstName,
             last_name: data.lastName,
             email: data.email,
             role: 'cleaner'
-          })
-          .select('id')
-          .single();
+          });
         
         if (profileError) throw profileError;
         
@@ -148,7 +146,7 @@ const AddEditUserDialog = ({
         const { error: cleanerError } = await supabase
           .from('cleaners')
           .insert({
-            id: profileData.id,
+            id: newUserId,
             phone: data.phoneNumber,
             start_date: data.startDate,
             active: data.isActive,
