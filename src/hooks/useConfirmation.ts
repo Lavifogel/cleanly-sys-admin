@@ -1,18 +1,22 @@
 
 import { useState } from "react";
 
-export type ConfirmationAction = () => void;
+export interface ConfirmationDialogData {
+  title: string;
+  description: string;
+  action: () => void;
+}
 
 export function useConfirmation() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<ConfirmationAction | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmationDialogData | null>(null);
   
   const showConfirmationDialog = (
     title: string,
     description: string,
-    action: ConfirmationAction
+    action: () => void
   ) => {
-    setConfirmAction(() => action);
+    setConfirmAction({ title, description, action });
     setShowConfirmDialog(true);
   };
 

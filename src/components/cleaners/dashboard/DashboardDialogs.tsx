@@ -2,7 +2,7 @@
 import CleaningSummaryDialog from "@/components/cleaners/CleaningSummaryDialog";
 import ConfirmationDialog from "@/components/cleaners/ConfirmationDialog";
 import { CleaningSummary } from "@/types/cleaning";
-import { ConfirmationAction } from "@/hooks/useConfirmation";
+import { ConfirmationDialogData } from "@/hooks/useConfirmation";
 
 interface DashboardDialogsProps {
   showSummary: boolean;
@@ -15,7 +15,7 @@ interface DashboardDialogsProps {
   handleCompleteSummary: () => void;
   showConfirmDialog: boolean;
   setShowConfirmDialog: (show: boolean) => void;
-  confirmAction: ConfirmationAction | null;
+  confirmAction: ConfirmationDialogData | null;
 }
 
 const DashboardDialogs = ({

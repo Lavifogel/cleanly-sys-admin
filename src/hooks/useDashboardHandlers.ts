@@ -1,15 +1,16 @@
 
 import { useState } from "react";
-import { ScannerPurpose } from "@/hooks/useQRScanner";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/useCleaning";
-import { useConfirmation } from "@/hooks/useConfirmation";
-import { useQRScanner } from "@/hooks/useQRScanner";
+import { useTabManagement } from "@/hooks/useTabManagement";
+import { useDashboardQRScanner } from "@/hooks/useDashboardQRScanner";
+import { useDashboardConfirmations } from "@/hooks/useDashboardConfirmations";
 
 export function useDashboardHandlers() {
-  const [activeTab, setActiveTab] = useState("home");
+  // Use our custom hooks for tab management
+  const { activeTab, setActiveTab } = useTabManagement();
   
-  // Use our custom hooks
+  // Use shift and cleaning hooks
   const {
     activeShift,
     elapsedTime,
@@ -35,82 +36,39 @@ export function useDashboardHandlers() {
     setShowSummary
   } = useCleaning(activeShift?.id);
   
+  // Use QR scanner hook
   const {
     showQRScanner,
     scannerPurpose,
-    openScanner,
-    closeScanner
-  } = useQRScanner();
+    closeScanner,
+    handleQRScan,
+    handleStartShift,
+    handleEndShiftWithScan,
+    handleStartCleaning,
+    handleEndCleaningWithScan
+  } = useDashboardQRScanner(
+    activeShift,
+    activeCleaning,
+    setActiveTab,
+    startShift,
+    endShift,
+    startCleaning,
+    prepareSummary
+  );
   
+  // Use confirmations hook
   const {
     showConfirmDialog,
     confirmAction,
     setShowConfirmDialog,
-    showConfirmationDialog
-  } = useConfirmation();
-
-  // Handle scanning QR code
-  const handleQRScan = (decodedText: string) => {
-    console.log("QR Code scanned:", decodedText);
-    closeScanner();
-
-    switch (scannerPurpose) {
-      case "startShift":
-        startShift(decodedText);
-        break;
-      case "endShift":
-        endShift(true, decodedText);
-        break;
-      case "startCleaning":
-        startCleaning(decodedText);
-        setActiveTab("cleaning");
-        break;
-      case "endCleaning":
-        prepareSummary(true, decodedText);
-        break;
-      default:
-        break;
-    }
-  };
-
-  // Handler functions
-  const handleStartShift = () => {
-    if (activeShift) return;
-    openScanner("startShift");
-  };
-
-  const handleEndShiftWithScan = () => {
-    if (!activeShift || activeCleaning) return;
-    openScanner("endShift");
-  };
-
-  const handleEndShiftWithoutScan = () => {
-    if (!activeShift || activeCleaning) return;
-    showConfirmationDialog(
-      "End Shift Without Scan",
-      "Are you sure you want to end your shift without scanning? This action cannot be undone.",
-      () => endShift(false)
-    );
-  };
-
-  const handleStartCleaning = () => {
-    if (!activeShift || activeCleaning) return;
-    openScanner("startCleaning");
-  };
-
-  const handleEndCleaningWithScan = () => {
-    if (!activeCleaning) return;
-    openScanner("endCleaning");
-  };
-
-  const handleEndCleaningWithoutScan = () => {
-    if (!activeCleaning) return;
-    showConfirmationDialog(
-      "End Cleaning Without Scan",
-      "Are you sure you want to end this cleaning without scanning? This action cannot be undone.",
-      () => prepareSummary(false)
-    );
-  };
+    handleEndShiftWithoutScan,
+    handleEndCleaningWithoutScan
+  } = useDashboardConfirmations(
+    activeShift,
+    activeCleaning,
+    endShift,
+    prepareSummary
+  );
 
   // Handle completing a cleaning summary
   const handleCompleteSummary = () => {
