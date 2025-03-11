@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
+import QRCode from "qrcode";
 
 const QrCodeGenerator = () => {
   const { toast } = useToast();
@@ -83,22 +85,27 @@ const QrCodeGenerator = () => {
 
       const areaId = functionData || `${areaName.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
       
-      const tempCanvas = document.createElement('canvas');
       const qrData = JSON.stringify({
         areaId: areaId,
         areaName: areaName,
         type: qrType
       });
       
-      const qr = new QRCodeCanvas({
-        value: qrData,
-        size: 200,
-        level: "H",
-        includeMargin: true
+      // Use the QRCode library to generate QR code as a data URL
+      const qrCodeImageUrl = await new Promise((resolve, reject) => {
+        QRCode.toDataURL(qrData, {
+          errorCorrectionLevel: 'H',
+          margin: 1,
+          width: 200,
+          color: {
+            dark: '#000000',
+            light: '#ffffff'
+          }
+        }, (err, url) => {
+          if (err) reject(err);
+          else resolve(url);
+        });
       });
-      qr.toCanvas(tempCanvas);
-      
-      const qrCodeImageUrl = tempCanvas.toDataURL('image/png');
       
       const { data, error } = await supabase
         .from('qr_codes')
