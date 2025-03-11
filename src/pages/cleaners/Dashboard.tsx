@@ -237,6 +237,7 @@ const CleanerDashboard = () => {
                 <RecentCleaningsCard 
                   cleaningsHistory={cleaningsHistory} 
                   currentShiftId={activeShift.id}
+                  activeCleaning={activeCleaning}
                 />
               </TabsContent>
 

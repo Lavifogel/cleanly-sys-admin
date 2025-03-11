@@ -1,10 +1,11 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Calendar, Clock, Timer, FileText, ImageIcon, X } from "lucide-react";
+import { MapPin, Calendar, Clock, Timer, FileText, ImageIcon, X, CheckCircle2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 
@@ -25,11 +26,16 @@ interface CleaningHistoryItem {
 interface RecentCleaningsCardProps {
   cleaningsHistory: CleaningHistoryItem[];
   currentShiftId?: string;
+  activeCleaning?: {
+    location: string;
+    startTime: Date;
+  } | null;
 }
 
 const RecentCleaningsCard = ({ 
   cleaningsHistory, 
-  currentShiftId 
+  currentShiftId,
+  activeCleaning
 }: RecentCleaningsCardProps) => {
   // State to store cleanings with image URLs
   const [cleaningsWithImages, setCleaningsWithImages] = useState<CleaningHistoryItem[]>([]);
@@ -39,6 +45,25 @@ const RecentCleaningsCard = ({
   const filteredCleanings = currentShiftId 
     ? cleaningsWithImages.filter(cleaning => cleaning.shiftId === currentShiftId) 
     : cleaningsWithImages;
+
+  // Create an active cleaning entry if one exists
+  const allCleanings = activeCleaning 
+    ? [
+        {
+          id: "active",
+          location: activeCleaning.location,
+          date: new Date().toISOString().split('T')[0],
+          startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
+          endTime: "--:--",
+          duration: "In progress",
+          status: "open",
+          images: 0,
+          notes: "",
+          shiftId: currentShiftId,
+        },
+        ...filteredCleanings
+      ] 
+    : filteredCleanings;
 
   // Fetch images for cleanings when the component mounts or history changes
   useEffect(() => {
@@ -104,8 +129,8 @@ const RecentCleaningsCard = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {filteredCleanings.length > 0 ? (
-              filteredCleanings.map((cleaning) => (
+            {allCleanings.length > 0 ? (
+              allCleanings.map((cleaning) => (
                 <div
                   key={cleaning.id}
                   className="border rounded-lg p-4 space-y-2"
@@ -115,6 +140,15 @@ const RecentCleaningsCard = ({
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 mr-1 text-primary" />
                         <h4 className="font-medium">{cleaning.location}</h4>
+                        {cleaning.status === "open" ? (
+                          <Badge variant="outline" className="ml-2 bg-green-50 text-green-600 border-green-200 hover:bg-green-50">
+                            OPEN
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="ml-2 bg-red-50 text-red-500 border-red-200 hover:bg-red-50">
+                            COMPLETE
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center mt-1 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3 mr-1" />
