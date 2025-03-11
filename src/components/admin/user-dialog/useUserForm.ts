@@ -82,7 +82,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         
         console.log("Creating new user with ID:", newUserId);
         
-        // Use explicit typing to avoid TypeScript errors
+        // Fix: Use correct type parameters for the rpc call
         const { data: response, error: fnError } = await supabase
           .rpc('create_cleaner_user', {
             user_id: newUserId,
