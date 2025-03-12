@@ -1,10 +1,18 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormValues, userSchema, getNames, UserDialogProps } from "./userFormSchema";
+
+// Helper function to generate a UUID (RFC4122 version 4 compliant)
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogProps) => {
   const { toast } = useToast();
@@ -90,66 +98,104 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         });
       } else {
         // Create new user
-        const newUserId = crypto.randomUUID();
         console.log("Creating new user with data:", {
-          id: newUserId,
-          first_name: data.firstName,
-          last_name: data.lastName,
           email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName, 
           role: data.role,
-          user_name: data.phoneNumber
+          phoneNumber: data.phoneNumber
         });
         
-        // Direct insertion approach without the database function
-        // First, insert into profiles
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: newUserId,
-            first_name: data.firstName,
-            last_name: data.lastName,
-            email: data.email,
-            role: data.role,
-            user_name: data.phoneNumber
-          });
-        
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-          throw profileError;
-        }
-        
-        // Then, based on role, insert into either cleaners or admins
+        // Call the RPC function to create a cleaner user
         if (data.role === 'cleaner') {
-          const { error: cleanerError } = await supabase
-            .from('cleaners')
-            .insert({
-              id: newUserId,
-              phone: data.phoneNumber,
-              start_date: data.startDate,
-              active: data.isActive
+          // Try using the create_cleaner_user function that exists in your database
+          const password = `${data.firstName.toLowerCase()}${data.lastName.toLowerCase()}123!`;
+          
+          // Generate a UUID for the user
+          const userId = crypto.randomUUID?.() || 
+            'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+              const r = Math.random() * 16 | 0;
+              const v = c === 'x' ? r : (r & 0x3 | 0x8);
+              return v.toString(16);
             });
           
-          if (cleanerError) {
-            console.error("Error creating cleaner:", cleanerError);
-            throw cleanerError;
+          // Use the database function to create a new cleaner
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            'create_cleaner_user',
+            {
+              user_id: userId,
+              first_name: data.firstName,
+              last_name: data.lastName,
+              email: data.email,
+              phone_number: data.phoneNumber,
+              start_date: data.startDate,
+              is_active: data.isActive
+            }
+          );
+          
+          if (rpcError) {
+            console.error("Error creating user with RPC function:", rpcError);
+            
+            // If this is a rate limit issue
+            if (rpcError.message.includes("security purposes") || 
+                rpcError.message.includes("rate limit") || 
+                rpcError.message.includes("seconds")) {
+              throw new Error("Rate limit reached. Please wait a minute before trying again.");
+            }
+            
+            throw rpcError;
           }
-        } else if (data.role === 'admin') {
+          
+          toast({
+            title: "Cleaner Created",
+            description: `New cleaner has been created successfully. Note: Authentication will need to be set up separately.`,
+          });
+        } else {
+          // For admins, use a simpler approach similar to cleaners
+          const password = `${data.firstName.toLowerCase()}${data.lastName.toLowerCase()}123!`;
+          
+          // Generate a UUID for the user
+          const userId = crypto.randomUUID?.() || 
+            'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+              const r = Math.random() * 16 | 0;
+              const v = c === 'x' ? r : (r & 0x3 | 0x8);
+              return v.toString(16);
+            });
+          
+          // First create the profile
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              first_name: data.firstName,
+              last_name: data.lastName,
+              email: data.email,
+              user_name: data.email,
+              role: 'admin'
+            });
+          
+          if (profileError) {
+            console.error("Error creating admin profile:", profileError);
+            throw profileError;
+          }
+          
+          // Then create the admin record
           const { error: adminError } = await supabase
             .from('admins')
             .insert({
-              id: newUserId
+              id: userId
             });
           
           if (adminError) {
-            console.error("Error creating admin:", adminError);
+            console.error("Error creating admin record:", adminError);
             throw adminError;
           }
+          
+          toast({
+            title: "Admin Created",
+            description: `New admin has been created. Note: Authentication will need to be set up separately.`,
+          });
         }
-        
-        toast({
-          title: "User Created",
-          description: `New ${data.role} has been created successfully`,
-        });
       }
       
       onOpenChange(false);
