@@ -50,15 +50,6 @@ const DashboardContent = ({
         <NoShiftView onStartShift={handleStartShift} />
       ) : (
         <>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Cleaner Dashboard</h1>
-              <p className="text-muted-foreground mt-1">
-                Manage your shifts and cleaning tasks
-              </p>
-            </div>
-          </div>
-
           <DashboardTabs 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
