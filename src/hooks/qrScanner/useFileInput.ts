@@ -1,10 +1,11 @@
 
 import { useRef, useState } from "react";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { Html5Qrcode } from "html5-qrcode";
 
 interface UseFileInputProps {
   onScanSuccess: (decodedText: string) => void;
-  scannerRef: React.MutableRefObject<any>;
+  scannerRef: React.MutableRefObject<Html5Qrcode | null>;
   stopCamera: () => Promise<void>;
   startScanner: () => Promise<void>;
   setError: (error: string | null) => void;
@@ -66,10 +67,18 @@ export const useFileInput = ({
     }
   };
 
+  // Function to trigger file input programmatically
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   return {
     isTakingPicture,
     fileInputRef,
     handleTakePicture,
-    handleFileSelect
+    handleFileSelect,
+    triggerFileInput
   };
 };

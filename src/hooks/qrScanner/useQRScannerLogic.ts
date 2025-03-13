@@ -1,35 +1,44 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useCameraControls } from "./useCameraControls";
 import { useFileInput } from "./useFileInput";
 import { useSimulation } from "./useSimulation";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { QRScannerStates } from "@/types/qrScanner";
 
 interface UseQRScannerLogicProps {
   onScanSuccess: (decodedText: string) => void;
+  onClose?: () => void;
 }
 
-export const useQRScannerLogic = ({ onScanSuccess }: UseQRScannerLogicProps) => {
-  const [html5QrCode, setHtml5QrCode] = useState<Html5Qrcode | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
+export const useQRScannerLogic = ({ onScanSuccess, onClose }: UseQRScannerLogicProps) => {
   const [scanError, setScanError] = useState<string | null>(null);
+  const [isTakingPicture, setIsTakingPicture] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerId = "qr-scanner-container";
+  
+  // Initialize scanner on first render
+  const initializeScanner = useCallback(() => {
+    if (!scannerRef.current) {
+      scannerRef.current = new Html5Qrcode(scannerContainerId);
+    }
+    return scannerRef.current;
+  }, [scannerContainerId]);
 
+  // Camera controls hook
   const {
-    cameras,
-    selectedCamera,
-    isLoading: isCameraLoading,
-    hasCameraPermission,
-    loadCameras,
-    selectCamera
-  } = useCameraControls();
+    cameraActive,
+    isScanning,
+    stopCamera,
+    startScanner,
+    setError
+  } = useCameraControls({ 
+    onScanSuccess, 
+    scannerContainerId 
+  });
 
-  const {
-    fileInputRef,
-    handleFileInputChange,
-    triggerFileInput
-  } = useFileInput({ onScanSuccess });
-
+  // Simulation hook
   const {
     simulationActive,
     simulationProgress,
@@ -37,100 +46,94 @@ export const useQRScannerLogic = ({ onScanSuccess }: UseQRScannerLogicProps) => 
     resetSimulation
   } = useSimulation({ onScanSuccess });
 
-  // Initialize QR scanner
-  useEffect(() => {
-    const qrCodeScanner = new Html5Qrcode("qrScanner");
-    setHtml5QrCode(qrCodeScanner);
+  // File input hook
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleTakePicture = () => {
+    setIsTakingPicture(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
-    return () => {
-      if (qrCodeScanner.isScanning) {
-        qrCodeScanner.stop().catch(error => {
-          console.error("Error stopping scanner on unmount:", error);
-        });
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) {
+      setIsTakingPicture(false);
+      return;
+    }
+
+    const imageFile = files[0];
+    const scanner = initializeScanner();
+    
+    try {
+      // Stop live scanning if it's active
+      if (isScanning) {
+        await stopCamera();
       }
-      stopAllVideoStreams();
-    };
-  }, []);
 
-  // Start scanning with camera
-  const startScan = useCallback(async () => {
-    if (!html5QrCode || !selectedCamera || isScanning) return;
-
-    setIsScanning(true);
-    setScanError(null);
-
-    try {
-      await html5QrCode.start(
-        selectedCamera.id,
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        (decodedText) => {
-          html5QrCode.stop().catch(console.error);
-          onScanSuccess(decodedText);
-          setIsScanning(false);
-        },
-        (errorMessage) => {
-          console.info("QR code parse error, error =", errorMessage);
-        }
-      );
-    } catch (err) {
-      setIsScanning(false);
-      setScanError(`Failed to start scanner: ${err instanceof Error ? err.message : String(err)}`);
-      console.error("Error starting QR scanner:", err);
+      // Scan the QR code from the image
+      const result = await scanner.scanFile(imageFile, true);
+      onScanSuccess(result);
+    } catch (error) {
+      console.error("Error scanning image:", error);
+      setError("Could not detect a QR code in the image. Please try again.");
+      
+      // Restart live scanning
+      if (!isScanning) {
+        startScanner();
+      }
+    } finally {
+      setIsTakingPicture(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
-  }, [html5QrCode, selectedCamera, isScanning, onScanSuccess]);
+  };
 
-  // Stop scanning
-  const stopScan = useCallback(async () => {
-    if (!html5QrCode || !isScanning) return;
-
-    try {
-      await html5QrCode.stop();
-      setIsScanning(false);
-    } catch (err) {
-      console.error("Error stopping QR scanner:", err);
-    }
-
-    // Ensure all video streams are stopped
+  // Handle close
+  const handleClose = () => {
+    stopCamera();
     stopAllVideoStreams();
-  }, [html5QrCode, isScanning]);
+    if (onClose) onClose();
+  };
+
+  // Handle manual simulation
+  const handleManualSimulation = () => {
+    stopCamera();
+    startSimulation();
+  };
+
+  // Create a scanner state object to pass to components
+  const scannerState: QRScannerStates = {
+    isScanning,
+    error: scanError,
+    isTakingPicture,
+    cameraActive,
+    simulationActive,
+    simulationProgress
+  };
 
   // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().catch(console.error);
+  const cleanup = useCallback(() => {
+    if (scannerRef.current) {
+      if (scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(console.error);
       }
-      stopAllVideoStreams();
-    };
-  }, [html5QrCode]);
+    }
+    stopAllVideoStreams();
+  }, []);
 
   return {
-    // Camera-related props
-    cameras,
-    selectedCamera,
-    isCameraLoading,
-    hasCameraPermission,
-    loadCameras,
-    selectCamera,
-    
-    // Scanning state
-    isScanning,
-    scanError,
-    startScan,
-    stopScan,
-    
-    // File input related props
+    // Public API
+    scannerState,
+    scannerContainerId,
     fileInputRef,
-    handleFileInputChange,
-    triggerFileInput,
-    
-    // Simulation related props
-    simulationActive,
-    simulationProgress,
-    startSimulation,
-    resetSimulation
+    handleClose,
+    handleTakePicture,
+    handleFileSelect,
+    handleManualSimulation,
+    cleanup
   };
 };
