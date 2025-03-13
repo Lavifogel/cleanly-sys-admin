@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,14 +30,17 @@ export const useUserManagement = () => {
       
       // Process the data
       if (data) {
-        const formattedUsers: CleanerUser[] = data.map(user => {          
+        const formattedUsers: CleanerUser[] = data.map(user => {
+          // Ensure status is strictly typed as "active" or "inactive"
+          const userStatus = user.status?.toLowerCase() === 'active' ? "active" : "inactive";
+          
           return {
             id: user.id,
             phoneNumber: user.phone || user.user_name || '',
             name: user.full_name || 'Unknown',
             role: user.role || 'cleaner',
             startDate: user.start_date || '',
-            status: user.status || "active",
+            status: userStatus, // Now properly typed as "active" | "inactive"
             email: user.email || ''
           };
         });
