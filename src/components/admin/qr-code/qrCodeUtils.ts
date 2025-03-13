@@ -1,7 +1,7 @@
 
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
-import { QrCodeData, SaveQrCodeParams, QrCode } from "@/types/qrCode";
+import { QrCodeData, SaveQrCodeParams, QrCode, Area } from "@/types/qrCode";
 
 /**
  * Generates a QR code image as a data URL
@@ -48,21 +48,31 @@ export const generateAreaId = async (areaName: string): Promise<string> => {
  * Saves QR code to database
  */
 export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
-  const { areaName, type, areaId, qrCodeImageUrl, description, floor, building } = params;
+  const { areaName, type, areaId, qrCodeImageUrl } = params;
   
   console.log("Attempting to insert QR code into database...");
   
-  // Insert into area table (previously named qr_codes)
+  // The trigger will automatically create the area, but we have full data here
+  // so it's better to explicitly add the area first
+  const { error: areaError } = await supabase
+    .from('areas')
+    .upsert({
+      area_id: areaId,
+      name: areaName
+    }, { onConflict: 'area_id' });
+    
+  if (areaError) {
+    console.error("Error creating area:", areaError);
+    throw areaError;
+  }
+  
   const { data, error } = await supabase
-    .from('area')
+    .from('qr_codes')
     .insert({
       area_name: areaName,
       type: type,
       area_id: areaId,
-      qr_code_image_url: qrCodeImageUrl,
-      description: description,
-      floor: floor,
-      building: building
+      qr_code_image_url: qrCodeImageUrl
     })
     .select()
     .single();
@@ -80,11 +90,7 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
     type: data.type,
     areaId: data.area_id,
     qrCodeImageUrl: data.qr_code_image_url,
-    description: data.description,
-    floor: data.floor,
-    building: data.building,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at
+    createdAt: data.created_at
   };
 };
 
@@ -93,7 +99,7 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
  */
 export const fetchQrCodes = async (): Promise<QrCode[]> => {
   const { data, error } = await supabase
-    .from('area')
+    .from('qr_codes')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -107,22 +113,43 @@ export const fetchQrCodes = async (): Promise<QrCode[]> => {
     type: qr.type,
     areaId: qr.area_id,
     qrCodeImageUrl: qr.qr_code_image_url,
-    description: qr.description,
-    floor: qr.floor,
-    building: qr.building,
-    createdAt: qr.created_at,
-    updatedAt: qr.updated_at
+    createdAt: qr.created_at
+  }));
+};
+
+/**
+ * Fetches areas from database
+ */
+export const fetchAreas = async (): Promise<Area[]> => {
+  const { data, error } = await supabase
+    .from('areas')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+
+  if (!data) return [];
+  
+  return data.map(area => ({
+    id: area.id,
+    areaId: area.area_id,
+    name: area.name,
+    description: area.description,
+    floor: area.floor,
+    building: area.building,
+    createdAt: area.created_at,
+    updatedAt: area.updated_at
   }));
 };
 
 /**
  * Updates area details
  */
-export const updateArea = async (area: Partial<QrCode> & { areaId: string }): Promise<QrCode> => {
+export const updateArea = async (area: Partial<Area> & { areaId: string }): Promise<Area> => {
   const { data, error } = await supabase
-    .from('area')
+    .from('areas')
     .update({
-      area_name: area.areaName,
+      name: area.name,
       description: area.description,
       floor: area.floor,
       building: area.building
@@ -136,9 +163,7 @@ export const updateArea = async (area: Partial<QrCode> & { areaId: string }): Pr
   return {
     id: data.id,
     areaId: data.area_id,
-    areaName: data.area_name,
-    type: data.type,
-    qrCodeImageUrl: data.qr_code_image_url,
+    name: data.name,
     description: data.description,
     floor: data.floor,
     building: data.building,
