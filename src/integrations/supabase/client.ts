@@ -18,4 +18,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
       'X-App-Version': '1.0.0',
     },
   },
+  // Add storage configuration to allow direct uploads
+  storage: {
+    retryIntervalMs: 1000, // 1 second
+    maxRetryCount: 3,
+  },
 });

@@ -292,66 +292,6 @@ export type Database = {
           },
         ]
       }
-      tasks: {
-        Row: {
-          assigned_to: string | null
-          completed_at: string | null
-          created_at: string
-          created_by: string | null
-          description: string | null
-          due_date: string | null
-          id: string
-          location: string | null
-          priority: string | null
-          status: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_to?: string | null
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          location?: string | null
-          priority?: string | null
-          status?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_to?: string | null
-          completed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          due_date?: string | null
-          id?: string
-          location?: string | null
-          priority?: string | null
-          status?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "cleaners"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "admins"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
