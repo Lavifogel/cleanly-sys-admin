@@ -58,6 +58,11 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
           ref={fileInputRef}
           onChange={handleFileSelect}
           className="hidden"
+          onClick={(e) => {
+            // This prevents the file selection dialog from showing files
+            // and forces it to go directly to the camera
+            e.stopPropagation();
+          }}
         />
       </CardContent>
     </Card>

@@ -67,6 +67,10 @@ const ImagesSection = ({
     });
     
     if (!cameraInUse) {
+      // Reset input to ensure it triggers even if the same file would be selected
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
       setShowCamera(true);
     }
   };
@@ -158,8 +162,9 @@ const ImagesSection = ({
         className="hidden"
         onChange={handleCapture}
         onClick={(e) => {
-          // Reset the input value to allow selecting the same file again
-          (e.target as HTMLInputElement).value = '';
+          // This prevents the file selection dialog from showing files
+          // and forces it to go directly to the camera
+          e.stopPropagation();
         }}
       />
     </div>

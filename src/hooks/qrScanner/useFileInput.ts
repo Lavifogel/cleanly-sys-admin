@@ -25,6 +25,8 @@ export const useFileInput = ({
   const handleTakePicture = () => {
     setIsTakingPicture(true);
     if (fileInputRef.current) {
+      // Reset the input value to ensure the change event fires even if selecting the same file
+      fileInputRef.current.value = '';
       fileInputRef.current.click();
     }
   };
