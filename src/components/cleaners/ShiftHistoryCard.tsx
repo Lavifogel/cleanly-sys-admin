@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, Timer, ClipboardCheck } from "lucide-react";
+import { Calendar, Clock, ClipboardCheck, Timer } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RecentCleaningsCard from "./RecentCleaningsCard";
 import { CleaningHistoryItem } from "@/types/cleaning";
@@ -96,29 +96,27 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
             {shiftsHistory.map((shift) => (
               <div 
                 key={shift.id} 
-                className="border rounded-lg overflow-hidden cursor-pointer hover:border-primary transition-colors"
+                className="border rounded-lg overflow-hidden cursor-pointer hover:border-primary transition-colors p-4"
                 onClick={() => setSelectedShift(shift)}
               >
-                <div className="p-4 bg-card">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1 text-primary" />
-                        <h4 className="font-medium">{shift.date}</h4>
-                      </div>
-                      <div className="flex items-center mt-1 text-sm text-muted-foreground">
-                        <Clock className="h-3 w-3 mr-1" />
-                        <p>{shift.startTime} - {shift.endTime}</p>
-                      </div>
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <div className="flex items-center">
+                      <Calendar className="h-5 w-5 mr-2 text-primary" />
+                      <h4 className="font-medium text-lg">{shift.date}</h4>
                     </div>
-                    <div className="text-sm font-medium flex items-center bg-primary/10 px-2 py-1 rounded">
-                      <Timer className="h-3 w-3 mr-1 text-primary" />
-                      {shift.duration}
+                    <div className="flex items-center text-muted-foreground">
+                      <Clock className="h-4 w-4 mr-2" />
+                      <p>{shift.startTime} - {shift.endTime}</p>
+                    </div>
+                    <div className="flex items-center text-muted-foreground">
+                      <ClipboardCheck className="h-4 w-4 mr-2" />
+                      <p>{shift.cleanings} cleanings completed</p>
                     </div>
                   </div>
-                  <div className="mt-2 text-sm text-muted-foreground flex items-center">
-                    <ClipboardCheck className="h-3 w-3 mr-1" />
-                    {shift.cleanings} cleanings completed
+                  <div className="text-sm font-medium flex items-center bg-primary/10 px-3 py-1.5 rounded-full">
+                    <Timer className="h-3.5 w-3.5 mr-1 text-primary" />
+                    {shift.duration}
                   </div>
                 </div>
               </div>

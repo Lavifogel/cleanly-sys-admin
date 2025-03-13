@@ -1,6 +1,8 @@
 
 import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
+import CleaningHistoryCard from "@/components/cleaners/CleaningHistoryCard";
 import ProfileCard from "@/components/cleaners/ProfileCard";
+import { CleaningHistoryItem } from "@/types/cleaning";
 
 export interface ShiftHistoryItem {
   id: string;
@@ -14,12 +16,14 @@ export interface ShiftHistoryItem {
 
 interface ProfileTabProps {
   shiftsHistory: ShiftHistoryItem[];
+  cleaningsHistory?: CleaningHistoryItem[];
 }
 
-const ProfileTab = ({ shiftsHistory }: ProfileTabProps) => {
+const ProfileTab = ({ shiftsHistory, cleaningsHistory = [] }: ProfileTabProps) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <ShiftHistoryCard shiftsHistory={shiftsHistory} />
+      <CleaningHistoryCard cleaningsHistory={cleaningsHistory} />
       <ProfileCard />
     </div>
   );
