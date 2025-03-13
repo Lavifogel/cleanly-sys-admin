@@ -1,93 +1,136 @@
 
-import { useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { QRScannerStates } from "@/types/qrScanner";
 import { useCameraControls } from "./useCameraControls";
-import { useSimulation } from "./useSimulation";
 import { useFileInput } from "./useFileInput";
+import { useSimulation } from "./useSimulation";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
-export const useQRScannerLogic = (
-  onScanSuccess: (decodedText: string) => void,
-  onClose: () => void
-) => {
-  const { 
-    cameraActive, 
-    isScanning, 
-    error, 
-    scannerRef, 
-    scannerContainerId, 
-    stopCamera, 
-    startScanner,
-    setError 
-  } = useCameraControls({ onScanSuccess });
+interface UseQRScannerLogicProps {
+  onScanSuccess: (decodedText: string) => void;
+}
 
-  const { 
-    simulationActive, 
-    simulationProgress, 
-    startSimulation, 
-    resetSimulation 
+export const useQRScannerLogic = ({ onScanSuccess }: UseQRScannerLogicProps) => {
+  const [html5QrCode, setHtml5QrCode] = useState<Html5Qrcode | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+
+  const {
+    cameras,
+    selectedCamera,
+    isLoading: isCameraLoading,
+    hasCameraPermission,
+    loadCameras,
+    selectCamera
+  } = useCameraControls();
+
+  const {
+    fileInputRef,
+    handleFileInputChange,
+    triggerFileInput
+  } = useFileInput({ onScanSuccess });
+
+  const {
+    simulationActive,
+    simulationProgress,
+    startSimulation,
+    resetSimulation
   } = useSimulation({ onScanSuccess });
 
-  const { 
-    isTakingPicture, 
-    fileInputRef, 
-    handleTakePicture, 
-    handleFileSelect 
-  } = useFileInput({
-    onScanSuccess,
-    scannerRef,
-    stopCamera,
-    startScanner,
-    setError,
-    isScanning
-  });
-
-  // Combine all states into a single scanner state object
-  const scannerState: QRScannerStates = {
-    isScanning,
-    error,
-    isTakingPicture,
-    cameraActive,
-    simulationActive,
-    simulationProgress
-  };
-
-  // Initialize the scanner when component mounts
+  // Initialize QR scanner
   useEffect(() => {
-    scannerRef.current = new Html5Qrcode(scannerContainerId);
+    const qrCodeScanner = new Html5Qrcode("qrScanner");
+    setHtml5QrCode(qrCodeScanner);
 
-    // Clean up when component unmounts
     return () => {
-      stopCamera();
+      if (qrCodeScanner.isScanning) {
+        qrCodeScanner.stop().catch(error => {
+          console.error("Error stopping scanner on unmount:", error);
+        });
+      }
+      stopAllVideoStreams();
     };
   }, []);
 
-  // Start scanning when the scanner is initialized
-  useEffect(() => {
-    if (scannerRef.current && !isScanning) {
-      startScanner();
+  // Start scanning with camera
+  const startScan = useCallback(async () => {
+    if (!html5QrCode || !selectedCamera || isScanning) return;
+
+    setIsScanning(true);
+    setScanError(null);
+
+    try {
+      await html5QrCode.start(
+        selectedCamera.id,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        (decodedText) => {
+          html5QrCode.stop().catch(console.error);
+          onScanSuccess(decodedText);
+          setIsScanning(false);
+        },
+        (errorMessage) => {
+          console.info("QR code parse error, error =", errorMessage);
+        }
+      );
+    } catch (err) {
+      setIsScanning(false);
+      setScanError(`Failed to start scanner: ${err instanceof Error ? err.message : String(err)}`);
+      console.error("Error starting QR scanner:", err);
     }
-  }, [scannerRef.current]);
+  }, [html5QrCode, selectedCamera, isScanning, onScanSuccess]);
 
-  const handleClose = () => {
-    stopCamera(); // Ensure camera is stopped before closing
-    resetSimulation(); // Reset any active simulation
-    onClose();
-  };
+  // Stop scanning
+  const stopScan = useCallback(async () => {
+    if (!html5QrCode || !isScanning) return;
 
-  const handleManualSimulation = () => {
-    // This is for demonstration only - simulates a successful scan
-    startSimulation();
-  };
+    try {
+      await html5QrCode.stop();
+      setIsScanning(false);
+    } catch (err) {
+      console.error("Error stopping QR scanner:", err);
+    }
+
+    // Ensure all video streams are stopped
+    stopAllVideoStreams();
+  }, [html5QrCode, isScanning]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(console.error);
+      }
+      stopAllVideoStreams();
+    };
+  }, [html5QrCode]);
 
   return {
-    scannerState,
-    scannerContainerId,
+    // Camera-related props
+    cameras,
+    selectedCamera,
+    isCameraLoading,
+    hasCameraPermission,
+    loadCameras,
+    selectCamera,
+    
+    // Scanning state
+    isScanning,
+    scanError,
+    startScan,
+    stopScan,
+    
+    // File input related props
     fileInputRef,
-    handleClose,
-    handleTakePicture,
-    handleFileSelect,
-    handleManualSimulation
+    handleFileInputChange,
+    triggerFileInput,
+    
+    // Simulation related props
+    simulationActive,
+    simulationProgress,
+    startSimulation,
+    resetSimulation
   };
 };
