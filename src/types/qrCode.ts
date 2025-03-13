@@ -12,7 +12,11 @@ export interface QrCode {
   type: string;
   areaId: string;
   qrCodeImageUrl?: string;
+  description?: string;
+  floor?: string;
+  building?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -32,6 +36,9 @@ export interface SaveQrCodeParams {
   type: string;
   areaId: string;
   qrCodeImageUrl: string;
+  description?: string;
+  floor?: string;
+  building?: string;
 }
 
 /**
@@ -64,17 +71,3 @@ export interface QrCodePreviewModalProps {
  * Valid QR code types
  */
 export type QrCodeType = "Shift" | "Cleaning";
-
-/**
- * Represents an area entity
- */
-export interface Area {
-  id: string;
-  areaId: string;
-  name: string;
-  description?: string;
-  floor?: string;
-  building?: string;
-  createdAt: string;
-  updatedAt: string;
-}

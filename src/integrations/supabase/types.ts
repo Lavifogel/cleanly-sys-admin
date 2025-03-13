@@ -9,121 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admins: {
-        Row: {
-          access_level: string | null
-          created_at: string
-          department: string | null
-          id: string
-          position: string | null
-          updated_at: string
-        }
-        Insert: {
-          access_level?: string | null
-          created_at?: string
-          department?: string | null
-          id: string
-          position?: string | null
-          updated_at?: string
-        }
-        Update: {
-          access_level?: string | null
-          created_at?: string
-          department?: string | null
-          id?: string
-          position?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admins_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      areas: {
-        Row: {
-          area_id: string
-          building: string | null
-          created_at: string
-          description: string | null
-          floor: string | null
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          area_id: string
-          building?: string | null
-          created_at?: string
-          description?: string | null
-          floor?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          area_id?: string
-          building?: string | null
-          created_at?: string
-          description?: string | null
-          floor?: string | null
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      cleaners: {
-        Row: {
-          active: boolean | null
-          address: string | null
-          created_at: string
-          id: string
-          phone: string | null
-          rating: number | null
-          specialization: string | null
-          start_date: string | null
-          status: string | null
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean | null
-          address?: string | null
-          created_at?: string
-          id: string
-          phone?: string | null
-          rating?: number | null
-          specialization?: string | null
-          start_date?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean | null
-          address?: string | null
-          created_at?: string
-          id?: string
-          phone?: string | null
-          rating?: number | null
-          specialization?: string | null
-          start_date?: string | null
-          status?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cleaners_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       cleanings: {
         Row: {
           area_id: string
@@ -210,80 +95,52 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          created_at: string
-          email: string
-          first_name: string | null
-          id: string
-          last_name: string | null
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
-          user_name: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          first_name?: string | null
-          id: string
-          last_name?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-          user_name?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-          user_name?: string | null
-        }
-        Relationships: []
-      }
       qr_codes: {
         Row: {
           area_id: string
           area_name: string
+          building: string | null
           created_at: string
           created_by: string | null
+          description: string | null
+          floor: string | null
           id: string
           qr_code_image_url: string | null
           type: string
+          updated_at: string | null
         }
         Insert: {
           area_id: string
           area_name: string
+          building?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
+          floor?: string | null
           id?: string
           qr_code_image_url?: string | null
           type: string
+          updated_at?: string | null
         }
         Update: {
           area_id?: string
           area_name?: string
+          building?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
+          floor?: string | null
           id?: string
           qr_code_image_url?: string | null
           type?: string
+          updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "qr_codes_area_id_fkey"
-            columns: ["area_id"]
-            isOneToOne: true
-            referencedRelation: "areas"
-            referencedColumns: ["area_id"]
-          },
           {
             foreignKeyName: "qr_codes_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "admins"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -327,66 +184,48 @@ export type Database = {
             foreignKeyName: "shifts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "cleaners"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
       users: {
         Row: {
-          access_level: string | null
           active: boolean | null
-          address: string | null
           created_at: string
-          department: string | null
           email: string
           first_name: string | null
           full_name: string | null
           id: string
           last_name: string | null
           phone: string | null
-          position: string | null
-          rating: number | null
           role: string
-          specialization: string | null
           start_date: string | null
           updated_at: string
         }
         Insert: {
-          access_level?: string | null
           active?: boolean | null
-          address?: string | null
           created_at?: string
-          department?: string | null
           email: string
           first_name?: string | null
           full_name?: string | null
           id: string
           last_name?: string | null
           phone?: string | null
-          position?: string | null
-          rating?: number | null
           role?: string
-          specialization?: string | null
           start_date?: string | null
           updated_at?: string
         }
         Update: {
-          access_level?: string | null
           active?: boolean | null
-          address?: string | null
           created_at?: string
-          department?: string | null
           email?: string
           first_name?: string | null
           full_name?: string | null
           id?: string
           last_name?: string | null
           phone?: string | null
-          position?: string | null
-          rating?: number | null
           role?: string
-          specialization?: string | null
           start_date?: string | null
           updated_at?: string
         }
@@ -397,18 +236,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_cleaner_user: {
-        Args: {
-          user_id: string
-          first_name: string
-          last_name: string
-          email: string
-          phone_number: string
-          start_date: string
-          is_active: boolean
-        }
-        Returns: Json
-      }
       create_user: {
         Args: {
           user_id: string
@@ -427,22 +254,6 @@ export type Database = {
           area_name: string
         }
         Returns: string
-      }
-      get_full_user_info: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          user_name: string
-          first_name: string
-          last_name: string
-          full_name: string
-          email: string
-          role: string
-          start_date: string
-          created_at: string
-          status: string
-          phone: string
-        }[]
       }
       get_user_info: {
         Args: Record<PropertyKey, never>
