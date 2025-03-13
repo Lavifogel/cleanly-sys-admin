@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { stopAllVideoStreams, isCameraInUse } from "@/utils/qrScannerUtils";
 
 interface ImagesSectionProps {
   images: string[];
@@ -35,27 +35,20 @@ const ImagesSection = ({
     }
 
     // Check if camera is already in use
-    const videoElements = document.querySelectorAll('video');
-    let cameraInUse = false;
+    if (isCameraInUse()) {
+      toast({
+        title: "Camera in use",
+        description: "Please close the QR scanner before taking photos.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    videoElements.forEach(video => {
-      if (video.srcObject) {
-        cameraInUse = true;
-        toast({
-          title: "Camera in use",
-          description: "Please close the QR scanner before taking photos.",
-          variant: "destructive",
-        });
-      }
-    });
-    
-    if (!cameraInUse) {
-      // Reset the file input to ensure it triggers properly
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-        // Directly trigger a click on the file input
-        fileInputRef.current.click();
-      }
+    // Reset the file input to ensure it triggers properly
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      // Directly trigger a click on the file input
+      fileInputRef.current.click();
     }
   };
 
@@ -90,6 +83,13 @@ const ImagesSection = ({
   };
 
   // Clean up any video streams when component unmounts
+  useEffect(() => {
+    return () => {
+      stopAllVideoStreams();
+    };
+  }, []);
+
+  // Clean up any camera resources when this component unmounts
   useEffect(() => {
     return () => {
       stopAllVideoStreams();

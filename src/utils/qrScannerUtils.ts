@@ -44,3 +44,18 @@ export const stopAllVideoStreams = () => {
     // Ignore any errors in this cleanup
   }
 };
+
+// Check if camera is already in use by checking for active video tracks
+export const isCameraInUse = (): boolean => {
+  let inUse = false;
+  
+  // Check video elements first
+  const videoElements = document.querySelectorAll('video');
+  videoElements.forEach(video => {
+    if (video.srcObject) {
+      inUse = true;
+    }
+  });
+  
+  return inUse;
+};
