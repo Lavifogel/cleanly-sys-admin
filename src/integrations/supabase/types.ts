@@ -9,56 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      area: {
-        Row: {
-          area_id: string
-          area_name: string
-          building: string | null
-          created_at: string
-          created_by: string | null
-          description: string | null
-          floor: string | null
-          id: string
-          qr_code_image_url: string | null
-          type: string
-          updated_at: string | null
-        }
-        Insert: {
-          area_id: string
-          area_name: string
-          building?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          floor?: string | null
-          id?: string
-          qr_code_image_url?: string | null
-          type: string
-          updated_at?: string | null
-        }
-        Update: {
-          area_id?: string
-          area_name?: string
-          building?: string | null
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          floor?: string | null
-          id?: string
-          qr_code_image_url?: string | null
-          type?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "qr_codes_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       areas: {
         Row: {
           area_id: string
@@ -84,39 +34,36 @@ export type Database = {
         Row: {
           area_id: string
           created_at: string
-          end_date: string | null
           end_time: string | null
           id: string
           notes: string | null
+          qr_id: string | null
           shift_id: string
-          start_date: string
-          start_time: string
+          start_time: string | null
           status: string
           updated_at: string
         }
         Insert: {
           area_id: string
           created_at?: string
-          end_date?: string | null
           end_time?: string | null
           id?: string
           notes?: string | null
+          qr_id?: string | null
           shift_id: string
-          start_date?: string
-          start_time?: string
+          start_time?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           area_id?: string
           created_at?: string
-          end_date?: string | null
           end_time?: string | null
           id?: string
           notes?: string | null
+          qr_id?: string | null
           shift_id?: string
-          start_date?: string
-          start_time?: string
+          start_time?: string | null
           status?: string
           updated_at?: string
         }
@@ -125,8 +72,15 @@ export type Database = {
             foreignKeyName: "cleanings_area_id_fkey"
             columns: ["area_id"]
             isOneToOne: false
-            referencedRelation: "area"
+            referencedRelation: "areas"
             referencedColumns: ["area_id"]
+          },
+          {
+            foreignKeyName: "cleanings_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["qr_id"]
           },
           {
             foreignKeyName: "cleanings_shift_id_fkey"
@@ -136,27 +90,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      date_time: {
-        Row: {
-          date: string
-          day: number
-          month: number
-          year: number
-        }
-        Insert: {
-          date: string
-          day: number
-          month: number
-          year: number
-        }
-        Update: {
-          date?: string
-          day?: number
-          month?: number
-          year?: number
-        }
-        Relationships: []
       }
       images: {
         Row: {
@@ -222,36 +155,30 @@ export type Database = {
       shifts: {
         Row: {
           created_at: string
-          end_date: string | null
           end_time: string | null
           id: string
           qr_id: string | null
-          start_date: string
-          start_time: string
+          start_time: string | null
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          end_date?: string | null
           end_time?: string | null
           id?: string
           qr_id?: string | null
-          start_date?: string
-          start_time?: string
+          start_time?: string | null
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          end_date?: string | null
           end_time?: string | null
           id?: string
           qr_id?: string | null
-          start_date?: string
-          start_time?: string
+          start_time?: string | null
           status?: string
           updated_at?: string
           user_id?: string

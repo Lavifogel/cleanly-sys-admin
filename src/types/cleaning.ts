@@ -31,14 +31,14 @@ export interface CleaningSummary {
   images: string[];
 }
 
-// Database models matching our schema
+// Database models matching our updated schema
 export interface DbCleaning {
   id: string; // PK (UUID)
   shift_id: string; // FK to shifts
   area_id: string; // FK to areas
   qr_id?: string; // FK to qr_codes
-  start_time: string;
-  end_time?: string;
+  start_time: string; // Now a timestamp with timezone
+  end_time?: string; // Now a timestamp with timezone
   status: 'active' | 'finished with scan' | 'finished without scan';
   note?: string;
   created_at: string;
@@ -71,10 +71,8 @@ export interface DbShift {
   id: string; // PK (UUID)
   user_id: string; // FK to users
   qr_id?: string; // FK to qr_codes
-  start_date: string;
-  start_time: string;
-  end_date?: string;
-  end_time?: string;
+  start_time: string; // Now a timestamp with timezone
+  end_time?: string; // Now a timestamp with timezone
   status: 'active' | 'finished with scan' | 'finished without scan';
   created_at: string;
   updated_at: string;
