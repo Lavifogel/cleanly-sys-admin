@@ -38,6 +38,7 @@ const ImagesSection = ({
       if (inputRef.current) {
         inputRef.current.value = '';
       }
+      stopAllVideoStreams();
     };
   }, []);
   
@@ -162,8 +163,7 @@ const ImagesSection = ({
         className="hidden"
         onChange={handleCapture}
         onClick={(e) => {
-          // This prevents the file selection dialog from showing files
-          // and forces it to go directly to the camera
+          // This prevents showing the file picker and forces camera to open
           e.stopPropagation();
         }}
       />
