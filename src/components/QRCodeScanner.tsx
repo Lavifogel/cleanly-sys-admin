@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
@@ -16,14 +16,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     handleClose,
     handleTakePicture,
     handleFileSelect,
-    handleManualSimulation,
-    cleanup
-  } = useQRScannerLogic({ onScanSuccess, onClose });
+    handleManualSimulation
+  } = useQRScannerLogic(onScanSuccess, onClose);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+  const { error } = scannerState;
 
   return (
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
@@ -43,9 +39,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
           scannerState={scannerState} 
         />
         
-        {scannerState.error && (
+        {error && (
           <div className="mt-4 text-destructive text-center">
-            {scannerState.error}
+            {error}
           </div>
         )}
 

@@ -1,34 +1,24 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseCameraControlsProps {
   onScanSuccess: (decodedText: string) => void;
-  scannerContainerId: string;
 }
 
-export const useCameraControls = ({ onScanSuccess, scannerContainerId }: UseCameraControlsProps) => {
+export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => {
   const [cameraActive, setCameraActive] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
   const scannerRef = useRef<Html5Qrcode | null>(null);
-
-  // Initialize scanner on first render
-  useEffect(() => {
-    if (!scannerRef.current) {
-      scannerRef.current = new Html5Qrcode(scannerContainerId);
-    }
-
-    return () => {
-      stopCamera();
-    };
-  }, [scannerContainerId]);
+  const scannerContainerId = "qr-scanner-container";
 
   // Stop camera function - improved to ensure complete cleanup
   const stopCamera = async () => {
     try {
-      if (scannerRef.current && scannerRef.current.isScanning) {
+      if (scannerRef.current && isScanning) {
         await scannerRef.current.stop();
         console.log("Camera stopped successfully from scanner");
       }
@@ -88,21 +78,12 @@ export const useCameraControls = ({ onScanSuccess, scannerContainerId }: UseCame
     }
   };
 
-  // Start scanner automatically
-  useEffect(() => {
-    // Auto-start scanner after component mounts
-    startScanner();
-    
-    // Cleanup when unmounting
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
   return {
     cameraActive,
     isScanning,
     error,
+    scannerRef,
+    scannerContainerId,
     stopCamera,
     startScanner,
     setError
