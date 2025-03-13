@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,11 +14,11 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      console.log("Fetching user data using the new unified users table...");
+      console.log("Fetching user data using the merged function...");
       
-      // Use the new database function that works with the unified users table
+      // Use the new database function that merges profiles, cleaners, and admins
       const { data, error } = await supabase
-        .rpc('get_user_info');
+        .rpc('get_full_user_info');
       
       if (error) {
         console.error("Error fetching users:", error);
@@ -30,17 +29,14 @@ export const useUserManagement = () => {
       
       // Process the data
       if (data) {
-        const formattedUsers: CleanerUser[] = data.map(user => {
-          // Ensure status is strictly typed as "active" or "inactive"
-          const userStatus = user.status?.toLowerCase() === 'active' ? "active" : "inactive";
-          
+        const formattedUsers: CleanerUser[] = data.map(user => {          
           return {
             id: user.id,
             phoneNumber: user.phone || user.user_name || '',
             name: user.full_name || 'Unknown',
             role: user.role || 'cleaner',
             startDate: user.start_date || '',
-            status: userStatus, // Now properly typed as "active" | "inactive"
+            status: user.status || "active",
             email: user.email || ''
           };
         });
@@ -81,8 +77,8 @@ export const useUserManagement = () => {
       const newStatus = user.status === "active" ? false : true;
       
       const { error } = await supabase
-        .from('users')
-        .update({ active: newStatus })
+        .from('cleaners')
+        .update({ active: newStatus } as any)
         .eq('id', user.id);
       
       if (error) throw error;
@@ -112,7 +108,7 @@ export const useUserManagement = () => {
   const handleDeleteUser = async (userId: string) => {
     try {
       const { error } = await supabase
-        .from('users')
+        .from('cleaners')
         .delete()
         .eq('id', userId);
       

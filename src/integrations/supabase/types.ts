@@ -332,66 +332,6 @@ export type Database = {
           },
         ]
       }
-      users: {
-        Row: {
-          access_level: string | null
-          active: boolean | null
-          address: string | null
-          created_at: string
-          department: string | null
-          email: string
-          first_name: string | null
-          full_name: string | null
-          id: string
-          last_name: string | null
-          phone: string | null
-          position: string | null
-          rating: number | null
-          role: string
-          specialization: string | null
-          start_date: string | null
-          updated_at: string
-        }
-        Insert: {
-          access_level?: string | null
-          active?: boolean | null
-          address?: string | null
-          created_at?: string
-          department?: string | null
-          email: string
-          first_name?: string | null
-          full_name?: string | null
-          id: string
-          last_name?: string | null
-          phone?: string | null
-          position?: string | null
-          rating?: number | null
-          role?: string
-          specialization?: string | null
-          start_date?: string | null
-          updated_at?: string
-        }
-        Update: {
-          access_level?: string | null
-          active?: boolean | null
-          address?: string | null
-          created_at?: string
-          department?: string | null
-          email?: string
-          first_name?: string | null
-          full_name?: string | null
-          id?: string
-          last_name?: string | null
-          phone?: string | null
-          position?: string | null
-          rating?: number | null
-          role?: string
-          specialization?: string | null
-          start_date?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -404,19 +344,6 @@ export type Database = {
           last_name: string
           email: string
           phone_number: string
-          start_date: string
-          is_active: boolean
-        }
-        Returns: Json
-      }
-      create_user: {
-        Args: {
-          user_id: string
-          first_name: string
-          last_name: string
-          email: string
-          phone_number: string
-          role: string
           start_date: string
           is_active: boolean
         }
@@ -443,26 +370,6 @@ export type Database = {
           status: string
           phone: string
         }[]
-      }
-      get_user_info: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          user_name: string
-          first_name: string
-          last_name: string
-          full_name: string
-          email: string
-          role: string
-          start_date: string
-          created_at: string
-          status: string
-          phone: string
-        }[]
-      }
-      migrate_to_users_table: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
     }
     Enums: {
