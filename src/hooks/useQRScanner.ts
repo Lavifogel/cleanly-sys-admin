@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export type ScannerPurpose = "startShift" | "endShift" | "startCleaning" | "endCleaning";
 
@@ -10,22 +11,19 @@ export function useQRScanner() {
   // Effect to release camera resources when QR scanner is closed
   useEffect(() => {
     if (!showQRScanner) {
-      // Extra safety: ensure camera is released when scanner is closed
-      setTimeout(() => {
-        const videoElements = document.querySelectorAll('video');
-        videoElements.forEach(video => {
-          if (video.srcObject) {
-            const stream = video.srcObject as MediaStream;
-            stream.getTracks().forEach(track => {
-              track.stop();
-              console.log("Released camera track from hook:", track.kind);
-            });
-            video.srcObject = null;
-          }
-        });
-      }, 100); // Small delay to ensure cleanup happens after component unmount
+      // When the scanner is closed, ensure camera is released
+      stopAllVideoStreams();
+      console.log("Camera resources released from useQRScanner hook");
     }
   }, [showQRScanner]);
+
+  // Also clean up on component unmount
+  useEffect(() => {
+    return () => {
+      stopAllVideoStreams();
+      console.log("Camera resources released on component unmount");
+    };
+  }, []);
 
   const openScanner = (purpose: ScannerPurpose) => {
     setScannerPurpose(purpose);

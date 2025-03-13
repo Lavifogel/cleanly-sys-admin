@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { ScannerPurpose } from "@/hooks/useQRScanner";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface QRScannerHandlerProps {
   showQRScanner: boolean;
@@ -21,28 +22,33 @@ const QRScannerHandler = ({
   useEffect(() => {
     if (!showQRScanner) {
       // Ensure any lingering video tracks are stopped
-      const videoElements = document.querySelectorAll('video');
-      videoElements.forEach(video => {
-        if (video.srcObject) {
-          const stream = video.srcObject as MediaStream;
-          if (stream) {
-            stream.getTracks().forEach(track => {
-              track.stop();
-              console.log("Stopping track on QR scanner close:", track.kind);
-            });
-          }
-          video.srcObject = null;
-        }
-      });
+      stopAllVideoStreams();
+      console.log("Camera resources released when QR scanner hidden");
     }
+    
+    // Also clean up when unmounting
+    return () => {
+      if (showQRScanner) {
+        stopAllVideoStreams();
+        console.log("Camera resources released when QR scanner component unmounted");
+      }
+    };
   }, [showQRScanner]);
 
   if (!showQRScanner) return null;
 
   return (
     <QRCodeScanner 
-      onScanSuccess={onQRScan}
-      onClose={closeScanner}
+      onScanSuccess={(decodedText) => {
+        onQRScan(decodedText);
+        // Ensure camera is stopped after successful scan
+        stopAllVideoStreams();
+      }}
+      onClose={() => {
+        closeScanner();
+        // Double-ensure camera is stopped
+        stopAllVideoStreams();
+      }}
     />
   );
 };

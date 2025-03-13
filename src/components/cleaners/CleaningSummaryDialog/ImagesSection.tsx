@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface ImagesSectionProps {
   images: string[];
@@ -30,6 +31,15 @@ const ImagesSection = ({
       inputRef.current.click();
     }
   }, [showCamera]);
+  
+  // Add cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+    };
+  }, []);
   
   const openCamera = () => {
     if (images.length >= maxImages) {
@@ -81,10 +91,11 @@ const ImagesSection = ({
       console.error("Error handling file:", error);
       // Error is already handled in the hook with toast
     } finally {
-      // Reset the input value
+      // Reset the input value and stop any camera streams
       if (inputRef.current) {
         inputRef.current.value = '';
       }
+      stopAllVideoStreams();
     }
   };
 

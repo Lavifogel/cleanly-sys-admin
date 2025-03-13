@@ -66,12 +66,12 @@ export const useQRScannerLogic = (
     };
   }, [scannerState.simulationActive, scannerState.simulationProgress, onScanSuccess]);
 
-  // Stop camera function
+  // Stop camera function - improved to ensure complete cleanup
   const stopCamera = async () => {
     try {
       if (scannerRef.current && scannerState.isScanning) {
         await scannerRef.current.stop();
-        console.log("Camera stopped successfully");
+        console.log("Camera stopped successfully from scanner");
       }
       
       // Additional cleanup to ensure all camera resources are released
@@ -84,6 +84,8 @@ export const useQRScannerLogic = (
       }));
     } catch (error) {
       console.error("Error stopping camera:", error);
+      // Even if there's an error, still try to stop all video streams as a fallback
+      stopAllVideoStreams();
     }
   };
 
@@ -137,7 +139,7 @@ export const useQRScannerLogic = (
   };
 
   const handleClose = () => {
-    stopCamera();
+    stopCamera(); // Ensure camera is stopped before closing
     onClose();
   };
 
