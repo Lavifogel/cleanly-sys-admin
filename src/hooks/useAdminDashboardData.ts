@@ -27,8 +27,8 @@ export function useAdminDashboardData() {
       const { data: activeShifts, error: shiftsError } = await supabase
         .from('shifts')
         .select('id, user_id')
-        .eq('status', 'active' as any)
-        .is('end_date', null);
+        .eq('status', 'active')
+        .is('end_time', null);
 
       if (shiftsError) throw shiftsError;
 
@@ -37,8 +37,8 @@ export function useAdminDashboardData() {
       const { data: cleaningsToday, error: cleaningsError } = await supabase
         .from('cleanings')
         .select('id')
-        .eq('start_date', today as any)
-        .eq('status', 'finished' as any);
+        .gte('start_time', today)
+        .eq('status', 'finished');
 
       if (cleaningsError) throw cleaningsError;
 
@@ -46,7 +46,7 @@ export function useAdminDashboardData() {
       const { data: pendingCleanings, error: pendingError } = await supabase
         .from('cleanings')
         .select('id')
-        .eq('status', 'active' as any);
+        .eq('status', 'active');
 
       if (pendingError) throw pendingError;
 
