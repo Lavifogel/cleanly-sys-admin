@@ -45,47 +45,20 @@ export const generateAreaId = async (areaName: string): Promise<string> => {
 };
 
 /**
- * Creates a new area in the database
- */
-export const createArea = async (areaId: string, areaName: string): Promise<any> => {
-  const { data, error } = await supabase
-    .from('areas')
-    .insert({
-      area_id: areaId,
-      area_name: areaName
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Error creating area:", error);
-    throw error;
-  }
-
-  return data;
-};
-
-/**
- * Saves QR code to database
+ * Saves QR code to database using the new unified schema
  */
 export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
   const { areaName, type, areaId, qrCodeImageUrl } = params;
   
   console.log("Attempting to insert QR code into database...");
   
-  // First, ensure the area exists
-  try {
-    await createArea(areaId, areaName);
-  } catch (error) {
-    console.log("Area may already exist, continuing...");
-  }
-  
-  // Then create the QR code record
+  // With the unified schema, we insert directly into qr_codes table
   const { data, error } = await supabase
     .from('qr_codes')
     .insert({
-      qr_value: JSON.stringify({ areaId, areaName, type }),
       area_id: areaId,
+      area_name: areaName,
+      qr_value: JSON.stringify({ areaId, areaName, type }),
       type: type
     })
     .select()
@@ -100,7 +73,7 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
   
   return {
     id: data.qr_id,
-    areaName: areaName,
+    areaName: data.area_name,
     type: data.type,
     areaId: data.area_id,
     qrCodeImageUrl: qrCodeImageUrl, // We store this client-side only
@@ -109,22 +82,12 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
 };
 
 /**
- * Fetches QR codes from database and joins with area information
+ * Fetches QR codes from the unified table
  */
 export const fetchQrCodes = async (): Promise<QrCode[]> => {
-  // Join with areas table to get area names
   const { data, error } = await supabase
     .from('qr_codes')
-    .select(`
-      qr_id,
-      qr_value,
-      area_id,
-      type, 
-      created_at,
-      areas (
-        area_name
-      )
-    `)
+    .select('*')
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -132,9 +95,6 @@ export const fetchQrCodes = async (): Promise<QrCode[]> => {
   if (!data) return [];
   
   return data.map(qr => {
-    // Get the area name from the areas join or use a fallback
-    const areaName = qr.areas?.area_name || 'Unknown Area';
-    
     // Parse QR value for image URL if available, otherwise undefined
     let qrData;
     try {
@@ -145,7 +105,7 @@ export const fetchQrCodes = async (): Promise<QrCode[]> => {
     
     return {
       id: qr.qr_id,
-      areaName: areaName,
+      areaName: qr.area_name,
       type: qr.type,
       areaId: qr.area_id || '',
       // No image URL stored in database, we would need to regenerate it

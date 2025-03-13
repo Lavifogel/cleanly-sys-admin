@@ -36,14 +36,7 @@ export const getQrCodes = async () => {
   return data || [];
 };
 
-export const getAreas = async () => {
-  const { data, error } = await supabase
-    .from('areas')
-    .select('*');
-  
-  if (error) throw error;
-  return data || [];
-};
+// No separate getAreas function is needed anymore since areas are now in qr_codes table
 
 export const getShifts = async () => {
   const { data, error } = await supabase

@@ -51,19 +51,15 @@ export interface DbImage {
   created_at: string;
 }
 
-export interface DbArea {
-  area_id: string; // PK
-  area_name: string;
-  created_at: string;
-  updated_at: string;
-}
-
+// Updated for unified schema - QR codes now include area information
 export interface DbQrCode {
   qr_id: string; // PK (UUID)
+  area_id: string; // Now a field in the qr_codes table
+  area_name: string; // Now a field in the qr_codes table
   qr_value: string;
-  area_id?: string; // FK to areas
   type: 'Shift' | 'Cleaning';
   created_at: string;
+  updated_at: string;
 }
 
 export interface DbShift {
