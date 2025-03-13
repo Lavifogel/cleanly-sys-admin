@@ -22,15 +22,7 @@ const ImagesSection = ({
   isUploading = false
 }: ImagesSectionProps) => {
   const { toast } = useToast();
-  const [showCamera, setShowCamera] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Effect to trigger the camera input when showCamera becomes true
-  useEffect(() => {
-    if (showCamera && inputRef.current) {
-      inputRef.current.click();
-    }
-  }, [showCamera]);
   
   // Add cleanup when component unmounts
   useEffect(() => {
@@ -67,12 +59,16 @@ const ImagesSection = ({
     });
     
     if (!cameraInUse) {
-      setShowCamera(true);
+      // Directly trigger the input click to open the camera
+      if (inputRef.current) {
+        // Ensure the input is reset before opening again
+        inputRef.current.value = '';
+        inputRef.current.click();
+      }
     }
   };
 
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setShowCamera(false);
     const file = e.target.files?.[0];
     if (!file) return;
     
