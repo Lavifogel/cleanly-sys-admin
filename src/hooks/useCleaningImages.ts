@@ -28,6 +28,7 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
         });
       
       if (error) {
+        console.error("Supabase storage upload error:", error);
         throw error;
       }
       
@@ -100,18 +101,20 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
   
   // Function to remove an image
   const removeImage = async (index: number) => {
+    if (isUploading) return;
+    
     const imageUrl = images[index];
     
     // If it's a Supabase URL, extract the path and delete from storage
     if (imageUrl && imageUrl.includes('cleaning-images')) {
       try {
         // Extract the file path from the URL
-        const filePath = imageUrl.split('cleaning-images/')[1];
+        const pathMatch = imageUrl.match(/cleaning-images\/(.+)/);
         
-        if (filePath) {
+        if (pathMatch && pathMatch[1]) {
           await supabase.storage
             .from('cleaning-images')
-            .remove([`cleanings/${filePath}`]);
+            .remove([`cleanings/${pathMatch[1]}`]);
         }
       } catch (error) {
         console.error("Error removing image from storage:", error);

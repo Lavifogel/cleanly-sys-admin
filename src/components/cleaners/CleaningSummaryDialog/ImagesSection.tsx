@@ -22,25 +22,9 @@ const ImagesSection = ({
   isUploading = false
 }: ImagesSectionProps) => {
   const { toast } = useToast();
-  const [showCamera, setShowCamera] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  useEffect(() => {
-    if (showCamera && inputRef.current) {
-      inputRef.current.click();
-    }
-  }, [showCamera]);
-  
-  useEffect(() => {
-    return () => {
-      if (inputRef.current) {
-        inputRef.current.value = '';
-      }
-      stopAllVideoStreams();
-    };
-  }, []);
-  
-  const openCamera = () => {
+  const handleCameraClick = () => {
     if (images.length >= maxImages) {
       toast({
         title: "Maximum images reached",
@@ -49,7 +33,7 @@ const ImagesSection = ({
       });
       return;
     }
-    
+
     // Check if camera is already in use
     const videoElements = document.querySelectorAll('video');
     let cameraInUse = false;
@@ -66,16 +50,16 @@ const ImagesSection = ({
     });
     
     if (!cameraInUse) {
-      // Reset input to ensure it triggers even if the same file would be selected
-      if (inputRef.current) {
-        inputRef.current.value = '';
+      // Reset the file input to ensure it triggers properly
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+        // Directly trigger a click on the file input
+        fileInputRef.current.click();
       }
-      setShowCamera(true);
     }
   };
 
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setShowCamera(false);
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -92,13 +76,25 @@ const ImagesSection = ({
       await onAddImage(file);
     } catch (error) {
       console.error("Error handling file:", error);
+      toast({
+        title: "Upload failed",
+        description: "There was a problem uploading your image.",
+        variant: "destructive",
+      });
     } finally {
-      if (inputRef.current) {
-        inputRef.current.value = '';
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
       stopAllVideoStreams();
     }
   };
+
+  // Clean up any video streams when component unmounts
+  useEffect(() => {
+    return () => {
+      stopAllVideoStreams();
+    };
+  }, []);
 
   return (
     <div>
@@ -136,7 +132,7 @@ const ImagesSection = ({
         size="sm" 
         className="w-full"
         disabled={images.length >= maxImages || isUploading}
-        onClick={openCamera}
+        onClick={handleCameraClick}
       >
         {isUploading ? (
           <>
@@ -152,17 +148,12 @@ const ImagesSection = ({
       </Button>
       
       <input
-        ref={inputRef}
+        ref={fileInputRef}
         type="file"
         accept="image/*"
         capture="environment"
         className="hidden"
         onChange={handleCapture}
-        onClick={(e) => {
-          // Force camera to open directly
-          e.preventDefault();
-          e.stopPropagation();
-        }}
       />
     </div>
   );
