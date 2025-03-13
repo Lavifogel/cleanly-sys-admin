@@ -157,10 +157,6 @@ const ImagesSection = ({
         capture="environment"
         className="hidden"
         onChange={handleCapture}
-        onClick={(e) => {
-          // Reset the input value to allow selecting the same file again
-          (e.target as HTMLInputElement).value = '';
-        }}
       />
     </div>
   );
