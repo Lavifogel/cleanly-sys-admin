@@ -44,39 +44,6 @@ export type Database = {
           },
         ]
       }
-      areas: {
-        Row: {
-          area_id: string
-          building: string | null
-          created_at: string
-          description: string | null
-          floor: string | null
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          area_id: string
-          building?: string | null
-          created_at?: string
-          description?: string | null
-          floor?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          area_id?: string
-          building?: string | null
-          created_at?: string
-          description?: string | null
-          floor?: string | null
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       cleaners: {
         Row: {
           active: boolean | null
@@ -272,13 +239,6 @@ export type Database = {
           type?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "qr_codes_area_id_fkey"
-            columns: ["area_id"]
-            isOneToOne: true
-            referencedRelation: "areas"
-            referencedColumns: ["area_id"]
-          },
           {
             foreignKeyName: "qr_codes_created_by_fkey"
             columns: ["created_by"]

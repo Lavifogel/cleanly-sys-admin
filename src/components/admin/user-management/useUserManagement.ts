@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,30 +15,51 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      console.log("Fetching user data using the merged function...");
+      console.log("Fetching profiles data...");
       
-      // Use the new database function that merges profiles, cleaners, and admins
-      const { data, error } = await supabase
-        .rpc('get_full_user_info');
+      // First get all profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
       
-      if (error) {
-        console.error("Error fetching users:", error);
-        throw error;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
       }
       
-      console.log("User data received:", data);
+      console.log("Profiles data received:", profilesData);
       
-      // Process the data
-      if (data) {
-        const formattedUsers: CleanerUser[] = data.map(user => {          
+      // Get cleaner specific data
+      const { data: cleanersData, error: cleanersError } = await supabase
+        .from('cleaners')
+        .select('*');
+      
+      if (cleanersError) {
+        console.error("Error fetching cleaners:", cleanersError);
+        throw cleanersError;
+      }
+      
+      console.log("Cleaners data received:", cleanersData);
+      
+      // Create a map of cleaner data for quick lookup
+      const cleanersMap = new Map();
+      cleanersData?.forEach(cleaner => {
+        cleanersMap.set(cleaner.id, cleaner);
+      });
+      
+      // Process and combine the data
+      if (profilesData) {
+        const formattedUsers: CleanerUser[] = profilesData.map(profile => {
+          const cleaner = cleanersMap.get(profile.id);
+          
           return {
-            id: user.id,
-            phoneNumber: user.phone || user.user_name || '',
-            name: user.full_name || 'Unknown',
-            role: user.role || 'cleaner',
-            startDate: user.start_date || '',
-            status: user.status || "active",
-            email: user.email || ''
+            id: profile.id,
+            phoneNumber: cleaner?.phone || profile.user_name || '',
+            name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown',
+            role: profile.role || 'cleaner',
+            startDate: cleaner?.start_date || '',
+            status: (cleaner?.active === false) ? "inactive" : "active",
+            email: profile.email || ''
           };
         });
         
