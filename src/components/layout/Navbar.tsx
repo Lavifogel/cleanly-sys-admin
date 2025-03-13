@@ -35,7 +35,7 @@ const Navbar = () => {
     const fetchUserProfile = async () => {
       if (session?.user) {
         const { data } = await supabase
-          .from('profiles')
+          .from('users')
           .select('role')
           .eq('id', session.user.id)
           .single();
