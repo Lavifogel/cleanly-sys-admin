@@ -16,3 +16,58 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     },
   },
 });
+
+// Helper functions for new schema
+export const getUsers = async () => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*');
+  
+  if (error) throw error;
+  return data || [];
+};
+
+export const getQrCodes = async () => {
+  const { data, error } = await supabase
+    .from('qr_codes')
+    .select('*');
+  
+  if (error) throw error;
+  return data || [];
+};
+
+export const getAreas = async () => {
+  const { data, error } = await supabase
+    .from('areas')
+    .select('*');
+  
+  if (error) throw error;
+  return data || [];
+};
+
+export const getShifts = async () => {
+  const { data, error } = await supabase
+    .from('shifts')
+    .select('*');
+  
+  if (error) throw error;
+  return data || [];
+};
+
+export const getCleanings = async () => {
+  const { data, error } = await supabase
+    .from('cleanings')
+    .select('*');
+  
+  if (error) throw error;
+  return data || [];
+};
+
+export const getImages = async () => {
+  const { data, error } = await supabase
+    .from('images')
+    .select('*');
+  
+  if (error) throw error;
+  return data || [];
+};

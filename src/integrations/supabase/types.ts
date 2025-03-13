@@ -9,87 +9,76 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admins: {
+      area: {
         Row: {
-          access_level: string | null
+          area_id: string
+          area_name: string
+          building: string | null
           created_at: string
-          department: string | null
+          created_by: string | null
+          description: string | null
+          floor: string | null
           id: string
-          position: string | null
-          updated_at: string
+          qr_code_image_url: string | null
+          type: string
+          updated_at: string | null
         }
         Insert: {
-          access_level?: string | null
+          area_id: string
+          area_name: string
+          building?: string | null
           created_at?: string
-          department?: string | null
-          id: string
-          position?: string | null
-          updated_at?: string
+          created_by?: string | null
+          description?: string | null
+          floor?: string | null
+          id?: string
+          qr_code_image_url?: string | null
+          type: string
+          updated_at?: string | null
         }
         Update: {
-          access_level?: string | null
+          area_id?: string
+          area_name?: string
+          building?: string | null
           created_at?: string
-          department?: string | null
+          created_by?: string | null
+          description?: string | null
+          floor?: string | null
           id?: string
-          position?: string | null
-          updated_at?: string
+          qr_code_image_url?: string | null
+          type?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "admins_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
+            foreignKeyName: "qr_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
-      cleaners: {
+      areas: {
         Row: {
-          active: boolean | null
-          address: string | null
+          area_id: string
+          area_name: string
           created_at: string
-          id: string
-          phone: string | null
-          rating: number | null
-          specialization: string | null
-          start_date: string | null
-          status: string | null
           updated_at: string
         }
         Insert: {
-          active?: boolean | null
-          address?: string | null
+          area_id: string
+          area_name: string
           created_at?: string
-          id: string
-          phone?: string | null
-          rating?: number | null
-          specialization?: string | null
-          start_date?: string | null
-          status?: string | null
           updated_at?: string
         }
         Update: {
-          active?: boolean | null
-          address?: string | null
+          area_id?: string
+          area_name?: string
           created_at?: string
-          id?: string
-          phone?: string | null
-          rating?: number | null
-          specialization?: string | null
-          start_date?: string | null
-          status?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "cleaners_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       cleanings: {
         Row: {
@@ -136,7 +125,7 @@ export type Database = {
             foreignKeyName: "cleanings_area_id_fkey"
             columns: ["area_id"]
             isOneToOne: false
-            referencedRelation: "qr_codes"
+            referencedRelation: "area"
             referencedColumns: ["area_id"]
           },
           {
@@ -147,6 +136,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      date_time: {
+        Row: {
+          date: string
+          day: number
+          month: number
+          year: number
+        }
+        Insert: {
+          date: string
+          day: number
+          month: number
+          year: number
+        }
+        Update: {
+          date?: string
+          day?: number
+          month?: number
+          year?: number
+        }
+        Relationships: []
       }
       images: {
         Row: {
@@ -177,74 +187,35 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          created_at: string
-          email: string
-          first_name: string | null
-          id: string
-          last_name: string | null
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
-          user_name: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          first_name?: string | null
-          id: string
-          last_name?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-          user_name?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
-          user_name?: string | null
-        }
-        Relationships: []
-      }
       qr_codes: {
         Row: {
-          area_id: string
-          area_name: string
+          area_id: string | null
           created_at: string
-          created_by: string | null
-          id: string
-          qr_code_image_url: string | null
+          qr_id: string
+          qr_value: string
           type: string
         }
         Insert: {
-          area_id: string
-          area_name: string
+          area_id?: string | null
           created_at?: string
-          created_by?: string | null
-          id?: string
-          qr_code_image_url?: string | null
+          qr_id?: string
+          qr_value: string
           type: string
         }
         Update: {
-          area_id?: string
-          area_name?: string
+          area_id?: string | null
           created_at?: string
-          created_by?: string | null
-          id?: string
-          qr_code_image_url?: string | null
+          qr_id?: string
+          qr_value?: string
           type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "qr_codes_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "qr_codes_area_id_fkey"
+            columns: ["area_id"]
             isOneToOne: false
-            referencedRelation: "admins"
-            referencedColumns: ["id"]
+            referencedRelation: "areas"
+            referencedColumns: ["area_id"]
           },
         ]
       }
@@ -254,6 +225,7 @@ export type Database = {
           end_date: string | null
           end_time: string | null
           id: string
+          qr_id: string | null
           start_date: string
           start_time: string
           status: string
@@ -265,6 +237,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           id?: string
+          qr_id?: string | null
           start_date?: string
           start_time?: string
           status?: string
@@ -276,6 +249,7 @@ export type Database = {
           end_date?: string | null
           end_time?: string | null
           id?: string
+          qr_id?: string | null
           start_date?: string
           start_time?: string
           status?: string
@@ -284,26 +258,76 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "shifts_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["qr_id"]
+          },
+          {
             foreignKeyName: "shifts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "cleaners"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
+      }
+      users: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          email: string
+          first_name: string | null
+          full_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          role: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          email: string
+          first_name?: string | null
+          full_name?: string | null
+          id: string
+          last_name?: string | null
+          phone?: string | null
+          role?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          role?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      create_cleaner_user: {
+      create_user: {
         Args: {
           user_id: string
           first_name: string
           last_name: string
           email: string
           phone_number: string
+          role: string
           start_date: string
           is_active: boolean
         }
@@ -315,7 +339,7 @@ export type Database = {
         }
         Returns: string
       }
-      get_full_user_info: {
+      get_user_info: {
         Args: Record<PropertyKey, never>
         Returns: {
           id: string
@@ -330,6 +354,10 @@ export type Database = {
           status: string
           phone: string
         }[]
+      }
+      migrate_to_users_table: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
