@@ -64,3 +64,17 @@ export interface QrCodePreviewModalProps {
  * Valid QR code types
  */
 export type QrCodeType = "Shift" | "Cleaning";
+
+/**
+ * Represents an area entity
+ */
+export interface Area {
+  id: string;
+  areaId: string;
+  name: string;
+  description?: string;
+  floor?: string;
+  building?: string;
+  createdAt: string;
+  updatedAt: string;
+}
