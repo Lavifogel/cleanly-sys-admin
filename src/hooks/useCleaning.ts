@@ -45,7 +45,10 @@ export function useCleaning(activeShiftId: string | undefined) {
     },
   ]);
 
-  const { addImage, removeImage, isUploading } = useCleaningImages(cleaningSummary, setCleaningSummary);
+  const { addImage, removeImage, isUploading } = useCleaningImages({ 
+    cleaningSummary, 
+    setCleaningSummary 
+  });
   
   useCleaningTimer(activeCleaning, setCleaningElapsedTime);
 

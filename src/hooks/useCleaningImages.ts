@@ -139,7 +139,7 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
           .insert({
             cleaning_id: cleaningId,
             image_url: imageUrl
-          });
+          } as any);
         
         if (error) {
           console.error("Error saving image to database:", error);

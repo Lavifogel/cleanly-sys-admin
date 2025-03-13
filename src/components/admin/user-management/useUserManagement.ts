@@ -100,7 +100,7 @@ export const useUserManagement = () => {
       
       const { error } = await supabase
         .from('cleaners')
-        .update({ active: newStatus })
+        .update({ active: newStatus } as any)
         .eq('id', user.id);
       
       if (error) throw error;

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +27,7 @@ export function useAdminDashboardData() {
       const { data: activeShifts, error: shiftsError } = await supabase
         .from('shifts')
         .select('id, user_id')
-        .eq('status', 'active')
+        .eq('status', 'active' as any)
         .is('end_date', null);
 
       if (shiftsError) throw shiftsError;
@@ -36,8 +37,8 @@ export function useAdminDashboardData() {
       const { data: cleaningsToday, error: cleaningsError } = await supabase
         .from('cleanings')
         .select('id')
-        .eq('start_date', today)
-        .eq('status', 'finished');
+        .eq('start_date', today as any)
+        .eq('status', 'finished' as any);
 
       if (cleaningsError) throw cleaningsError;
 
@@ -45,7 +46,7 @@ export function useAdminDashboardData() {
       const { data: pendingCleanings, error: pendingError } = await supabase
         .from('cleanings')
         .select('id')
-        .eq('status', 'active');
+        .eq('status', 'active' as any);
 
       if (pendingError) throw pendingError;
 

@@ -1,18 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFormValues, userSchema, getNames, UserDialogProps } from "./userFormSchema";
-
-// Helper function to generate a UUID (RFC4122 version 4 compliant)
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
 
 export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogProps) => {
   const { toast } = useToast();
@@ -63,7 +55,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             email: data.email,
             user_name: data.phoneNumber, // Use phoneNumber as user_name
             role: data.role
-          })
+          } as any)
           .eq('id', user.id);
         
         if (profileError) throw profileError;
@@ -76,7 +68,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
               phone: data.phoneNumber,
               start_date: data.startDate,
               active: data.isActive,
-            })
+            } as any)
             .eq('id', user.id);
           
           if (cleanerError) throw cleanerError;
@@ -87,7 +79,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             .upsert({
               id: user.id,
               updated_at: new Date().toISOString()
-            });
+            } as any);
           
           if (adminError) throw adminError;
         }
@@ -172,7 +164,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
               email: data.email,
               user_name: data.email,
               role: 'admin'
-            });
+            } as any);
           
           if (profileError) {
             console.error("Error creating admin profile:", profileError);
@@ -184,7 +176,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             .from('admins')
             .insert({
               id: userId
-            });
+            } as any);
           
           if (adminError) {
             console.error("Error creating admin record:", adminError);

@@ -37,7 +37,7 @@ export const generateAreaId = async (areaName: string): Promise<string> => {
       return `${areaName.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
     }
 
-    return data;
+    return data as string;
   } catch (error) {
     console.error("Error in generateAreaId:", error);
     return `${areaName.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString(36)}`;
@@ -54,12 +54,12 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
   
   const { data, error } = await supabase
     .from('qr_codes')
-    .insert([{
+    .insert({
       area_name: areaName,
       type: type,
       area_id: areaId,
       qr_code_image_url: qrCodeImageUrl
-    }])
+    })
     .select()
     .single();
 
@@ -91,16 +91,14 @@ export const fetchQrCodes = async (): Promise<QrCode[]> => {
 
   if (error) throw error;
 
-  if (data) {
-    return data.map(qr => ({
-      id: qr.id,
-      areaName: qr.area_name,
-      type: qr.type,
-      areaId: qr.area_id,
-      qrCodeImageUrl: qr.qr_code_image_url,
-      createdAt: qr.created_at
-    }));
-  }
+  if (!data) return [];
   
-  return [];
+  return data.map(qr => ({
+    id: qr.id,
+    areaName: qr.area_name,
+    type: qr.type,
+    areaId: qr.area_id,
+    qrCodeImageUrl: qr.qr_code_image_url,
+    createdAt: qr.created_at
+  }));
 };
