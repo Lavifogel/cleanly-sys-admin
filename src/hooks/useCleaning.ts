@@ -30,6 +30,10 @@ export function useCleaning(activeShiftId: string | undefined) {
       images: 2,
       notes: "Cleaned and restocked supplies",
       shiftId: "previous-shift-1",
+      imageUrls: [
+        "https://evkldsfnndkgpifhgvic.supabase.co/storage/v1/object/public/cleaning-images/cleanings/mockImage1.jpg",
+        "https://evkldsfnndkgpifhgvic.supabase.co/storage/v1/object/public/cleaning-images/cleanings/mockImage2.jpg"
+      ]
     },
     {
       id: "2",
@@ -45,7 +49,7 @@ export function useCleaning(activeShiftId: string | undefined) {
     },
   ]);
 
-  const { addImage, removeImage, isUploading } = useCleaningImages({ maxImages: 5 });
+  const { images, addImage, removeImage, isUploading, saveImagesToDatabase } = useCleaningImages({ maxImages: 5 });
   
   useCleaningTimer(activeCleaning, setCleaningElapsedTime);
 
@@ -89,7 +93,7 @@ export function useCleaning(activeShiftId: string | undefined) {
   };
 
   const completeSummary = () => {
-    if (!activeCleaning) return;
+    if (!activeCleaning) return false;
     
     const newCleaning = {
       id: (cleaningsHistory.length + 1).toString(),
@@ -99,9 +103,10 @@ export function useCleaning(activeShiftId: string | undefined) {
       endTime: new Date().toTimeString().slice(0, 5),
       duration: `${Math.floor(cleaningElapsedTime / 60)}m`,
       status: "finished with scan",
-      images: cleaningSummary.images.length,
+      images: images.length,
       notes: summaryNotes,
       shiftId: activeShiftId,
+      imageUrls: images
     };
 
     setCleaningsHistory([newCleaning, ...cleaningsHistory]);
@@ -120,6 +125,7 @@ export function useCleaning(activeShiftId: string | undefined) {
     summaryNotes,
     showSummary,
     isUploading,
+    images,
     startCleaning,
     togglePauseCleaning,
     prepareSummary,
@@ -127,6 +133,7 @@ export function useCleaning(activeShiftId: string | undefined) {
     addImage,
     removeImage,
     setSummaryNotes,
-    setShowSummary
+    setShowSummary,
+    saveImagesToDatabase
   };
 }

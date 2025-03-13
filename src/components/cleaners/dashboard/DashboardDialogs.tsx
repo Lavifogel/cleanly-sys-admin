@@ -17,6 +17,7 @@ interface DashboardDialogsProps {
   setShowConfirmDialog: (show: boolean) => void;
   confirmAction: ConfirmationDialogData | null;
   isUploading?: boolean;
+  images?: string[];
 }
 
 const DashboardDialogs = ({
@@ -32,6 +33,7 @@ const DashboardDialogs = ({
   setShowConfirmDialog,
   confirmAction,
   isUploading = false,
+  images = [],
 }: DashboardDialogsProps) => {
   return (
     <>
@@ -45,6 +47,7 @@ const DashboardDialogs = ({
         onRemoveImage={removeImage}
         onCompleteSummary={handleCompleteSummary}
         isUploading={isUploading}
+        images={images}
       />
 
       <ConfirmationDialog 

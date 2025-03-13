@@ -4,7 +4,8 @@ import {
   Clock, 
   Image, 
   MapPin, 
-  TimerIcon
+  TimerIcon,
+  StickyNote
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { CleaningHistoryItem } from "@/types/cleaning";
 import { useEffect, useState } from "react";
 import { formatTime } from "@/utils/timeUtils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CleaningItemProps {
   cleaning: CleaningHistoryItem & { 
@@ -35,6 +37,7 @@ const CleaningItem = ({ cleaning, onImageSelect }: CleaningItemProps) => {
 
   const hasImages = cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0;
   const firstImageUrl = hasImages ? cleaning.imageUrls![0] : '';
+  const hasNotes = cleaning.notes && cleaning.notes.trim() !== '';
 
   return (
     <div className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
@@ -85,25 +88,52 @@ const CleaningItem = ({ cleaning, onImageSelect }: CleaningItemProps) => {
           )}
         </div>
         
-        {hasImages && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-0 h-8 flex items-center" 
-            onClick={() => onImageSelect(firstImageUrl)}
-          >
-            <div className="flex items-center">
-              <Avatar className="h-6 w-6 mr-1.5 rounded-sm">
-                <AvatarImage src={firstImageUrl} alt="Cleaning image" className="object-cover rounded-sm" />
-                <AvatarFallback className="rounded-sm">
-                  <Image className="h-3 w-3" />
-                </AvatarFallback>
-              </Avatar>
-              <span>{cleaning.images} {cleaning.images === 1 ? 'image' : 'images'}</span>
-            </div>
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {hasNotes && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="p-0 h-8 flex items-center" 
+                  >
+                    <StickyNote className="h-4 w-4 text-amber-500" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-[200px]">{cleaning.notes}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
+          {hasImages && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-0 h-8 flex items-center" 
+              onClick={() => onImageSelect(firstImageUrl)}
+            >
+              <div className="flex items-center">
+                <Avatar className="h-6 w-6 mr-1.5 rounded-sm">
+                  <AvatarImage src={firstImageUrl} alt="Cleaning image" className="object-cover rounded-sm" />
+                  <AvatarFallback className="rounded-sm">
+                    <Image className="h-3 w-3" />
+                  </AvatarFallback>
+                </Avatar>
+                <span>{cleaning.images} {cleaning.images === 1 ? 'image' : 'images'}</span>
+              </div>
+            </Button>
+          )}
+        </div>
       </div>
+      
+      {hasNotes && (
+        <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
+          {cleaning.notes}
+        </div>
+      )}
     </div>
   );
 };

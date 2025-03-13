@@ -22,6 +22,7 @@ const CleanerDashboard = () => {
     showConfirmDialog,
     confirmAction,
     isUploading,
+    images,
     handleQRScan,
     handleStartShift,
     handleEndShiftWithScan,
@@ -79,6 +80,7 @@ const CleanerDashboard = () => {
         setShowConfirmDialog={setShowConfirmDialog}
         confirmAction={confirmAction}
         isUploading={isUploading}
+        images={images}
       />
     </div>
   );

@@ -1,5 +1,4 @@
 
-import { useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ interface CleaningSummaryDialogProps {
   onRemoveImage: (index: number) => void;
   onCompleteSummary: () => void;
   isUploading?: boolean;
+  images: string[];
 }
 
 const CleaningSummaryDialog = ({
@@ -30,6 +30,7 @@ const CleaningSummaryDialog = ({
   onRemoveImage,
   onCompleteSummary,
   isUploading = false,
+  images = [],
 }: CleaningSummaryDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -45,7 +46,7 @@ const CleaningSummaryDialog = ({
           <CleaningDetails cleaningSummary={cleaningSummary} />
           
           <ImagesSection 
-            images={cleaningSummary.images}
+            images={images}
             onAddImage={onAddImage}
             onRemoveImage={onRemoveImage}
             maxImages={3}
