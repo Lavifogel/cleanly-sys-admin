@@ -17,7 +17,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
 });
 
-// Helper functions for new schema
+// Helper functions for database schema
 export const getUsers = async () => {
   const { data, error } = await supabase
     .from('users')
@@ -70,4 +70,30 @@ export const getImages = async () => {
   
   if (error) throw error;
   return data || [];
+};
+
+// Create user function that uses the database function
+export const createUser = async (
+  userId: string,
+  firstName: string,
+  lastName: string,
+  email: string,
+  phoneNumber: string,
+  role: string,
+  startDate: string,
+  isActive: boolean
+) => {
+  const { data, error } = await supabase.rpc('create_user', {
+    user_id: userId,
+    first_name: firstName,
+    last_name: lastName,
+    email: email,
+    phone_number: phoneNumber,
+    role: role,
+    start_date: startDate,
+    is_active: isActive
+  });
+  
+  if (error) throw error;
+  return data;
 };

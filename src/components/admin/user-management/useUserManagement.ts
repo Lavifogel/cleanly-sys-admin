@@ -17,7 +17,7 @@ export const useUserManagement = () => {
     try {
       console.log("Fetching users data...");
       
-      // Get all users with the new schema
+      // Get all users with the schema
       const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('*');

@@ -80,14 +80,13 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
     console.log("Area may already exist, continuing...");
   }
   
-  // Then create the QR code
+  // Then create the QR code record
   const { data, error } = await supabase
     .from('qr_codes')
     .insert({
       qr_value: JSON.stringify({ areaId, areaName, type }),
       area_id: areaId,
-      type: type,
-      qr_code_image_url: qrCodeImageUrl
+      type: type
     })
     .select()
     .single();
@@ -104,30 +103,54 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
     areaName: areaName,
     type: data.type,
     areaId: data.area_id,
-    qrCodeImageUrl: qrCodeImageUrl,
+    qrCodeImageUrl: qrCodeImageUrl, // We store this client-side only
     createdAt: data.created_at
   };
 };
 
 /**
- * Fetches QR codes from database
+ * Fetches QR codes from database and joins with area information
  */
 export const fetchQrCodes = async (): Promise<QrCode[]> => {
+  // Join with areas table to get area names
   const { data, error } = await supabase
     .from('qr_codes')
-    .select('qr_id, qr_value, area_id, type, created_at, qr_code_image_url, areas(area_name)')
+    .select(`
+      qr_id,
+      qr_value,
+      area_id,
+      type, 
+      created_at,
+      areas (
+        area_name
+      )
+    `)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
 
   if (!data) return [];
   
-  return data.map(qr => ({
-    id: qr.qr_id,
-    areaName: qr.areas?.area_name || '',
-    type: qr.type,
-    areaId: qr.area_id || '',
-    qrCodeImageUrl: qr.qr_code_image_url || '',
-    createdAt: qr.created_at
-  }));
+  return data.map(qr => {
+    // Get the area name from the areas join or use a fallback
+    const areaName = qr.areas?.area_name || 'Unknown Area';
+    
+    // Parse QR value for image URL if available, otherwise undefined
+    let qrData;
+    try {
+      qrData = JSON.parse(qr.qr_value);
+    } catch (e) {
+      qrData = {};
+    }
+    
+    return {
+      id: qr.qr_id,
+      areaName: areaName,
+      type: qr.type,
+      areaId: qr.area_id || '',
+      // No image URL stored in database, we would need to regenerate it
+      qrCodeImageUrl: '',
+      createdAt: qr.created_at
+    };
+  });
 };

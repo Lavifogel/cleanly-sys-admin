@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -34,14 +33,16 @@ const Navbar = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
+        const { data, error } = await supabase
+          .from('users')
           .select('role')
           .eq('id', session.user.id)
           .single();
         
         if (data) {
           setUserRole(data.role);
+        } else {
+          setUserRole(null);
         }
       } else {
         setUserRole(null);

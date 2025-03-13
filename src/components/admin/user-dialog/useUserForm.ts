@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, createUser } from "@/integrations/supabase/client";
 import { UserFormValues, userSchema, getNames, UserDialogProps } from "./userFormSchema";
 
 export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogProps) => {
@@ -46,43 +46,21 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     try {
       if (user?.id) {
         // Update existing user
-        // First update the profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
+        const { error: userError } = await supabase
+          .from('users')
           .update({
             first_name: data.firstName,
             last_name: data.lastName,
             email: data.email,
-            user_name: data.phoneNumber, // Use phoneNumber as user_name
-            role: data.role
-          } as any)
+            phone: data.phoneNumber,
+            role: data.role,
+            start_date: data.startDate,
+            active: data.isActive,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', user.id);
         
-        if (profileError) throw profileError;
-        
-        // If role is cleaner, update the cleaners table
-        if (data.role === 'cleaner') {
-          const { error: cleanerError } = await supabase
-            .from('cleaners')
-            .update({
-              phone: data.phoneNumber,
-              start_date: data.startDate,
-              active: data.isActive,
-            } as any)
-            .eq('id', user.id);
-          
-          if (cleanerError) throw cleanerError;
-        } else if (data.role === 'admin') {
-          // If role is admin, make sure there's an entry in the admins table
-          const { error: adminError } = await supabase
-            .from('admins')
-            .upsert({
-              id: user.id,
-              updated_at: new Date().toISOString()
-            } as any);
-          
-          if (adminError) throw adminError;
-        }
+        if (userError) throw userError;
         
         toast({
           title: "User Updated",
@@ -98,94 +76,53 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           phoneNumber: data.phoneNumber
         });
         
-        // Call the RPC function to create a cleaner user
-        if (data.role === 'cleaner') {
-          // Try using the create_cleaner_user function that exists in your database
-          const password = `${data.firstName.toLowerCase()}${data.lastName.toLowerCase()}123!`;
-          
-          // Generate a UUID for the user
-          const userId = crypto.randomUUID?.() || 
-            'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-              const r = Math.random() * 16 | 0;
-              const v = c === 'x' ? r : (r & 0x3 | 0x8);
-              return v.toString(16);
-            });
-          
-          // Use the database function to create a new cleaner
-          const { data: rpcData, error: rpcError } = await supabase.rpc(
-            'create_cleaner_user',
-            {
-              user_id: userId,
-              first_name: data.firstName,
-              last_name: data.lastName,
-              email: data.email,
-              phone_number: data.phoneNumber,
-              start_date: data.startDate,
-              is_active: data.isActive
-            }
+        // Generate a UUID for the user
+        const userId = crypto.randomUUID?.() || 
+          'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        
+        try {
+          // Use the database function to create a new user
+          await createUser(
+            userId,
+            data.firstName,
+            data.lastName,
+            data.email,
+            data.phoneNumber,
+            data.role,
+            data.startDate,
+            data.isActive
           );
           
-          if (rpcError) {
-            console.error("Error creating user with RPC function:", rpcError);
-            
-            // If this is a rate limit issue
-            if (rpcError.message.includes("security purposes") || 
-                rpcError.message.includes("rate limit") || 
-                rpcError.message.includes("seconds")) {
-              throw new Error("Rate limit reached. Please wait a minute before trying again.");
-            }
-            
-            throw rpcError;
-          }
-          
           toast({
-            title: "Cleaner Created",
-            description: `New cleaner has been created successfully. Note: Authentication will need to be set up separately.`,
+            title: `${data.role === 'admin' ? 'Admin' : 'Cleaner'} Created`,
+            description: `New ${data.role} has been created successfully. Note: Authentication will need to be set up separately.`,
           });
-        } else {
-          // For admins, use a simpler approach similar to cleaners
-          const password = `${data.firstName.toLowerCase()}${data.lastName.toLowerCase()}123!`;
+        } catch (error) {
+          console.error("Error creating user:", error);
           
-          // Generate a UUID for the user
-          const userId = crypto.randomUUID?.() || 
-            'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-              const r = Math.random() * 16 | 0;
-              const v = c === 'x' ? r : (r & 0x3 | 0x8);
-              return v.toString(16);
-            });
-          
-          // First create the profile
-          const { error: profileError } = await supabase
-            .from('profiles')
+          // If function doesn't exist or fails, fall back to direct insert
+          const { error: insertError } = await supabase
+            .from('users')
             .insert({
               id: userId,
               first_name: data.firstName,
               last_name: data.lastName,
               email: data.email,
-              user_name: data.email,
-              role: 'admin'
-            } as any);
+              phone: data.phoneNumber,
+              role: data.role,
+              start_date: data.startDate,
+              active: data.isActive
+            });
           
-          if (profileError) {
-            console.error("Error creating admin profile:", profileError);
-            throw profileError;
-          }
-          
-          // Then create the admin record
-          const { error: adminError } = await supabase
-            .from('admins')
-            .insert({
-              id: userId
-            } as any);
-          
-          if (adminError) {
-            console.error("Error creating admin record:", adminError);
-            throw adminError;
-          }
+          if (insertError) throw insertError;
           
           toast({
-            title: "Admin Created",
-            description: `New admin has been created. Note: Authentication will need to be set up separately.`,
+            title: `${data.role === 'admin' ? 'Admin' : 'Cleaner'} Created`,
+            description: `New ${data.role} has been created. Note: Authentication will need to be set up separately.`,
           });
         }
       }
