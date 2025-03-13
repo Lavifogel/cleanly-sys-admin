@@ -18,9 +18,9 @@ const ProfileCard = () => {
     const fetchUserProfile = async () => {
       try {
         // In a real app, this would use the current authenticated user's ID
-        // For now, we'll just fetch the first cleaner for demonstration
+        // For now, we'll just fetch the first user for demonstration
         const { data, error } = await supabase
-          .rpc('get_full_user_info')
+          .rpc('get_user_info')
           .limit(1);
           
         if (error) throw error;

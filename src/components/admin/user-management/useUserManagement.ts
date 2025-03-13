@@ -15,11 +15,11 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      console.log("Fetching user data using the merged function...");
+      console.log("Fetching user data using the new unified users table...");
       
-      // Use the new database function that merges profiles, cleaners, and admins
+      // Use the new database function that works with the unified users table
       const { data, error } = await supabase
-        .rpc('get_full_user_info');
+        .rpc('get_user_info');
       
       if (error) {
         console.error("Error fetching users:", error);
@@ -81,8 +81,8 @@ export const useUserManagement = () => {
       const newStatus = user.status === "active" ? false : true;
       
       const { error } = await supabase
-        .from('cleaners')
-        .update({ active: newStatus } as any)
+        .from('users')
+        .update({ active: newStatus })
         .eq('id', user.id);
       
       if (error) throw error;
@@ -112,7 +112,7 @@ export const useUserManagement = () => {
   const handleDeleteUser = async (userId: string) => {
     try {
       const { error } = await supabase
-        .from('cleaners')
+        .from('users')
         .delete()
         .eq('id', userId);
       
