@@ -52,9 +52,9 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
   
   console.log("Attempting to insert QR code into database...");
   
-  // Insert directly into qr_codes - no need to create area separately anymore
+  // Insert into area table (previously named qr_codes)
   const { data, error } = await supabase
-    .from('qr_codes')
+    .from('area')
     .insert({
       area_name: areaName,
       type: type,
@@ -93,7 +93,7 @@ export const saveQrCode = async (params: SaveQrCodeParams): Promise<QrCode> => {
  */
 export const fetchQrCodes = async (): Promise<QrCode[]> => {
   const { data, error } = await supabase
-    .from('qr_codes')
+    .from('area')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -120,7 +120,7 @@ export const fetchQrCodes = async (): Promise<QrCode[]> => {
  */
 export const updateArea = async (area: Partial<QrCode> & { areaId: string }): Promise<QrCode> => {
   const { data, error } = await supabase
-    .from('qr_codes')
+    .from('area')
     .update({
       area_name: area.areaName,
       description: area.description,
