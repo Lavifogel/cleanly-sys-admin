@@ -45,7 +45,6 @@ export function useCleaning(activeShiftId: string | undefined) {
     },
   ]);
 
-  // We need to fix this line - remove the cleaningSummary property
   const { addImage, removeImage, isUploading } = useCleaningImages({ maxImages: 5 });
   
   useCleaningTimer(activeCleaning, setCleaningElapsedTime);

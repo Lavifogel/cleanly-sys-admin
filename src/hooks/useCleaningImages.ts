@@ -43,7 +43,7 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
     }
   };
   
-  // Function to add an image
+  // Function to add an image (camera capture or file selection)
   const addImage = async (file: File) => {
     if (images.length >= maxImages) {
       toast({
@@ -139,7 +139,7 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
           .insert({
             cleaning_id: cleaningId,
             image_url: imageUrl
-          } as any);
+          });
         
         if (error) {
           console.error("Error saving image to database:", error);

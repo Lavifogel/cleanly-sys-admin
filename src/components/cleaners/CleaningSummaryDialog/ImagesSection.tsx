@@ -25,14 +25,12 @@ const ImagesSection = ({
   const [showCamera, setShowCamera] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Effect to trigger the camera input when showCamera becomes true
   useEffect(() => {
     if (showCamera && inputRef.current) {
       inputRef.current.click();
     }
   }, [showCamera]);
   
-  // Add cleanup when component unmounts
   useEffect(() => {
     return () => {
       if (inputRef.current) {
@@ -52,7 +50,7 @@ const ImagesSection = ({
       return;
     }
     
-    // First check if camera is in use by looking for active video elements
+    // Check if camera is already in use
     const videoElements = document.querySelectorAll('video');
     let cameraInUse = false;
     
@@ -94,9 +92,7 @@ const ImagesSection = ({
       await onAddImage(file);
     } catch (error) {
       console.error("Error handling file:", error);
-      // Error is already handled in the hook with toast
     } finally {
-      // Reset the input value and stop any camera streams
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -163,9 +159,8 @@ const ImagesSection = ({
         className="hidden"
         onChange={handleCapture}
         onClick={(e) => {
-          // Prevent the default file picker behavior
+          // Force camera to open directly
           e.preventDefault();
-          // This ensures we directly open the camera
           e.stopPropagation();
         }}
       />
