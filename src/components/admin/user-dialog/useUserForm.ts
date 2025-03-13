@@ -17,7 +17,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     defaultValues: {
       firstName,
       lastName,
-      email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
       startDate: user?.startDate || new Date().toISOString().split('T')[0],
       isActive: user?.status !== "inactive",
@@ -31,7 +30,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
       reset({
         firstName,
         lastName,
-        email: user?.email || "",
         phoneNumber: user?.phoneNumber || "",
         startDate: user?.startDate || new Date().toISOString().split('T')[0],
         isActive: user?.status !== "inactive",
@@ -51,7 +49,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           .update({
             first_name: data.firstName,
             last_name: data.lastName,
-            email: data.email,
             phone: data.phoneNumber,
             role: data.role,
             start_date: data.startDate,
@@ -69,7 +66,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
       } else {
         // Create new user
         console.log("Creating new user with data:", {
-          email: data.email,
           firstName: data.firstName,
           lastName: data.lastName, 
           role: data.role,
@@ -84,13 +80,16 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
             return v.toString(16);
           });
         
+        // Create a default email derived from name for database requirements
+        const defaultEmail = `${data.firstName.toLowerCase()}.${data.lastName.toLowerCase()}@example.com`;
+        
         try {
           // Use the database function to create a new user
           await createUser(
             userId,
             data.firstName,
             data.lastName,
-            data.email,
+            defaultEmail, // Use default email
             data.phoneNumber,
             data.role,
             data.startDate,
@@ -99,7 +98,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           
           toast({
             title: `${data.role === 'admin' ? 'Admin' : 'Cleaner'} Created`,
-            description: `New ${data.role} has been created successfully. Note: Authentication will need to be set up separately.`,
+            description: `New ${data.role} has been created successfully.`,
           });
         } catch (error) {
           console.error("Error creating user:", error);
@@ -111,7 +110,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
               id: userId,
               first_name: data.firstName,
               last_name: data.lastName,
-              email: data.email,
+              email: defaultEmail, // Use default email
               phone: data.phoneNumber,
               role: data.role,
               start_date: data.startDate,
@@ -122,7 +121,7 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           
           toast({
             title: `${data.role === 'admin' ? 'Admin' : 'Cleaner'} Created`,
-            description: `New ${data.role} has been created. Note: Authentication will need to be set up separately.`,
+            description: `New ${data.role} has been created successfully.`,
           });
         }
       }

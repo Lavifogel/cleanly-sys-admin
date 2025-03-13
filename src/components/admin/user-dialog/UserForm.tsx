@@ -55,19 +55,6 @@ const UserForm = (props: UserDialogProps) => {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input 
-          id="email"
-          type="email"
-          {...register("email")}
-          placeholder="john.doe@example.com"
-        />
-        {errors.email && (
-          <p className="text-sm text-red-500">{errors.email.message}</p>
-        )}
-      </div>
-      
-      <div className="space-y-2">
         <Label htmlFor="phoneNumber">Phone Number</Label>
         <Input 
           id="phoneNumber"
