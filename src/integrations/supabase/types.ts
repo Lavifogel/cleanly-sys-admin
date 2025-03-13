@@ -32,7 +32,6 @@ export type Database = {
       }
       cleanings: {
         Row: {
-          area_id: string
           created_at: string
           end_time: string | null
           id: string
@@ -44,7 +43,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          area_id: string
           created_at?: string
           end_time?: string | null
           id?: string
@@ -56,7 +54,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          area_id?: string
           created_at?: string
           end_time?: string | null
           id?: string
@@ -68,13 +65,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "cleanings_area_id_fkey"
-            columns: ["area_id"]
-            isOneToOne: false
-            referencedRelation: "areas"
-            referencedColumns: ["area_id"]
-          },
           {
             foreignKeyName: "cleanings_qr_id_fkey"
             columns: ["qr_id"]
