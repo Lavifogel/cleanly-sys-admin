@@ -3,21 +3,12 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
-import { useQRScannerLogic } from "@/hooks/qrScanner/useQRScannerLogic";
+import { QRCodeScannerProps } from "@/types/qrScanner";
+import { useQRScannerLogic } from "@/hooks/useQRScannerLogic";
 import QRScannerControls from "@/components/qrScanner/QRScannerControls";
 import QRScannerView from "@/components/qrScanner/QRScannerView";
 
-interface QRCodeScannerProps {
-  onScanSuccess: (decodedText: string) => void;
-  onClose: () => void;
-  title?: string;
-}
-
-const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ 
-  onScanSuccess, 
-  onClose, 
-  title = "Scan QR Code" 
-}) => {
+const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const {
     scannerState,
     scannerContainerId,
@@ -39,7 +30,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       </div>
       <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
         <div className="mb-4 text-center">
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-lg font-semibold">Scan QR Code</h3>
           <p className="text-sm text-muted-foreground">Position the QR code within the frame or take a picture</p>
         </div>
         

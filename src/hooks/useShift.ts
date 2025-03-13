@@ -115,100 +115,24 @@ export function useShift() {
     fetchShifts();
   }, [toast]);
 
-  // Parse QR code data from scanned text 
-  const parseQRData = (qrData: string): { [key: string]: string } => {
-    try {
-      // First try to parse as JSON
-      return JSON.parse(qrData);
-    } catch (e) {
-      // If not valid JSON, try to parse as query string
-      const result: { [key: string]: string } = {};
-      // Check if it's a URL with query parameters
-      if (qrData.includes('?')) {
-        const queryPart = qrData.split('?')[1];
-        const pairs = queryPart.split('&');
-        pairs.forEach(pair => {
-          const [key, value] = pair.split('=');
-          if (key && value) {
-            result[key] = decodeURIComponent(value);
-          }
-        });
-        return result;
-      }
-      
-      // If it's not a query string, try to extract area or location info
-      if (qrData.includes('area:') || qrData.includes('location:')) {
-        const pairs = qrData.split(',');
-        pairs.forEach(pair => {
-          const [key, value] = pair.trim().split(':');
-          if (key && value) {
-            result[key.trim()] = value.trim();
-          }
-        });
-        return result;
-      }
-      
-      // Fallback - just use as raw text
-      return { rawData: qrData };
-    }
-  };
-
   // Handle startShift
   const startShift = async (qrData: string) => {
     try {
-      console.log("Starting shift with QR data:", qrData);
       const shiftId = uuidv4();
       const startTime = new Date();
       
-      // Parse QR data
-      const parsedQRData = parseQRData(qrData);
-      console.log("Parsed QR data:", parsedQRData);
-      
       // Get QR ID if it exists
       let qrId = null;
-      let locationInfo = null;
-      
-      if (parsedQRData) {
-        // Try to find QR code in database by value
+      if (qrData) {
         const { data: qrCodes } = await supabase
           .from('qr_codes')
-          .select('qr_id, area_name, qr_value')
+          .select('qr_id')
+          .eq('qr_value', qrData)
           .eq('type', 'Shift')
-          .limit(10);
+          .limit(1);
           
-        console.log("Found QR codes in database:", qrCodes);
-        
         if (qrCodes && qrCodes.length > 0) {
-          // Check if any of the QR codes match our scanned data
-          for (const qrCode of qrCodes) {
-            try {
-              // Make sure qr_value exists and parse it
-              if (!qrCode.qr_value) continue;
-              
-              const dbQrValue = qrCode.qr_value || '{}';
-              const dbQrData = typeof dbQrValue === 'string' ? JSON.parse(dbQrValue) : dbQrValue;
-              
-              // Compare key attributes to find a match
-              if (parsedQRData.areaId && dbQrData.areaId === parsedQRData.areaId) {
-                qrId = qrCode.qr_id;
-                locationInfo = qrCode.area_name;
-                break;
-              }
-              
-              if (parsedQRData.area && dbQrData.area === parsedQRData.area) {
-                qrId = qrCode.qr_id;
-                locationInfo = qrCode.area_name;
-                break;
-              }
-            } catch (e) {
-              console.error("Error parsing QR value from database:", e);
-            }
-          }
-        }
-        
-        // If no match found but we have location info in the QR code, use that
-        if (!locationInfo) {
-          locationInfo = parsedQRData.areaName || parsedQRData.area || parsedQRData.location || "Unknown Location";
+          qrId = qrCodes[0].qr_id;
         }
       }
       
@@ -220,17 +144,11 @@ export function useShift() {
           user_id: '00000000-0000-0000-0000-000000000000', // Replace with actual user ID when auth is implemented
           qr_id: qrId,
           start_time: startTime.toISOString(),
-          status: 'active',
-          location_info: locationInfo
+          status: 'active'
         })
         .select();
       
-      if (error) {
-        console.error("Supabase error inserting shift:", error);
-        throw error;
-      }
-      
-      console.log("Shift inserted successfully:", data);
+      if (error) throw error;
       
       setActiveShift({
         startTime,
@@ -241,7 +159,7 @@ export function useShift() {
       
       toast({
         title: "Shift Started",
-        description: `Your shift has been successfully started${locationInfo ? ` at ${locationInfo}` : ''}.`,
+        description: "Your shift has been successfully started.",
       });
     } catch (error) {
       console.error("Error starting shift:", error);
@@ -262,51 +180,16 @@ export function useShift() {
       
       // Get QR ID if provided and it's a scan
       let qrId = null;
-      let locationInfo = null;
-      
       if (withScan && qrData) {
-        // Parse QR data
-        const parsedQRData = parseQRData(qrData);
-        console.log("Parsed QR data for end shift:", parsedQRData);
-        
-        // Try to find QR code in database
         const { data: qrCodes } = await supabase
           .from('qr_codes')
-          .select('qr_id, area_name, qr_value')
+          .select('qr_id')
+          .eq('qr_value', qrData)
           .eq('type', 'Shift')
-          .limit(10);
+          .limit(1);
           
         if (qrCodes && qrCodes.length > 0) {
-          // Check if any of the QR codes match our scanned data
-          for (const qrCode of qrCodes) {
-            try {
-              // Make sure qr_value exists and parse it
-              if (!qrCode.qr_value) continue;
-              
-              const dbQrValue = qrCode.qr_value || '{}';
-              const dbQrData = typeof dbQrValue === 'string' ? JSON.parse(dbQrValue) : dbQrValue;
-              
-              // Compare key attributes to find a match
-              if (parsedQRData.areaId && dbQrData.areaId === parsedQRData.areaId) {
-                qrId = qrCode.qr_id;
-                locationInfo = qrCode.area_name;
-                break;
-              }
-              
-              if (parsedQRData.area && dbQrData.area === parsedQRData.area) {
-                qrId = qrCode.qr_id;
-                locationInfo = qrCode.area_name;
-                break;
-              }
-            } catch (e) {
-              console.error("Error parsing QR value from database:", e);
-            }
-          }
-        }
-        
-        // If no match found but we have location info in the QR code, use that
-        if (!locationInfo) {
-          locationInfo = parsedQRData.areaName || parsedQRData.area || parsedQRData.location || "Unknown Location";
+          qrId = qrCodes[0].qr_id;
         }
       }
       
@@ -316,15 +199,11 @@ export function useShift() {
         .update({
           end_time: endTime.toISOString(),
           status: withScan ? 'finished with scan' : 'finished without scan',
-          qr_id: qrId || null,
-          end_location_info: locationInfo
+          qr_id: qrId || null
         })
         .eq('id', activeShift.id);
       
-      if (error) {
-        console.error("Supabase error updating shift:", error);
-        throw error;
-      }
+      if (error) throw error;
       
       const newShift = {
         id: activeShift.id,
@@ -343,7 +222,7 @@ export function useShift() {
       // Show success toast
       toast({
         title: "Shift Ended",
-        description: `Your shift has been successfully completed${locationInfo ? ` at ${locationInfo}` : ''}.`,
+        description: "Your shift has been successfully completed.",
         duration: 3000,
       });
       

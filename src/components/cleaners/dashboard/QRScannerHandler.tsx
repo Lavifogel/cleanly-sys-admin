@@ -35,27 +35,10 @@ const QRScannerHandler = ({
     };
   }, [showQRScanner]);
 
-  // Generate appropriate title based on scanner purpose
-  const getScannerTitle = () => {
-    switch (scannerPurpose) {
-      case "startShift":
-        return "Scan to Start Shift";
-      case "endShift":
-        return "Scan to End Shift";
-      case "startCleaning":
-        return "Scan to Start Cleaning";
-      case "endCleaning":
-        return "Scan to Complete Cleaning";
-      default:
-        return "Scan QR Code";
-    }
-  };
-
   if (!showQRScanner) return null;
 
   return (
     <QRCodeScanner 
-      title={getScannerTitle()}
       onScanSuccess={(decodedText) => {
         onQRScan(decodedText);
         // Ensure camera is stopped after successful scan
