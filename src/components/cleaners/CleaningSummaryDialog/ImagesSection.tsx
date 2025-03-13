@@ -163,7 +163,9 @@ const ImagesSection = ({
         className="hidden"
         onChange={handleCapture}
         onClick={(e) => {
-          // This prevents showing the file picker and forces camera to open
+          // Prevent the default file picker behavior
+          e.preventDefault();
+          // This ensures we directly open the camera
           e.stopPropagation();
         }}
       />
