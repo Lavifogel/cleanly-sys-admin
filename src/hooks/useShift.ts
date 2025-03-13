@@ -172,7 +172,7 @@ export function useShift() {
         // Try to find QR code in database by value
         const { data: qrCodes } = await supabase
           .from('qr_codes')
-          .select('qr_id, area_name')
+          .select('qr_id, area_name, qr_value')
           .eq('type', 'Shift')
           .limit(10);
           
@@ -182,6 +182,9 @@ export function useShift() {
           // Check if any of the QR codes match our scanned data
           for (const qrCode of qrCodes) {
             try {
+              // Make sure qr_value exists and parse it
+              if (!qrCode.qr_value) continue;
+              
               const dbQrValue = qrCode.qr_value || '{}';
               const dbQrData = typeof dbQrValue === 'string' ? JSON.parse(dbQrValue) : dbQrValue;
               
@@ -269,7 +272,7 @@ export function useShift() {
         // Try to find QR code in database
         const { data: qrCodes } = await supabase
           .from('qr_codes')
-          .select('qr_id, area_name')
+          .select('qr_id, area_name, qr_value')
           .eq('type', 'Shift')
           .limit(10);
           
@@ -277,6 +280,9 @@ export function useShift() {
           // Check if any of the QR codes match our scanned data
           for (const qrCode of qrCodes) {
             try {
+              // Make sure qr_value exists and parse it
+              if (!qrCode.qr_value) continue;
+              
               const dbQrValue = qrCode.qr_value || '{}';
               const dbQrData = typeof dbQrValue === 'string' ? JSON.parse(dbQrValue) : dbQrValue;
               
