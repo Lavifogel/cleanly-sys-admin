@@ -9,27 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      areas_backup: {
-        Row: {
-          area_id: string
-          area_name: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          area_id: string
-          area_name: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          area_id?: string
-          area_name?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       cleanings: {
         Row: {
           created_at: string
@@ -139,38 +118,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      qr_codes_backup: {
-        Row: {
-          area_id: string | null
-          created_at: string
-          qr_id: string
-          qr_value: string
-          type: string
-        }
-        Insert: {
-          area_id?: string | null
-          created_at?: string
-          qr_id?: string
-          qr_value: string
-          type: string
-        }
-        Update: {
-          area_id?: string | null
-          created_at?: string
-          qr_id?: string
-          qr_value?: string
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "qr_codes_area_id_fkey"
-            columns: ["area_id"]
-            isOneToOne: false
-            referencedRelation: "areas_backup"
-            referencedColumns: ["area_id"]
-          },
-        ]
       }
       shifts: {
         Row: {
