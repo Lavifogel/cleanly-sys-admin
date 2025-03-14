@@ -3,20 +3,21 @@ import { useState } from "react";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/useCleaning";
 import { useTabManagement } from "@/hooks/useTabManagement";
-import { useDashboardQRScanner } from "@/hooks/useDashboardQRScanner";
+import { useQRScannerHandlers } from "@/hooks/useQRScannerHandlers";
 import { useDashboardConfirmations } from "@/hooks/useDashboardConfirmations";
+import { useToast } from "@/hooks/use-toast";
 
 export function useDashboardHandlers() {
-  // Use our custom hooks for tab management
+  const { toast } = useToast();
   const { activeTab, setActiveTab } = useTabManagement();
   
-  // Use shift and cleaning hooks
   const {
     activeShift,
     elapsedTime,
     shiftsHistory,
     startShift,
-    endShift
+    endShift,
+    autoEndShift
   } = useShift();
   
   const {
@@ -38,47 +39,71 @@ export function useDashboardHandlers() {
     setShowSummary
   } = useCleaning(activeShift?.id);
   
-  // Use QR scanner hook
   const {
     showQRScanner,
     scannerPurpose,
-    closeScanner,
     handleQRScan,
-    handleStartShift,
-    handleEndShiftWithScan,
-    handleStartCleaning,
-    handleEndCleaningWithScan
-  } = useDashboardQRScanner(
-    activeShift,
-    activeCleaning,
-    setActiveTab,
-    startShift,
-    endShift,
-    startCleaning,
-    prepareSummary
-  );
+    handleQRScannerStart,
+    closeScanner
+  } = useQRScannerHandlers({
+    onStartShiftScan: startShift,
+    onEndShiftScan: endShift,
+    onStartCleaningScan: startCleaning,
+    onEndCleaningScan: prepareSummary
+  });
   
-  // Use confirmations hook
   const {
     showConfirmDialog,
     confirmAction,
     setShowConfirmDialog,
-    handleEndShiftWithoutScan,
-    handleEndCleaningWithoutScan
-  } = useDashboardConfirmations(
-    activeShift,
-    activeCleaning,
-    endShift,
-    prepareSummary
-  );
-
-  // Handle completing a cleaning summary
-  const handleCompleteSummary = () => {
-    if (completeSummary()) {
-      setActiveTab("home");
-    }
+    handleConfirmEndShiftWithoutQR,
+    handleConfirmEndCleaningWithoutQR
+  } = useDashboardConfirmations();
+  
+  // Event handlers
+  const handleStartShift = () => {
+    handleQRScannerStart('startShift');
+  };
+  
+  const handleEndShiftWithScan = () => {
+    handleQRScannerStart('endShift');
+  };
+  
+  const handleEndShiftWithoutScan = () => {
+    handleConfirmEndShiftWithoutQR(endShift);
   };
 
+  const handleAutoEndShift = () => {
+    autoEndShift();
+  };
+  
+  const handleStartCleaning = () => {
+    if (!activeShift) {
+      toast({
+        title: "Error",
+        description: "You need to start a shift first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    handleQRScannerStart('startCleaning');
+  };
+  
+  const handleEndCleaningWithScan = () => {
+    handleQRScannerStart('endCleaning');
+  };
+  
+  const handleEndCleaningWithoutScan = () => {
+    handleConfirmEndCleaningWithoutQR(prepareSummary);
+  };
+  
+  const handleCompleteSummary = async () => {
+    if (await completeSummary()) {
+      setActiveTab('home');
+    }
+  };
+  
   return {
     activeTab,
     setActiveTab,
@@ -101,6 +126,7 @@ export function useDashboardHandlers() {
     handleStartShift,
     handleEndShiftWithScan,
     handleEndShiftWithoutScan,
+    handleAutoEndShift,
     handleStartCleaning,
     handleEndCleaningWithScan,
     handleEndCleaningWithoutScan,

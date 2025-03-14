@@ -6,6 +6,7 @@ import NoShiftView from "@/components/cleaners/dashboard/NoShiftView";
 import DashboardTabs from "@/components/cleaners/dashboard/DashboardTabs";
 import { Shift } from "@/hooks/useShift";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
+import { useEffect } from "react";
 
 interface DashboardContentProps {
   activeShift: Shift | null;
@@ -23,6 +24,7 @@ interface DashboardContentProps {
   handleEndCleaningWithScan: () => void;
   handleEndCleaningWithoutScan: () => void;
   handleStartShift: () => void;
+  handleAutoEndShift: () => void;
 }
 
 const DashboardContent = ({
@@ -40,12 +42,23 @@ const DashboardContent = ({
   handleStartCleaning,
   handleEndCleaningWithScan,
   handleEndCleaningWithoutScan,
-  handleStartShift
+  handleStartShift,
+  handleAutoEndShift
 }: DashboardContentProps) => {
   // Get navigate function from useNavbar hook
   const navigate = () => {
     window.location.href = '/';
   };
+
+  // Auto-close shift after 16 hours (16 * 60 * 60 = 57600 seconds)
+  useEffect(() => {
+    const MAX_SHIFT_DURATION = 57600; // 16 hours in seconds
+    
+    if (activeShift && elapsedTime >= MAX_SHIFT_DURATION) {
+      console.log("Shift exceeded 16 hours, automatically ending it");
+      handleAutoEndShift();
+    }
+  }, [activeShift, elapsedTime, handleAutoEndShift]);
 
   return (
     <motion.div
