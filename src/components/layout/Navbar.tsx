@@ -1,7 +1,7 @@
+
 import { cn } from '@/lib/utils';
 import { useNavbar } from '@/hooks/useNavbar';
 import NavbarRoutes from './NavbarRoutes';
-import ProfileButton from './ProfileButton';
 import MobileMenu from './MobileMenu';
 import { getNavRoutes } from '@/utils/navbarUtils';
 import Logo from '@/components/ui/logo';
@@ -80,7 +80,7 @@ const Navbar = () => {
           />
         </div>
 
-        {/* Right section with navigation and profile */}
+        {/* Right section with navigation */}
         <div className="flex-1 flex items-center justify-end space-x-2">
           {/* Desktop Navigation */}
           <NavbarRoutes 
@@ -88,11 +88,8 @@ const Navbar = () => {
             isActive={isActive} 
             className="hidden md:flex items-center space-x-1" 
           />
-
-          {/* Profile Button - hidden on login, index pages, and for admin users */}
-          {!shouldHideProfileIcon && (
-            <ProfileButton onClick={handleProfileClick} />
-          )}
+          
+          {/* Profile button removed */}
         </div>
       </div>
 
