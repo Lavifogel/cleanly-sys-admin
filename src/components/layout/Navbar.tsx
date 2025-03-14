@@ -1,7 +1,5 @@
 
-import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import Logo from '@/components/ui/logo';
 import { useNavbar } from '@/hooks/useNavbar';
 import NavbarRoutes from './NavbarRoutes';
 import ProfileButton from './ProfileButton';
@@ -54,13 +52,9 @@ const Navbar = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="transition-opacity hover:opacity-80">
-          <Logo size="md" variant="default" />
-        </Link>
-
         {/* User name display */}
         {userName && !isIndexPage && (
-          <div className="hidden md:flex items-center mr-auto ml-6 text-sm font-medium">
+          <div className="flex items-center text-sm font-medium">
             <span>Welcome, {userName}</span>
           </div>
         )}
@@ -69,7 +63,7 @@ const Navbar = () => {
         <NavbarRoutes 
           routes={routes} 
           isActive={isActive} 
-          className="hidden md:flex items-center space-x-1" 
+          className="hidden md:flex items-center space-x-1 ml-auto" 
         />
 
         {/* Profile Button - hidden on login, index pages, and for admin users */}
