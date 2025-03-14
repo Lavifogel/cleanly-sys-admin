@@ -17,6 +17,11 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
     setIsLoading(true);
     try {
       await onStartShift();
+      toast({
+        title: "QR Scanner opened",
+        description: "Please scan a QR code or use the simulation button.",
+        duration: 3000,
+      });
     } catch (error: any) {
       console.error("Error starting shift:", error);
       toast({

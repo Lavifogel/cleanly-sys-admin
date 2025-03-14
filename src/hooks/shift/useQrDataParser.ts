@@ -4,15 +4,18 @@
  */
 export function parseQrData(qrData: string) {
   try {
+    console.log("Attempting to parse QR data:", qrData);
     const qrDataObj = JSON.parse(qrData);
     console.log("Parsed QR data:", qrDataObj);
     
-    if (qrDataObj) {
+    if (qrDataObj && qrDataObj.areaId) {
       return {
         areaId: qrDataObj.areaId,
         areaName: qrDataObj.areaName || `Area ${Math.floor(Math.random() * 100)}`,
         isValid: true
       };
+    } else {
+      console.error("Invalid QR data structure:", qrDataObj);
     }
   } catch (e) {
     console.error("Error parsing QR data:", e);

@@ -40,6 +40,8 @@ export const useSimulation = ({ onScanSuccess }: UseSimulationProps) => {
                 timestamp: Date.now()
               });
               
+              console.log("Simulated QR code data:", mockData);
+              
               onScanSuccess(mockData);
             }, 500);
             return 100;

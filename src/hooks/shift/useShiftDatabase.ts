@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from "uuid";
  * Creates or finds an existing QR code in the database
  */
 export async function createOrFindQrCode(areaId: string, areaName: string, qrData: string) {
+  console.log("Creating or finding QR code for area:", areaId, areaName);
+  
   // Check if a QR code with this area ID already exists
   const { data: existingQrCodes, error: lookupError } = await supabase
     .from('qr_codes')
@@ -46,6 +48,7 @@ export async function createOrFindQrCode(areaId: string, areaName: string, qrDat
       throw new Error("Failed to create QR code: No data returned");
     }
     
+    console.log("Created new QR code:", newQrCode);
     return newQrCode.qr_id;
   }
 }
@@ -54,6 +57,8 @@ export async function createOrFindQrCode(areaId: string, areaName: string, qrDat
  * Creates a new shift in the database
  */
 export async function createShift(shiftId: string, userId: string, startTime: string, qrId: string | null) {
+  console.log("Creating shift with ID:", shiftId, "for user:", userId, "QR ID:", qrId);
+  
   const { data, error } = await supabase
     .from('shifts')
     .insert({
@@ -69,6 +74,7 @@ export async function createShift(shiftId: string, userId: string, startTime: st
     throw new Error(`Failed to store shift: ${error.message}`);
   }
   
+  console.log("Shift created successfully");
   return data;
 }
 
