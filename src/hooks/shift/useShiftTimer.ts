@@ -7,7 +7,7 @@ import { Shift } from "@/hooks/shift/types";
  */
 export function useShiftTimer(
   activeShift: Shift | null,
-  setElapsedTime: (time: number) => void
+  setElapsedTime: React.Dispatch<React.SetStateAction<number>>
 ) {
   // Timer effect for tracking shift time
   useEffect(() => {
@@ -15,7 +15,7 @@ export function useShiftTimer(
     
     if (activeShift && !interval) {
       interval = window.setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
+        setElapsedTime(prev => prev + 1);
       }, 1000);
     }
     
