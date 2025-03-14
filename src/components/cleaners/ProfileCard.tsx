@@ -31,7 +31,8 @@ const ProfileCard = ({ disableLogoClick = false }: ProfileCardProps) => {
             <Badge variant="outline" className="w-fit">Cleaner</Badge>
           </div>
         </div>
-        <div className="flex items-center justify-center py-3 pointer-events-none">
+        {/* Using a div with both pointer-events-none and tabIndex=-1 to ensure no interactions */}
+        <div className="flex items-center justify-center py-3 pointer-events-none" tabIndex={-1} aria-hidden="true">
           <Logo size="lg" variant="default" disableClick={true} />
         </div>
       </CardContent>
