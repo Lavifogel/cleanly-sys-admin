@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scan } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface StartShiftCardProps {
   onStartShift: () => void;
@@ -10,6 +11,7 @@ interface StartShiftCardProps {
 
 const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
   const handleStartShift = async () => {
     setIsLoading(true);
@@ -17,6 +19,11 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
       await onStartShift();
     } catch (error) {
       console.error("Error starting shift:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start shift. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

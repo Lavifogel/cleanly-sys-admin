@@ -61,7 +61,7 @@ export function useShift() {
           // Get the QR code ID from the database using area ID
           const { data: qrCodes, error: qrError } = await supabase
             .from('qr_codes')
-            .select('qr_id')
+            .select('qr_id, qr_value')
             .eq('area_id', qrDataObj.areaId)
             .eq('type', 'Shift')
             .limit(1);
@@ -77,8 +77,8 @@ export function useShift() {
         // Continue with null qrId if parsing fails
       }
       
-      // Create a temporary user ID (in a real app, get this from auth)
-      const temporaryUserId = "temp-user-id";
+      // Create a proper UUID for the user ID (in a real app, get this from auth)
+      const temporaryUserId = uuidv4();
       
       // Store the shift in the database
       const { data, error } = await supabase
@@ -123,6 +123,7 @@ export function useShift() {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+      throw error; // Re-throw to allow the calling component to handle it
     }
   };
 
