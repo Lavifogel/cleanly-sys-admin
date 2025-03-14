@@ -55,7 +55,7 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
             <Clock className="h-3.5 w-3.5 mr-1" />
             <span>
               {cleaning.isActive 
-                ? cleaning.duration 
+                ? `Duration: ${cleaning.duration}` 
                 : `${cleaning.startTime} - ${cleaning.endTime} (${cleaning.duration})`}
             </span>
           </div>
