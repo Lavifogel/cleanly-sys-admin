@@ -52,42 +52,46 @@ const Navbar = () => {
         isScrolled ? 'bg-background/80 backdrop-blur-md border-b' : 'bg-transparent'
       )}
     >
-      <div className="max-w-7xl mx-auto flex flex-col items-center justify-center">
-        {/* Static logo design (non-interactive) centered at the top */}
-        <div 
-          className="flex items-center gap-3 pointer-events-none mb-2" 
-          aria-hidden="true"
-        >
-          {/* Logo icon */}
-          <div className="relative flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-2 h-10 w-10">
-            <Check className="absolute h-3/5 w-3/5" strokeWidth={3} />
-            <div className="absolute right-0 bottom-0 -translate-x-px -translate-y-px">
-              <Sparkles className="h-2/5 w-2/5 text-amber-300" />
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        {/* Left section with logo and username */}
+        <div className="flex items-center gap-4">
+          {/* Logo (non-interactive) */}
+          <div 
+            className="flex items-center gap-2 pointer-events-none" 
+            aria-hidden="true"
+          >
+            {/* Logo icon */}
+            <div className="relative flex items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-1.5 h-8 w-8">
+              <Check className="absolute h-3/5 w-3/5" strokeWidth={3} />
+              <div className="absolute right-0 bottom-0 -translate-x-px -translate-y-px">
+                <Sparkles className="h-2/5 w-2/5 text-amber-300" />
+              </div>
+            </div>
+            {/* Logo text */}
+            <div className="flex flex-col items-start">
+              <span className="text-lg font-bold tracking-tight leading-none">
+                <span className="text-blue-600">Cleaners</span>
+                <span className="text-indigo-700">Check</span>
+              </span>
+              <span className="text-xs text-muted-foreground">Smart Cleaning Management</span>
             </div>
           </div>
-          {/* Logo text */}
-          <div className="flex flex-col items-start">
-            <span className="text-2xl font-bold tracking-tight leading-none">
-              <span className="text-blue-600">Cleaners</span>
-              <span className="text-indigo-700">Check</span>
-            </span>
-            <span className="text-xs text-muted-foreground">Smart Cleaning Management</span>
-          </div>
-        </div>
 
-        <div className="w-full flex items-center justify-between">
           {/* User name display */}
           {userName && !isIndexPage && (
-            <div className="flex items-center text-sm font-medium">
+            <div className="flex items-center text-sm font-medium ml-2">
               <span>Welcome, {userName}</span>
             </div>
           )}
+        </div>
 
+        {/* Right section with navigation and profile */}
+        <div className="flex items-center space-x-2">
           {/* Desktop Navigation */}
           <NavbarRoutes 
             routes={routes} 
             isActive={isActive} 
-            className="hidden md:flex items-center space-x-1 ml-auto" 
+            className="hidden md:flex items-center space-x-1" 
           />
 
           {/* Profile Button - hidden on login, index pages, and for admin users */}
