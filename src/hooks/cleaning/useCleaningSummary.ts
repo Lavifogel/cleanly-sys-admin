@@ -15,13 +15,18 @@ export function useCleaningSummary(
   setCleaningsHistory: (history: CleaningHistoryItem[]) => void,
   setCleaningSummary: (summary: CleaningSummary) => void,
   summaryNotes: string,
+  setSummaryNotes: (notes: string) => void,
   setShowSummary: (show: boolean) => void
 ) {
-  const { images, addImage, removeImage, isUploading, saveImagesToDatabase } = useCleaningImages({ maxImages: 5 });
+  const { images, addImage, removeImage, isUploading, saveImagesToDatabase, resetImages } = useCleaningImages({ maxImages: 5 });
 
   // Prepare cleaning summary for completion
   const prepareSummary = (withScan: boolean, qrData?: string) => {
     if (!activeCleaning) return;
+    
+    // Reset summary notes and images when opening the summary form
+    setSummaryNotes("");
+    resetImages();
     
     setCleaningSummary({
       location: activeCleaning.location,

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,11 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   
+  // Function to reset images
+  const resetImages = () => {
+    setImages([]);
+  };
+
   // Function to upload image to Supabase storage
   const uploadImageToStorage = async (file: File): Promise<string | null> => {
     try {
@@ -161,6 +165,7 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
     isUploading,
     addImage,
     removeImage,
-    saveImagesToDatabase
+    saveImagesToDatabase,
+    resetImages
   };
 }
