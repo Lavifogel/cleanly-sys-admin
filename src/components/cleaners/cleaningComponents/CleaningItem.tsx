@@ -36,25 +36,25 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
       className={`p-4 rounded-lg border ${cleaning.isActive ? 'bg-muted/50 border-primary/20 cursor-pointer' : 'bg-card'}`}
       onClick={onClick} // Add onClick handler to the entire item
     >
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex-1">
+      <div className="flex justify-between items-start">
+        <div>
           <h3 className="font-medium text-base">{cleaning.location}</h3>
           <div className="flex items-center text-muted-foreground text-sm mt-1">
             <Calendar className="h-3.5 w-3.5 mr-1" />
             <span>{formattedDate}</span>
           </div>
           
-          {/* Display time information more prominently */}
-          <div className="flex items-center text-sm mt-1.5">
-            <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-            {cleaning.isActive ? (
+          {cleaning.isActive ? (
+            <div className="flex items-center text-sm mt-1">
+              <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
               <span>Duration: {cleaning.duration}</span>
-            ) : (
-              <span className="text-muted-foreground">
-                {cleaning.startTime} - {cleaning.endTime} <span className="ml-1 text-primary-foreground/70">({cleaning.duration})</span>
-              </span>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="flex items-center text-sm mt-1">
+              <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
+              <span>{cleaning.startTime} - {cleaning.endTime}</span>
+            </div>
+          )}
         </div>
         <Badge variant={getBadgeVariant(cleaning.status)}>
           {cleaning.isActive ? "In Progress" : cleaning.status}
@@ -62,9 +62,12 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
       </div>
       
       <div className="flex justify-between items-center mt-3">
-        {/* Remove the time display from here since we moved it above */}
         <div className="flex-1">
-          {/* Space left intentionally empty */}
+          {!cleaning.isActive && (
+            <div className="text-xs text-muted-foreground">
+              Duration: {cleaning.duration}
+            </div>
+          )}
         </div>
         
         {cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0 && (
