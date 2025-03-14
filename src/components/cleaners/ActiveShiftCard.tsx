@@ -17,6 +17,13 @@ const ActiveShiftCard = ({
   onEndShiftWithScan,
   onEndShiftWithoutScan,
 }: ActiveShiftCardProps) => {
+  // Format the current date as DD/MM/YYYY
+  const formattedDate = startTime.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -31,6 +38,7 @@ const ActiveShiftCard = ({
             {formatTime(elapsedTime)}
           </div>
           <p className="text-muted-foreground">Elapsed Time</p>
+          <p className="text-sm text-muted-foreground mt-1">{formattedDate}</p>
         </div>
         <div className="flex flex-col gap-2">
           <Button
