@@ -21,8 +21,25 @@ export const useSimulation = ({ onScanSuccess }: UseSimulationProps) => {
             clearInterval(interval);
             // Simulate a successful scan after reaching 100%
             setTimeout(() => {
-              // Generate a mock QR code data based on our use case
-              const mockData = `location=Conference Room ${Math.floor(Math.random() * 10) + 1}&timestamp=${Date.now()}`;
+              // Generate a mock QR code data that includes a properly formatted area ID
+              const mockAreas = [
+                "Conference Room A", 
+                "Bathroom Floor 1", 
+                "Kitchen", 
+                "Lobby", 
+                "Office Suite 101"
+              ];
+              const mockAreaName = mockAreas[Math.floor(Math.random() * mockAreas.length)];
+              const mockAreaId = `${mockAreaName.toLowerCase().replace(/\s+/g, '-')}-${Math.random().toString(36).substring(2, 10)}`;
+              
+              // Create a properly formatted QR code JSON string
+              const mockData = JSON.stringify({
+                areaId: mockAreaId,
+                areaName: mockAreaName,
+                type: "Shift",
+                timestamp: Date.now()
+              });
+              
               onScanSuccess(mockData);
             }, 500);
             return 100;

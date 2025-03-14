@@ -53,34 +53,93 @@ export function useShift() {
       const newShiftId = uuidv4();
       const startTime = new Date();
       
+      console.log("Starting shift with QR data:", qrData);
+      
       // Parse QR code data if it exists
       let qrId = null;
+      let areaId = null;
+      let areaName = null;
+      
       try {
         const qrDataObj = JSON.parse(qrData);
-        if (qrDataObj && qrDataObj.areaId) {
-          // Get the QR code ID from the database using area ID
-          const { data: qrCodes, error: qrError } = await supabase
+        console.log("Parsed QR data:", qrDataObj);
+        
+        if (qrDataObj) {
+          areaId = qrDataObj.areaId;
+          areaName = qrDataObj.areaName || `Area ${Math.floor(Math.random() * 100)}`;
+          
+          // Check if a QR code with this area ID already exists
+          const { data: existingQrCodes, error: lookupError } = await supabase
             .from('qr_codes')
             .select('qr_id, qr_value')
-            .eq('area_id', qrDataObj.areaId)
+            .eq('area_id', areaId)
             .eq('type', 'Shift')
             .limit(1);
           
-          if (qrError) {
-            console.error("Error fetching QR code:", qrError);
-          } else if (qrCodes && qrCodes.length > 0) {
-            qrId = qrCodes[0].qr_id;
+          if (lookupError) {
+            console.error("Error looking up QR code:", lookupError);
+          } else if (existingQrCodes && existingQrCodes.length > 0) {
+            // Use existing QR code
+            console.log("Found existing QR code:", existingQrCodes[0]);
+            qrId = existingQrCodes[0].qr_id;
+          } else {
+            // Create a new QR code in the database if it doesn't exist
+            console.log("Creating new QR code for area:", areaId);
+            const { data: newQrCode, error: qrInsertError } = await supabase
+              .from('qr_codes')
+              .insert({
+                area_id: areaId,
+                area_name: areaName,
+                qr_value: qrData,
+                type: 'Shift'
+              })
+              .select('qr_id')
+              .single();
+            
+            if (qrInsertError) {
+              console.error("Error creating QR code:", qrInsertError);
+            } else if (newQrCode) {
+              qrId = newQrCode.qr_id;
+              console.log("Created new QR code with ID:", qrId);
+            }
           }
         }
       } catch (e) {
         console.error("Error parsing QR data:", e);
-        // Continue with null qrId if parsing fails
+        // For simulation, create a random area if parsing fails
+        areaId = `simulated-area-${Math.random().toString(36).substring(2, 10)}`;
+        areaName = `Simulated Area ${Math.floor(Math.random() * 100)}`;
+        
+        // Create a new QR code for the simulation
+        const { data: newQrCode, error: qrError } = await supabase
+          .from('qr_codes')
+          .insert({
+            area_id: areaId,
+            area_name: areaName,
+            qr_value: JSON.stringify({
+              areaId: areaId,
+              areaName: areaName,
+              type: 'Shift',
+              timestamp: Date.now()
+            }),
+            type: 'Shift'
+          })
+          .select('qr_id')
+          .single();
+        
+        if (qrError) {
+          console.error("Error creating simulated QR code:", qrError);
+        } else if (newQrCode) {
+          qrId = newQrCode.qr_id;
+          console.log("Created simulated QR code with ID:", qrId);
+        }
       }
       
       // Create a proper UUID for the user ID (in a real app, get this from auth)
       const temporaryUserId = uuidv4();
       
       // Store the shift in the database
+      console.log("Inserting shift with user ID:", temporaryUserId, "and QR ID:", qrId);
       const { data, error } = await supabase
         .from('shifts')
         .insert({
@@ -95,7 +154,7 @@ export function useShift() {
         console.error("Error storing shift:", error);
         toast({
           title: "Error",
-          description: "Failed to start shift. Please try again.",
+          description: "Failed to start shift. Database error: " + error.message,
           variant: "destructive",
         });
         return;
@@ -116,11 +175,11 @@ export function useShift() {
         description: "Your shift has been started successfully.",
         duration: 3000,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in startShift:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
       throw error; // Re-throw to allow the calling component to handle it

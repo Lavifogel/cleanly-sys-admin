@@ -17,11 +17,11 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
     setIsLoading(true);
     try {
       await onStartShift();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error starting shift:", error);
       toast({
         title: "Error",
-        description: "Failed to start shift. Please try again.",
+        description: error.message || "Failed to start shift. Please try again.",
         variant: "destructive",
       });
     } finally {
