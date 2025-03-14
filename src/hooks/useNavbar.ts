@@ -21,12 +21,27 @@ export const useNavbar = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
+
+  // Set up event listener for the "set-home-tab" event
+  useEffect(() => {
+    const handleSetHomeTab = () => {
+      const event = new CustomEvent('set-active-tab', { detail: 'home' });
+      window.dispatchEvent(event);
+    };
+
+    window.addEventListener('set-home-tab', handleSetHomeTab);
+    
+    return () => {
+      window.removeEventListener('set-home-tab', handleSetHomeTab);
+    };
+  }, []);
 
   return {
     isScrolled,
