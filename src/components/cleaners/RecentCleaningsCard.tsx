@@ -125,9 +125,10 @@ const RecentCleaningsCard = ({
             <Button
               onClick={onStartCleaning}
               className="w-full"
+              disabled={!!activeCleaning} // Disable button if there's an active cleaning
             >
               <Scan className="mr-2 h-4 w-4" />
-              Scan to Start Cleaning
+              {activeCleaning ? "Finish Current Cleaning First" : "Scan to Start Cleaning"}
             </Button>
           </div>
         )}
