@@ -43,6 +43,18 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
             <Calendar className="h-3.5 w-3.5 mr-1" />
             <span>{formattedDate}</span>
           </div>
+          
+          {/* Display time information more prominently */}
+          <div className="flex items-center text-sm mt-1.5">
+            <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
+            {cleaning.isActive ? (
+              <span>Duration: {cleaning.duration}</span>
+            ) : (
+              <span className="text-muted-foreground">
+                {cleaning.startTime} - {cleaning.endTime} <span className="ml-1 text-primary-foreground/70">({cleaning.duration})</span>
+              </span>
+            )}
+          </div>
         </div>
         <Badge variant={getBadgeVariant(cleaning.status)}>
           {cleaning.isActive ? "In Progress" : cleaning.status}
@@ -50,15 +62,9 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
       </div>
       
       <div className="flex justify-between items-center mt-3">
-        <div className="flex items-center text-sm text-muted-foreground space-x-3">
-          <div className="flex items-center">
-            <Clock className="h-3.5 w-3.5 mr-1" />
-            <span>
-              {cleaning.isActive 
-                ? `Duration: ${cleaning.duration}` 
-                : `${cleaning.startTime} - ${cleaning.endTime} (${cleaning.duration})`}
-            </span>
-          </div>
+        {/* Remove the time display from here since we moved it above */}
+        <div className="flex-1">
+          {/* Space left intentionally empty */}
         </div>
         
         {cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0 && (
