@@ -32,7 +32,7 @@ const ProfileCard = ({ disableLogoClick = false }: ProfileCardProps) => {
           </div>
         </div>
         <div className="flex items-center justify-center py-3">
-          <Logo size="lg" variant="default" disableClick={disableLogoClick} />
+          <Logo size="lg" variant="default" disableClick={true} />
         </div>
       </CardContent>
     </Card>
