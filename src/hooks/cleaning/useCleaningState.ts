@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Cleaning, CleaningHistoryItem, CleaningSummary } from "@/types/cleaning";
 import { formatTime } from "@/utils/timeUtils";
-import { format } from "date-fns";
 
 export function useCleaningState(activeShiftId: string | undefined) {
   // Core cleaning state
@@ -26,7 +25,7 @@ export function useCleaningState(activeShiftId: string | undefined) {
     {
       id: "1",
       location: "Conference Room A",
-      date: "15/08/2023",
+      date: "2023-08-15",
       startTime: "09:30",
       endTime: "10:05",
       duration: "35m",
@@ -42,7 +41,7 @@ export function useCleaningState(activeShiftId: string | undefined) {
     {
       id: "2",
       location: "Main Office",
-      date: "15/08/2023",
+      date: "2023-08-15",
       startTime: "10:30",
       endTime: "11:12",
       duration: "42m",

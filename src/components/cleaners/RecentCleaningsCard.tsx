@@ -8,7 +8,6 @@ import CleaningItem from "./cleaningComponents/CleaningItem";
 import ImagePreview from "./cleaningComponents/ImagePreview";
 import { formatTime } from "@/utils/timeUtils";
 import { Scan } from "lucide-react";
-import { format } from "date-fns";
 
 interface RecentCleaningsCardProps {
   cleaningsHistory: CleaningHistoryItem[];
@@ -43,7 +42,7 @@ const RecentCleaningsCard = ({
         {
           id: "active",
           location: activeCleaning.location,
-          date: format(new Date(), "dd/MM/yyyy"),
+          date: new Date().toISOString().split('T')[0],
           startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
           endTime: "--:--",
           duration: formatTime(cleaningElapsedTime),

@@ -4,7 +4,6 @@ import { Cleaning, CleaningHistoryItem, CleaningSummary } from "@/types/cleaning
 import { useCleaningImages } from "@/hooks/useCleaningImages";
 import { updateCleaningEnd } from "@/hooks/shift/useCleaningDatabase";
 import { formatTime } from "@/utils/timeUtils";
-import { format } from "date-fns";
 
 export function useCleaningSummary(
   activeShiftId: string | undefined,
@@ -70,7 +69,7 @@ export function useCleaningSummary(
       const newCleaning = {
         id: cleaningId,
         location: activeCleaning.location,
-        date: format(new Date(), "dd/MM/yyyy"),
+        date: new Date().toISOString().split('T')[0],
         startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
         endTime: endTime.toTimeString().slice(0, 5),
         duration: `${Math.floor(cleaningElapsedTime / 60)}m`,
