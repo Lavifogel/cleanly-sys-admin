@@ -46,13 +46,13 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
         
         <div className="flex items-center text-muted-foreground text-sm">
           <Calendar className="h-3.5 w-3.5 mr-1" />
-          <span>{formattedDate}</span>
+          <span>Date: {formattedDate}</span>
         </div>
         
         <div className="flex items-center text-sm">
           <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
           <span>
-            {cleaning.startTime} 
+            Started at: {cleaning.startTime} 
             {!cleaning.isActive && ` - ${cleaning.endTime}`}
           </span>
         </div>
