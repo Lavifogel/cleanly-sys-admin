@@ -8,6 +8,8 @@ export type DashboardStats = {
   areasCleaned: number;
   areasPending: number;
   avgCleaningTime: number;
+  totalShifts?: number;
+  totalCleanings?: number;
 };
 
 export function useAdminDashboardData() {
@@ -17,6 +19,8 @@ export function useAdminDashboardData() {
     areasCleaned: 0,
     areasPending: 0,
     avgCleaningTime: 32,
+    totalShifts: 0,
+    totalCleanings: 0,
   });
   const { toast } = useToast();
 
@@ -38,7 +42,7 @@ export function useAdminDashboardData() {
         .from('cleanings')
         .select('id')
         .gte('start_time', today)
-        .eq('status', 'finished');
+        .eq('status', 'finished with scan');
 
       if (cleaningsError) throw cleaningsError;
 
@@ -50,15 +54,52 @@ export function useAdminDashboardData() {
 
       if (pendingError) throw pendingError;
 
+      // Get total shifts 
+      const { count: totalShifts, error: totalShiftsError } = await supabase
+        .from('shifts')
+        .select('id', { count: 'exact', head: true });
+
+      if (totalShiftsError) throw totalShiftsError;
+
+      // Get total cleanings
+      const { count: totalCleanings, error: totalCleaningsError } = await supabase
+        .from('cleanings')
+        .select('id', { count: 'exact', head: true });
+
+      if (totalCleaningsError) throw totalCleaningsError;
+
+      // Calculate average cleaning time from completed cleanings
+      const { data: completedCleanings, error: completedCleaningsError } = await supabase
+        .from('cleanings')
+        .select('start_time, end_time')
+        .not('end_time', 'is', null)
+        .limit(100);
+
+      if (completedCleaningsError) throw completedCleaningsError;
+
       // Calculate average cleaning time
-      // In a real app, you'd calculate this from completed cleanings
-      // For now, we'll keep the hardcoded value of 32 minutes
+      let avgCleaningTime = 32; // Default fallback value
+      if (completedCleanings && completedCleanings.length > 0) {
+        const cleaningTimes = completedCleanings.map(cleaning => {
+          const start = new Date(cleaning.start_time as string);
+          const end = new Date(cleaning.end_time as string);
+          return (end.getTime() - start.getTime()) / (1000 * 60); // Time in minutes
+        }).filter(time => time > 0 && time < 240); // Filter out outliers
+
+        if (cleaningTimes.length > 0) {
+          avgCleaningTime = Math.round(
+            cleaningTimes.reduce((sum, time) => sum + time, 0) / cleaningTimes.length
+          );
+        }
+      }
 
       setStats({
         activeCleaners: activeShifts?.length || 0,
         areasCleaned: cleaningsToday?.length || 0,
         areasPending: pendingCleanings?.length || 0,
-        avgCleaningTime: 32, // Default value, would be calculated in a real app
+        avgCleaningTime,
+        totalShifts: totalShifts || 0,
+        totalCleanings: totalCleanings || 0,
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

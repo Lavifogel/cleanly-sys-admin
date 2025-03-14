@@ -8,6 +8,7 @@ import QrCodeGenerator from "@/components/admin/QrCodeGenerator";
 import StatCards from "./StatCards";
 import RecentActivitiesCard from "./RecentActivitiesCard";
 import CleanerWorkHoursCard from "./CleanerWorkHoursCard";
+import ActivitiesTable from "./ActivitiesTable";
 import { DashboardStats } from "@/hooks/useAdminDashboardData";
 
 interface DashboardTabsProps {
@@ -80,51 +81,7 @@ const DashboardTabs = ({ stats, loading, refreshData }: DashboardTabsProps) => {
             <CardDescription>Track all cleaning activities</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <div className="grid grid-cols-5 p-4 font-medium">
-                <div>Date</div>
-                <div>Location</div>
-                <div>Cleaner</div>
-                <div>Duration</div>
-                <div>Status</div>
-              </div>
-              <div className="divide-y">
-                {/* Activities log would be fetched from Supabase in a more complete implementation */}
-                <div className="grid grid-cols-5 p-4">
-                  <div>Aug 15, 2023</div>
-                  <div>Conference Room A</div>
-                  <div>Jane Smith</div>
-                  <div>35 min</div>
-                  <div>
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
-                      Completed
-                    </span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-5 p-4">
-                  <div>Aug 15, 2023</div>
-                  <div>Main Office</div>
-                  <div>John Doe</div>
-                  <div>42 min</div>
-                  <div>
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
-                      Completed
-                    </span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-5 p-4">
-                  <div>Aug 15, 2023</div>
-                  <div>Cafeteria</div>
-                  <div>Mark Johnson</div>
-                  <div>67 min</div>
-                  <div>
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
-                      Completed
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ActivitiesTable />
           </CardContent>
         </Card>
       </TabsContent>
