@@ -52,10 +52,10 @@ const Navbar = () => {
         isScrolled ? 'bg-background/80 backdrop-blur-md border-b' : 'bg-transparent'
       )}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Static logo design (non-interactive) */}
+      <div className="max-w-7xl mx-auto flex flex-col items-center justify-center">
+        {/* Static logo design (non-interactive) centered at the top */}
         <div 
-          className="flex items-center gap-3 pointer-events-none" 
+          className="flex items-center gap-3 pointer-events-none mb-2" 
           aria-hidden="true"
         >
           {/* Logo icon */}
@@ -75,24 +75,26 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* User name display */}
-        {userName && !isIndexPage && (
-          <div className="flex items-center text-sm font-medium">
-            <span>Welcome, {userName}</span>
-          </div>
-        )}
+        <div className="w-full flex items-center justify-between">
+          {/* User name display */}
+          {userName && !isIndexPage && (
+            <div className="flex items-center text-sm font-medium">
+              <span>Welcome, {userName}</span>
+            </div>
+          )}
 
-        {/* Desktop Navigation */}
-        <NavbarRoutes 
-          routes={routes} 
-          isActive={isActive} 
-          className="hidden md:flex items-center space-x-1 ml-auto" 
-        />
+          {/* Desktop Navigation */}
+          <NavbarRoutes 
+            routes={routes} 
+            isActive={isActive} 
+            className="hidden md:flex items-center space-x-1 ml-auto" 
+          />
 
-        {/* Profile Button - hidden on login, index pages, and for admin users */}
-        {!shouldHideProfileIcon && (
-          <ProfileButton onClick={handleProfileClick} />
-        )}
+          {/* Profile Button - hidden on login, index pages, and for admin users */}
+          {!shouldHideProfileIcon && (
+            <ProfileButton onClick={handleProfileClick} />
+          )}
+        </div>
       </div>
 
       {/* Mobile Menu */}
