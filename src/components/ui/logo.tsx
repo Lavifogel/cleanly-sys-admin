@@ -9,6 +9,7 @@ interface LogoProps {
   size?: "sm" | "md" | "lg";
   variant?: "default" | "simple";
   onClick?: () => void;
+  disableClick?: boolean;
 }
 
 const Logo = ({
@@ -17,6 +18,7 @@ const Logo = ({
   size = "md",
   variant = "default",
   onClick,
+  disableClick = false,
 }: LogoProps) => {
   // Size mappings
   const sizeClasses = {
@@ -67,17 +69,20 @@ const Logo = ({
     }
   };
 
+  // Only apply cursor-pointer and onClick if not disabled
+  const containerProps = disableClick 
+    ? { className: cn("flex items-center", sizeClasses[size].spacing, className) }
+    : { 
+        className: cn("flex items-center cursor-pointer", sizeClasses[size].spacing, className),
+        onClick: onClick
+      };
+
   return (
     <motion.div
-      className={cn(
-        "flex items-center cursor-pointer",
-        sizeClasses[size].spacing,
-        className
-      )}
+      {...containerProps}
       initial="initial"
       animate="animate"
-      whileHover="hover"
-      onClick={onClick}
+      whileHover={disableClick ? undefined : "hover"}
     >
       {/* Logo icon */}
       <motion.div 

@@ -24,7 +24,7 @@ const ProfileTab = ({ shiftsHistory, cleaningsHistory = [] }: ProfileTabProps) =
     <div className="space-y-6">
       <ShiftHistoryCard shiftsHistory={shiftsHistory} />
       <CleaningHistoryCard cleaningsHistory={cleaningsHistory} />
-      <ProfileCard />
+      <ProfileCard disableLogoClick={true} />
     </div>
   );
 };
