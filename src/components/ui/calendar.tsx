@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -54,6 +55,17 @@ function Calendar({
       components={{
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+      }}
+      formatters={{
+        formatDay: (date) => date.getDate().toString(),
+        formatMonth: (date, options) => {
+          return date.toLocaleDateString(options?.locale, { month: 'long' });
+        },
+        formatMonthCaption: (date, options) => {
+          return (
+            date.toLocaleDateString(options?.locale, { month: 'long', year: 'numeric' })
+          );
+        },
       }}
       {...props}
     />

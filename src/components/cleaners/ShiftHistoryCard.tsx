@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, ClipboardCheck, Timer } from "lucide-react";
@@ -28,7 +27,7 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
     {
       id: "1",
       location: "Meeting Room A",
-      date: "2023-08-15",
+      date: "15/08/2023",
       startTime: "09:15",
       endTime: "09:45",
       duration: "30m",
@@ -41,7 +40,7 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
     {
       id: "2",
       location: "Office Space 101",
-      date: "2023-08-15",
+      date: "15/08/2023",
       startTime: "10:00",
       endTime: "10:30",
       duration: "30m",
@@ -54,7 +53,7 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
     {
       id: "3",
       location: "Bathroom Floor 2",
-      date: "2023-08-15",
+      date: "15/08/2023",
       startTime: "11:00",
       endTime: "11:45",
       duration: "45m",
@@ -67,7 +66,7 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
     {
       id: "4",
       location: "Kitchen Area",
-      date: "2023-08-14",
+      date: "14/08/2023",
       startTime: "09:00",
       endTime: "09:30",
       duration: "30m",

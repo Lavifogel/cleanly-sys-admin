@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -97,7 +96,7 @@ export function ActivitiesTable() {
         return {
           id: shift.id,
           type: "shift",
-          date: format(startTime, "MMM dd, yyyy"),
+          date: format(startTime, "dd/MM/yyyy"),
           userName,
           location: shift.qr_codes?.area_name || null,
           startTime: format(startTime, "HH:mm"),
@@ -124,7 +123,7 @@ export function ActivitiesTable() {
         return {
           id: cleaning.id,
           type: "cleaning",
-          date: format(startTime, "MMM dd, yyyy"),
+          date: format(startTime, "dd/MM/yyyy"),
           userName,
           location: cleaning.qr_codes?.area_name || extractLocationFromNotes(cleaning.notes),
           startTime: format(startTime, "HH:mm"),
@@ -137,7 +136,8 @@ export function ActivitiesTable() {
       // Combine and sort activities by date and start time
       const allActivities = [...shiftActivities, ...cleaningActivities].sort((a, b) => {
         // First sort by date (newest first)
-        const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+        const dateComparison = new Date(b.date.split('/').reverse().join('-')).getTime() - 
+                              new Date(a.date.split('/').reverse().join('-')).getTime();
         if (dateComparison !== 0) return dateComparison;
         
         // Then sort by start time (newest first)
