@@ -7,10 +7,8 @@ export interface NavRoute {
 export const getNavRoutes = (session: any, userRole: string | null): NavRoute[] => {
   // If user is not logged in, don't show any routes
   if (!session) {
-    // For Lavi, show the cleaner dashboard
-    return [
-      { path: '/cleaners/dashboard', label: 'Dashboard' }
-    ];
+    // Return empty array - no navigation items
+    return [];
   }
 
   // If user is logged in, only show their relevant dashboard
@@ -19,9 +17,8 @@ export const getNavRoutes = (session: any, userRole: string | null): NavRoute[] 
       { path: '/admin/dashboard', label: 'Dashboard' }
     ];
   } else if (userRole === 'cleaner') {
-    return [
-      { path: '/cleaners/dashboard', label: 'Dashboard' }
-    ];
+    // Return empty array for cleaner - removing the Dashboard button
+    return [];
   }
 
   return [];
