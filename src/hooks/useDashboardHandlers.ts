@@ -31,6 +31,7 @@ export function useDashboardHandlers() {
     images,
     startCleaning,
     togglePauseCleaning,
+    autoEndCleaning,
     prepareSummary,
     completeSummary,
     addImage,
@@ -103,6 +104,10 @@ export function useDashboardHandlers() {
     handleConfirmEndCleaningWithoutQR(() => prepareSummary(false));
   };
   
+  const handleAutoEndCleaning = () => {
+    autoEndCleaning();
+  };
+  
   const handleCompleteSummary = async () => {
     if (await completeSummary()) {
       setActiveTab('home');
@@ -138,6 +143,7 @@ export function useDashboardHandlers() {
     handleStartCleaning,
     handleEndCleaningWithScan,
     handleEndCleaningWithoutScan,
+    handleAutoEndCleaning,
     handleCompleteSummary,
     togglePauseCleaning,
     setSummaryNotes,

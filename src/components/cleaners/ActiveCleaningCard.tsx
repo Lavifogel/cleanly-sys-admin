@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, PauseCircle, Scan } from "lucide-react";
 import { formatTime } from "@/utils/timeUtils";
+import { useEffect } from "react";
 
 interface ActiveCleaningCardProps {
   location: string;
@@ -12,6 +13,7 @@ interface ActiveCleaningCardProps {
   onPauseCleaning: () => void;
   onEndCleaningWithScan: () => void;
   onEndCleaningWithoutScan: () => void;
+  onAutoEndCleaning?: () => void;
 }
 
 const ActiveCleaningCard = ({
@@ -22,7 +24,18 @@ const ActiveCleaningCard = ({
   onPauseCleaning,
   onEndCleaningWithScan,
   onEndCleaningWithoutScan,
+  onAutoEndCleaning,
 }: ActiveCleaningCardProps) => {
+  // Auto-close cleaning after 5 hours (5 * 60 * 60 = 18000 seconds)
+  useEffect(() => {
+    const MAX_CLEANING_DURATION = 18000; // 5 hours in seconds
+    
+    if (!isPaused && cleaningElapsedTime >= MAX_CLEANING_DURATION && onAutoEndCleaning) {
+      console.log("Cleaning exceeded 5 hours, automatically ending it");
+      onAutoEndCleaning();
+    }
+  }, [cleaningElapsedTime, isPaused, onAutoEndCleaning]);
+
   return (
     <Card>
       <CardHeader>

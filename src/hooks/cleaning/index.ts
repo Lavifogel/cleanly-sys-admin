@@ -24,12 +24,15 @@ export function useCleaning(activeShiftId: string | undefined) {
   // Initialize cleaning actions
   const {
     startCleaning,
-    togglePauseCleaning
+    togglePauseCleaning,
+    autoEndCleaning
   } = useCleaningActions(
     activeShiftId,
     activeCleaning,
     setActiveCleaning,
-    setCleaningElapsedTime
+    setCleaningElapsedTime,
+    cleaningsHistory,
+    setCleaningsHistory
   );
   
   // Initialize summary functionality
@@ -72,6 +75,7 @@ export function useCleaning(activeShiftId: string | undefined) {
     // Actions
     startCleaning,
     togglePauseCleaning,
+    autoEndCleaning,
     prepareSummary,
     completeSummary,
     addImage,

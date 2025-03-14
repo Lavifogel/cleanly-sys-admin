@@ -27,9 +27,11 @@ const CleanerDashboard = () => {
     handleStartShift,
     handleEndShiftWithScan,
     handleEndShiftWithoutScan,
+    handleAutoEndShift,
     handleStartCleaning,
     handleEndCleaningWithScan,
     handleEndCleaningWithoutScan,
+    handleAutoEndCleaning,
     handleCompleteSummary,
     togglePauseCleaning,
     setSummaryNotes,
@@ -37,8 +39,7 @@ const CleanerDashboard = () => {
     closeScanner,
     setShowConfirmDialog,
     addImage,
-    removeImage,
-    handleAutoEndShift
+    removeImage
   } = useDashboardHandlers();
 
   return (
@@ -60,6 +61,7 @@ const CleanerDashboard = () => {
         handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
         handleStartShift={handleStartShift}
         handleAutoEndShift={handleAutoEndShift}
+        handleAutoEndCleaning={handleAutoEndCleaning}
       />
 
       <QRScannerHandler 

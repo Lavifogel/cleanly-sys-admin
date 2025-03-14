@@ -25,6 +25,7 @@ interface DashboardContentProps {
   handleEndCleaningWithoutScan: () => void;
   handleStartShift: () => void;
   handleAutoEndShift: () => void;
+  handleAutoEndCleaning?: () => void;
 }
 
 const DashboardContent = ({
@@ -43,7 +44,8 @@ const DashboardContent = ({
   handleEndCleaningWithScan,
   handleEndCleaningWithoutScan,
   handleStartShift,
-  handleAutoEndShift
+  handleAutoEndShift,
+  handleAutoEndCleaning
 }: DashboardContentProps) => {
   // Get navigate function from useNavbar hook
   const navigate = () => {
@@ -97,6 +99,7 @@ const DashboardContent = ({
             handleStartCleaning={handleStartCleaning}
             handleEndCleaningWithScan={handleEndCleaningWithScan}
             handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
+            handleAutoEndCleaning={handleAutoEndCleaning}
           />
         </>
       )}

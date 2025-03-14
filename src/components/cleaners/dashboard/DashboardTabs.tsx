@@ -1,25 +1,17 @@
 
-import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, ClipboardCheck, User } from "lucide-react";
-import HomeTab from "./HomeTab";
-import CleaningTab from "./CleaningTab";
-import ProfileTab from "./ProfileTab";
-import { CleaningHistoryItem } from "@/types/cleaning";
+import HomeTab from "@/components/cleaners/dashboard/HomeTab";
+import CleaningTab from "@/components/cleaners/dashboard/CleaningTab";
+import ProfileTab from "@/components/cleaners/dashboard/ProfileTab";
+import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
+import { Shift } from "@/hooks/useShift";
 
 interface DashboardTabsProps {
   activeTab: string;
-  setActiveTab: (value: string) => void;
-  activeShift: {
-    id: string;
-    startTime: Date;
-  };
+  setActiveTab: (tab: string) => void;
+  activeShift: Shift;
   elapsedTime: number;
-  activeCleaning: {
-    location: string;
-    startTime: Date;
-    paused: boolean;
-  } | null;
+  activeCleaning: Cleaning | null;
   cleaningElapsedTime: number;
   cleaningsHistory: CleaningHistoryItem[];
   shiftsHistory: any[];
@@ -29,6 +21,7 @@ interface DashboardTabsProps {
   handleStartCleaning: () => void;
   handleEndCleaningWithScan: () => void;
   handleEndCleaningWithoutScan: () => void;
+  handleAutoEndCleaning?: () => void;
 }
 
 const DashboardTabs = ({
@@ -45,66 +38,48 @@ const DashboardTabs = ({
   handleEndShiftWithoutScan,
   handleStartCleaning,
   handleEndCleaningWithScan,
-  handleEndCleaningWithoutScan
+  handleEndCleaningWithoutScan,
+  handleAutoEndCleaning
 }: DashboardTabsProps) => {
-  // Listen for profile tab event from Navbar
-  useEffect(() => {
-    const handleSetProfileTab = () => {
-      setActiveTab("profile");
-    };
-    
-    window.addEventListener("set-profile-tab", handleSetProfileTab);
-    
-    return () => {
-      window.removeEventListener("set-profile-tab", handleSetProfileTab);
-    };
-  }, [setActiveTab]);
-
   return (
-    <Tabs defaultValue="home" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="home">
-          <Clock className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Shift</span>
-        </TabsTrigger>
-        <TabsTrigger value="cleaning" disabled={!activeCleaning}>
-          <ClipboardCheck className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Cleaning</span>
-        </TabsTrigger>
-        <TabsTrigger value="profile">
-          <User className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Profile</span>
-        </TabsTrigger>
+        <TabsTrigger value="home">Home</TabsTrigger>
+        <TabsTrigger value="cleaning">Cleaning</TabsTrigger>
+        <TabsTrigger value="profile">Profile</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="home">
+      <TabsContent value="home" className="mt-6">
         <HomeTab 
           activeShift={activeShift}
           elapsedTime={elapsedTime}
           activeCleaning={activeCleaning}
           cleaningElapsedTime={cleaningElapsedTime}
           cleaningsHistory={cleaningsHistory}
-          onEndShiftWithScan={handleEndShiftWithScan}
-          onEndShiftWithoutScan={handleEndShiftWithoutScan}
-          onStartCleaning={handleStartCleaning}
+          shiftsHistory={shiftsHistory}
+          handleEndShiftWithScan={handleEndShiftWithScan}
+          handleEndShiftWithoutScan={handleEndShiftWithoutScan}
+          handleStartCleaning={handleStartCleaning}
+          handleEndCleaningWithScan={handleEndCleaningWithScan}
+          handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
         />
       </TabsContent>
 
-      <TabsContent value="cleaning">
+      <TabsContent value="cleaning" className="mt-6">
         <CleaningTab 
           activeCleaning={activeCleaning}
           cleaningElapsedTime={cleaningElapsedTime}
-          onPauseCleaning={togglePauseCleaning}
-          onEndCleaningWithScan={handleEndCleaningWithScan}
-          onEndCleaningWithoutScan={handleEndCleaningWithoutScan}
+          cleaningsHistory={cleaningsHistory}
+          handleStartCleaning={handleStartCleaning}
+          handleEndCleaningWithScan={handleEndCleaningWithScan}
+          handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
+          togglePauseCleaning={togglePauseCleaning}
+          handleAutoEndCleaning={handleAutoEndCleaning || (() => {})}
         />
       </TabsContent>
 
-      <TabsContent value="profile">
-        <ProfileTab 
-          shiftsHistory={shiftsHistory} 
-          cleaningsHistory={cleaningsHistory}
-        />
+      <TabsContent value="profile" className="mt-6">
+        <ProfileTab />
       </TabsContent>
     </Tabs>
   );
