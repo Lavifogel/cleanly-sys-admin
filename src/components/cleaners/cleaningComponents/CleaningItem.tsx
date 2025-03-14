@@ -1,149 +1,87 @@
 
-import { 
-  CalendarIcon, 
-  Clock, 
-  Image, 
-  MapPin, 
-  TimerIcon,
-  StickyNote
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { formatDateToDDMMYYYY } from "@/utils/timeUtils";
 import { CleaningHistoryItem } from "@/types/cleaning";
-import { useEffect, useState } from "react";
-import { formatTime } from "@/utils/timeUtils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { Camera, Calendar, Clock } from "lucide-react";
 
 interface CleaningItemProps {
-  cleaning: CleaningHistoryItem & { 
-    isActive?: boolean;
-    elapsedTime?: number;
-  };
-  onImageSelect: (url: string) => void;
+  cleaning: CleaningHistoryItem;
+  onImageSelect?: (imageUrl: string) => void;
+  onClick?: () => void; // Add onClick handler prop
 }
 
-const CleaningItem = ({ cleaning, onImageSelect }: CleaningItemProps) => {
-  const [timeDisplay, setTimeDisplay] = useState<string>(
-    cleaning.isActive ? formatTime(cleaning.elapsedTime || 0) : cleaning.duration
-  );
+const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) => {
+  // Generate badge color based on status
+  const getBadgeVariant = (status: string) => {
+    if (status === "open" || status === "active") return "default";
+    if (status.includes("scan")) return "success";
+    return "secondary";
+  };
 
-  // For active cleanings, update the timer display
-  useEffect(() => {
-    if (cleaning.isActive && cleaning.elapsedTime !== undefined) {
-      setTimeDisplay(formatTime(cleaning.elapsedTime));
+  // Format date if needed
+  const formattedDate = cleaning.date.includes('/') 
+    ? cleaning.date 
+    : formatDateToDDMMYYYY(new Date(cleaning.date));
+
+  // Handle thumbnail click to show full image
+  const handleThumbnailClick = (e: React.MouseEvent, url: string) => {
+    e.stopPropagation(); // Stop event from bubbling up
+    if (onImageSelect) {
+      onImageSelect(url);
     }
-  }, [cleaning.isActive, cleaning.elapsedTime]);
-
-  // Format date to DD/MM/YYYY
-  const formattedDate = cleaning.date ? formatDateToDDMMYYYY(cleaning.date) : '';
-  
-  const hasImages = cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0;
-  const firstImageUrl = hasImages ? cleaning.imageUrls![0] : '';
-  const hasNotes = cleaning.notes && cleaning.notes.trim() !== '';
-
-  // Function to format date string to DD/MM/YYYY
-  function formatDateToDDMMYYYY(dateStr: string): string {
-    const date = new Date(dateStr);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
+  };
 
   return (
-    <div className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
+    <div 
+      className={`p-4 rounded-lg border ${cleaning.isActive ? 'bg-muted/50 border-primary/20 cursor-pointer' : 'bg-card'}`}
+      onClick={onClick} // Add onClick handler to the entire item
+    >
       <div className="flex justify-between items-start mb-2">
-        <div className="flex items-center">
-          <MapPin className="h-4 w-4 text-primary mr-1" />
-          <h3 className="font-medium">{cleaning.location}</h3>
+        <div className="flex-1">
+          <h3 className="font-medium text-base">{cleaning.location}</h3>
+          <div className="flex items-center text-muted-foreground text-sm mt-1">
+            <Calendar className="h-3.5 w-3.5 mr-1" />
+            <span>{formattedDate}</span>
+          </div>
         </div>
-        {cleaning.status === "open" ? (
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <TimerIcon className="h-3 w-3 mr-1" />
-            ACTIVE
-          </Badge>
-        ) : cleaning.status === "finished with scan" ? (
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-            COMPLETE
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-            MANUAL
-          </Badge>
-        )}
-      </div>
-      
-      <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mt-2">
-        <div className="flex items-center">
-          <CalendarIcon className="h-3 w-3 mr-1" />
-          <span>{formattedDate}</span>
-        </div>
-        <div className="flex items-center">
-          <Clock className="h-3 w-3 mr-1" />
-          <span>{cleaning.startTime} - {cleaning.endTime}</span>
-        </div>
+        <Badge variant={getBadgeVariant(cleaning.status)}>
+          {cleaning.isActive ? "In Progress" : cleaning.status}
+        </Badge>
       </div>
       
       <div className="flex justify-between items-center mt-3">
-        <div className="flex items-center">
-          {cleaning.isActive ? (
-            <div className="flex items-center text-primary font-medium">
-              <TimerIcon className="h-4 w-4 mr-1" />
-              {timeDisplay}
-            </div>
-          ) : (
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-              <span>{cleaning.duration}</span>
-            </div>
-          )}
+        <div className="flex items-center text-sm text-muted-foreground space-x-3">
+          <div className="flex items-center">
+            <Clock className="h-3.5 w-3.5 mr-1" />
+            <span>
+              {cleaning.isActive 
+                ? cleaning.duration 
+                : `${cleaning.startTime} - ${cleaning.endTime} (${cleaning.duration})`}
+            </span>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          {hasNotes && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="p-0 h-8 flex items-center" 
-                  >
-                    <StickyNote className="h-4 w-4 text-amber-500" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-[200px]">{cleaning.notes}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          {hasImages && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-0 h-8 flex items-center" 
-              onClick={() => onImageSelect(firstImageUrl)}
-            >
-              <div className="flex items-center">
-                <Avatar className="h-6 w-6 mr-1.5 rounded-sm">
-                  <AvatarImage src={firstImageUrl} alt="Cleaning image" className="object-cover rounded-sm" />
-                  <AvatarFallback className="rounded-sm">
-                    <Image className="h-3 w-3" />
-                  </AvatarFallback>
-                </Avatar>
-                <span>{cleaning.images} {cleaning.images === 1 ? 'image' : 'images'}</span>
-              </div>
-            </Button>
-          )}
-        </div>
+        {cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0 && (
+          <div className="flex items-center space-x-1">
+            <Camera className="h-4 w-4 text-muted-foreground" />
+            <div className="flex -space-x-2">
+              {cleaning.imageUrls.slice(0, 3).map((url, index) => (
+                <div 
+                  key={index}
+                  className="h-6 w-6 rounded-full border border-background overflow-hidden"
+                  onClick={(e) => handleThumbnailClick(e, url)}
+                >
+                  <img src={url} alt={`Image ${index + 1}`} className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       
-      {hasNotes && (
-        <div className="mt-2 text-sm text-muted-foreground line-clamp-2">
-          {cleaning.notes}
+      {cleaning.notes && (
+        <div className="mt-3 text-sm text-muted-foreground border-t pt-2">
+          "{cleaning.notes.length > 100 ? `${cleaning.notes.substring(0, 100)}...` : cleaning.notes}"
         </div>
       )}
     </div>

@@ -41,6 +41,11 @@ const DashboardTabs = ({
   handleEndCleaningWithoutScan,
   handleAutoEndCleaning
 }: DashboardTabsProps) => {
+  // Function to switch to the cleaning tab
+  const switchToCleaningTab = () => {
+    setActiveTab("cleaning");
+  };
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-3">
@@ -60,6 +65,7 @@ const DashboardTabs = ({
           onEndShiftWithScan={handleEndShiftWithScan}
           onEndShiftWithoutScan={handleEndShiftWithoutScan}
           onStartCleaning={handleStartCleaning}
+          onSwitchToCleaningTab={switchToCleaningTab} // Pass the tab switching function
         />
       </TabsContent>
 

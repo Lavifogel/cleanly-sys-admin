@@ -19,6 +19,7 @@ interface HomeTabProps {
   onEndShiftWithScan: () => void;
   onEndShiftWithoutScan: () => void;
   onStartCleaning: () => void;
+  onSwitchToCleaningTab?: () => void; // New prop for switching to cleaning tab
 }
 
 const HomeTab = ({
@@ -27,10 +28,11 @@ const HomeTab = ({
   activeCleaning,
   cleaningElapsedTime,
   cleaningsHistory,
-  shiftsHistory, // Adding the missing prop
+  shiftsHistory,
   onEndShiftWithScan,
   onEndShiftWithoutScan,
-  onStartCleaning
+  onStartCleaning,
+  onSwitchToCleaningTab
 }: HomeTabProps) => {
   return (
     <div className="space-y-4">
@@ -47,6 +49,7 @@ const HomeTab = ({
         activeCleaning={activeCleaning}
         cleaningElapsedTime={cleaningElapsedTime}
         onStartCleaning={onStartCleaning}
+        onActiveCleaningClick={onSwitchToCleaningTab} // Pass the navigation handler
       />
     </div>
   );

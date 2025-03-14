@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ interface RecentCleaningsCardProps {
   } | null;
   cleaningElapsedTime?: number;
   onStartCleaning?: () => void;
+  onActiveCleaningClick?: () => void;
 }
 
 const RecentCleaningsCard = ({ 
@@ -25,18 +25,16 @@ const RecentCleaningsCard = ({
   currentShiftId,
   activeCleaning,
   cleaningElapsedTime = 0,
-  onStartCleaning
+  onStartCleaning,
+  onActiveCleaningClick
 }: RecentCleaningsCardProps) => {
-  // State to store cleanings with image URLs
   const [cleaningsWithImages, setCleaningsWithImages] = useState<CleaningHistoryItem[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Filter cleanings to only show those from the current shift if a shift is active
   const filteredCleanings = currentShiftId 
     ? cleaningsWithImages.filter(cleaning => cleaning.shiftId === currentShiftId) 
     : cleaningsWithImages;
 
-  // Create an active cleaning entry if one exists
   const allCleanings = activeCleaning 
     ? [
         {
@@ -57,11 +55,9 @@ const RecentCleaningsCard = ({
       ] 
     : filteredCleanings;
 
-  // Fetch images for cleanings when the component mounts or history changes
   useEffect(() => {
     const fetchCleaningImages = async () => {
       try {
-        // List all files in the storage bucket
         const { data: files, error } = await supabase.storage
           .from('cleaning-images')
           .list();
@@ -74,14 +70,10 @@ const RecentCleaningsCard = ({
           
         console.log("Available files in storage:", files);
           
-        // Create a copy of cleanings history with image URLs
         const updatedCleanings = cleaningsHistory.map(cleaning => {
           if (cleaning.images > 0 && cleaning.imageUrls) {
-            // If imageUrls are already set, use them
             return cleaning;
           } else if (cleaning.images > 0) {
-            // Simulate image URLs - in a real app, you would have a relation 
-            // between cleanings and their images in the database
             const mockImageUrls = Array.from({ length: cleaning.images }).map((_, i) => {
               if (files && files.length > i) {
                 const { data: { publicUrl } } = supabase.storage
@@ -108,6 +100,12 @@ const RecentCleaningsCard = ({
     fetchCleaningImages();
   }, [cleaningsHistory]);
 
+  const handleCleaningItemClick = (cleaning: CleaningHistoryItem) => {
+    if (cleaning.isActive && onActiveCleaningClick) {
+      onActiveCleaningClick();
+    }
+  };
+
   return (
     <>
       <Card>
@@ -125,7 +123,7 @@ const RecentCleaningsCard = ({
             <Button
               onClick={onStartCleaning}
               className="w-full"
-              disabled={!!activeCleaning} // Disable button if there's an active cleaning
+              disabled={!!activeCleaning}
             >
               <Scan className="mr-2 h-4 w-4" />
               {activeCleaning ? "Finish Current Cleaning First" : "Scan to Start Cleaning"}
@@ -140,7 +138,8 @@ const RecentCleaningsCard = ({
                 <CleaningItem 
                   key={cleaning.id} 
                   cleaning={cleaning} 
-                  onImageSelect={setSelectedImage} 
+                  onImageSelect={setSelectedImage}
+                  onClick={() => handleCleaningItemClick(cleaning)}
                 />
               ))
             ) : (
@@ -155,7 +154,6 @@ const RecentCleaningsCard = ({
         </CardContent>
       </Card>
 
-      {/* Image Preview Dialog */}
       <ImagePreview 
         selectedImage={selectedImage} 
         onClose={() => setSelectedImage(null)} 
