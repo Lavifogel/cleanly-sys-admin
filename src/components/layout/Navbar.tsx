@@ -1,4 +1,3 @@
-
 import { cn } from '@/lib/utils';
 import { useNavbar } from '@/hooks/useNavbar';
 import NavbarRoutes from './NavbarRoutes';
@@ -13,8 +12,8 @@ const Navbar = () => {
     isMobileMenuOpen,
     userRole,
     userName,
-    location,
     navigate,
+    location,
     session,
     isIndexPage,
     shouldHideProfileIcon
@@ -48,12 +47,9 @@ const Navbar = () => {
     }
   };
 
-  // Handle logo click - same functionality as going to home tab
+  // Handle logo click - navigate to index page
   const handleLogoClick = () => {
-    if (isCleanerDashboard) {
-      const event = new CustomEvent('set-home-tab');
-      window.dispatchEvent(event);
-    }
+    navigate('/');
   };
 
   return (
@@ -75,13 +71,12 @@ const Navbar = () => {
 
         {/* Center section with logo */}
         <div className="flex-1 flex justify-center">
-          {/* Logo (interactive only on dashboard) */}
+          {/* Logo (always interactive) */}
           <Logo 
             variant="default"
             size="md"
             onClick={handleLogoClick}
-            disableClick={!isCleanerDashboard}
-            className={isCleanerDashboard ? "cursor-pointer" : ""}
+            className="cursor-pointer"
           />
         </div>
 
