@@ -1,5 +1,6 @@
 
 import { ShiftHistoryItem } from "@/hooks/useShift";
+import { format } from "date-fns";
 
 /**
  * Initial mock shift history data
@@ -8,7 +9,7 @@ export function getInitialShiftHistory(): ShiftHistoryItem[] {
   return [
     {
       id: "1",
-      date: "2023-08-15",
+      date: "15/08/2023",
       startTime: "09:00",
       endTime: "17:00",
       duration: "8h",
@@ -17,7 +18,7 @@ export function getInitialShiftHistory(): ShiftHistoryItem[] {
     },
     {
       id: "2",
-      date: "2023-08-14",
+      date: "14/08/2023",
       startTime: "08:30",
       endTime: "16:30",
       duration: "8h",
@@ -39,7 +40,7 @@ export function createShiftHistoryItem(
 ): ShiftHistoryItem {
   return {
     id: shiftId,
-    date: new Date().toISOString().split('T')[0],
+    date: format(new Date(), "dd/MM/yyyy"),
     startTime: startTime.toTimeString().slice(0, 5),
     endTime: endTime.toTimeString().slice(0, 5),
     duration: `${Math.floor(elapsedTime / 3600)}h ${Math.floor((elapsedTime % 3600) / 60)}m`,
@@ -47,3 +48,4 @@ export function createShiftHistoryItem(
     cleanings: 0,
   };
 }
+

@@ -20,6 +20,12 @@ const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHisto
     ? cleaningsHistory.filter(cleaning => cleaning.shiftId === currentShiftId)
     : cleaningsHistory;
   
+  // Helper function to format date from YYYY-MM-DD to DD/MM/YYYY
+  const formatDate = (dateString: string) => {
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+  
   return (
     <>
       <Card>
@@ -47,7 +53,7 @@ const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHisto
                       </div>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Calendar className="h-3.5 w-3.5 mr-1" />
-                        <p className="mr-3">{cleaning.date}</p>
+                        <p className="mr-3">{formatDate(cleaning.date)}</p>
                         <Clock className="h-3.5 w-3.5 mr-1" />
                         <p>{cleaning.startTime} - {cleaning.endTime}</p>
                       </div>
@@ -119,3 +125,4 @@ const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHisto
 };
 
 export default CleaningHistoryCard;
+

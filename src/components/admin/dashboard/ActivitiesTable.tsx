@@ -97,7 +97,7 @@ export function ActivitiesTable() {
         return {
           id: shift.id,
           type: "shift",
-          date: format(startTime, "MMM dd, yyyy"),
+          date: format(startTime, "dd/MM/yyyy"),
           userName,
           location: shift.qr_codes?.area_name || null,
           startTime: format(startTime, "HH:mm"),
@@ -124,7 +124,7 @@ export function ActivitiesTable() {
         return {
           id: cleaning.id,
           type: "cleaning",
-          date: format(startTime, "MMM dd, yyyy"),
+          date: format(startTime, "dd/MM/yyyy"),
           userName,
           location: cleaning.qr_codes?.area_name || extractLocationFromNotes(cleaning.notes),
           startTime: format(startTime, "HH:mm"),
@@ -136,8 +136,15 @@ export function ActivitiesTable() {
 
       // Combine and sort activities by date and start time
       const allActivities = [...shiftActivities, ...cleaningActivities].sort((a, b) => {
+        // Convert dates from DD/MM/YYYY format for comparison
+        const datePartsA = a.date.split('/');
+        const datePartsB = b.date.split('/');
+        
+        const dateA = new Date(parseInt(datePartsA[2]), parseInt(datePartsA[1])-1, parseInt(datePartsA[0]));
+        const dateB = new Date(parseInt(datePartsB[2]), parseInt(datePartsB[1])-1, parseInt(datePartsB[0]));
+        
         // First sort by date (newest first)
-        const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+        const dateComparison = dateB.getTime() - dateA.getTime();
         if (dateComparison !== 0) return dateComparison;
         
         // Then sort by start time (newest first)
@@ -245,3 +252,4 @@ export function ActivitiesTable() {
 }
 
 export default ActivitiesTable;
+
