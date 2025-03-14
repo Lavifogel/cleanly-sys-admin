@@ -47,7 +47,7 @@ export function useCleaningSummary(
       
       console.log("Completing cleaning with ID:", cleaningId);
       
-      // Save the cleaning data to the database
+      // Fixed: Only passing the required arguments to updateCleaningEnd
       await updateCleaningEnd(
         cleaningId,
         endTime.toISOString(),
@@ -57,7 +57,7 @@ export function useCleaningSummary(
       
       // Save any images
       if (images.length > 0) {
-        await saveImagesToDatabase(cleaningId, images);
+        await saveImagesToDatabase(cleaningId);
       }
       
       // Update the local state

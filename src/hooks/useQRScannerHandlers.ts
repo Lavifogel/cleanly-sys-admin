@@ -1,6 +1,8 @@
 
 import { useState } from "react";
-import { ScannerPurpose } from "@/types/qrScanner";
+
+// Importing ScannerPurpose from useQRScanner instead of qrScanner types
+import { ScannerPurpose } from "@/hooks/useQRScanner";
 
 interface ScanHandlerProps {
   onStartShiftScan: (qrData: string) => void;
