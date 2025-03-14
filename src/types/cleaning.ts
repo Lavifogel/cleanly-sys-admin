@@ -1,5 +1,6 @@
 
 export interface Cleaning {
+  id?: string; // Added id property as optional to maintain backward compatibility
   location: string;
   startTime: Date;
   timer: number;

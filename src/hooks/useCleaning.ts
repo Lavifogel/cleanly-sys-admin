@@ -102,9 +102,9 @@ export function useCleaning(activeShiftId: string | undefined) {
         console.error("Error storing cleaning:", error);
       }
       
-      // Update local state
+      // Update local state with the cleaning id included
       setActiveCleaning({
-        id: cleaningId, // Add cleaning ID to state
+        id: cleaningId,
         location: locationFromQR,
         startTime: startTime,
         timer: 0,
@@ -146,6 +146,7 @@ export function useCleaning(activeShiftId: string | undefined) {
     if (!activeCleaning || !activeShiftId) return false;
     
     try {
+      // Now this is valid since we added the id property to the Cleaning interface
       const cleaningId = activeCleaning.id || uuidv4(); // Use existing ID or create one
       const endTime = new Date();
       const status = "finished with scan";
