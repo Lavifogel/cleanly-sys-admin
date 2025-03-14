@@ -1,102 +1,27 @@
 
-import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { X, UserRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import Logo from '@/components/ui/logo';
+import { useNavbar } from '@/hooks/useNavbar';
+import NavbarRoutes from './NavbarRoutes';
+import ProfileButton from './ProfileButton';
+import MobileMenu from './MobileMenu';
+import { getNavRoutes } from '@/utils/navbarUtils';
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>('cleaner'); // Default to cleaner for Lavi
-  const [userName, setUserName] = useState<string | null>("Lavi Fogel"); // Default to Lavi Fogel
-  const location = useLocation();
-  const navigate = useNavigate();
+  const {
+    isScrolled,
+    isMobileMenuOpen,
+    userRole,
+    userName,
+    location,
+    navigate,
+    session,
+    isIndexPage,
+    shouldHideProfileIcon
+  } = useNavbar();
 
-  // Check if current page is login or index page
-  const isLoginPage = location.pathname === '/login';
-  const isIndexPage = location.pathname === '/';
-  const isAdminPage = location.pathname.includes('/admin');
-  const shouldHideProfileIcon = isLoginPage || isIndexPage || isAdminPage || userRole === 'admin';
-
-  // Fetch user session and role
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
-    },
-  });
-
-  // Fetch user profile to get role
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (session?.user) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('role, first_name, last_name')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (data) {
-          setUserRole(data.role);
-          if (data.first_name && data.last_name) {
-            setUserName(`${data.first_name} ${data.last_name}`);
-          }
-        } else {
-          setUserRole('cleaner'); // Fallback to cleaner (for Lavi)
-          setUserName("Lavi Fogel"); // Set name for Lavi
-        }
-      } else {
-        // When not authenticated, use Lavi's defaults
-        setUserRole('cleaner');
-        setUserName("Lavi Fogel");
-      }
-    };
-
-    fetchUserProfile();
-  }, [session]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location]);
-
-  // Define routes based on authentication status and role
-  const getRoutes = () => {
-    // If user is not logged in, don't show any routes
-    if (!session) {
-      // For Lavi, show the cleaner dashboard
-      return [
-        { path: '/cleaners/dashboard', label: 'Dashboard' }
-      ];
-    }
-
-    // If user is logged in, only show their relevant dashboard
-    if (userRole === 'admin') {
-      return [
-        { path: '/admin/dashboard', label: 'Dashboard' }
-      ];
-    } else if (userRole === 'cleaner') {
-      return [
-        { path: '/cleaners/dashboard', label: 'Dashboard' }
-      ];
-    }
-
-    return [];
-  };
-
-  const routes = getRoutes();
+  const routes = getNavRoutes(session, userRole);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -141,58 +66,20 @@ const Navbar = () => {
         )}
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-1">
-          {routes.map((route) => (
-            <Link
-              key={route.path}
-              to={route.path}
-              className={cn(
-                'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200',
-                isActive(route.path)
-                  ? 'text-primary bg-primary/10'
-                  : 'text-foreground/70 hover:text-foreground hover:bg-foreground/5'
-              )}
-            >
-              {route.label}
-            </Link>
-          ))}
-        </nav>
+        <NavbarRoutes 
+          routes={routes} 
+          isActive={isActive} 
+          className="hidden md:flex items-center space-x-1" 
+        />
 
         {/* Profile Button - hidden on login, index pages, and for admin users */}
         {!shouldHideProfileIcon && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:flex"
-            onClick={handleProfileClick}
-            aria-label="Profile"
-          >
-            <UserRound className="h-5 w-5" />
-          </Button>
+          <ProfileButton onClick={handleProfileClick} />
         )}
       </div>
 
       {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-sm border-b animate-slide-in">
-          <nav className="flex flex-col p-4 space-y-2 max-w-7xl mx-auto">
-            {routes.map((route) => (
-              <Link
-                key={route.path}
-                to={route.path}
-                className={cn(
-                  'px-4 py-3 rounded-md text-sm font-medium transition-colors',
-                  isActive(route.path)
-                    ? 'text-primary bg-primary/10'
-                    : 'text-foreground/70 hover:text-foreground hover:bg-foreground/5'
-                )}
-              >
-                {route.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      )}
+      <MobileMenu isOpen={isMobileMenuOpen} routes={routes} isActive={isActive} />
     </header>
   );
 };

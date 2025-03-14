@@ -1,31 +1,38 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import Logo from "@/components/ui/logo";
 
-const ProfileCard = () => {
+interface ProfileCardProps {
+  disableLogoClick?: boolean;
+}
+
+const ProfileCard = ({ disableLogoClick = false }: ProfileCardProps) => {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Personal Information</CardTitle>
-        <CardDescription>Your profile details</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-lg font-medium">Your Profile</CardTitle>
+        <Button variant="outline" size="sm" className="h-8 gap-1">
+          <LogOut className="h-3.5 w-3.5" />
+          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Sign Out</span>
+        </Button>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex justify-between py-2 border-b">
-            <span className="text-muted-foreground">Name:</span>
-            <span className="font-medium">John Doe</span>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src="/placeholder.svg" alt="Lavi Fogel" />
+            <AvatarFallback>LF</AvatarFallback>
+          </Avatar>
+          <div className="grid gap-1.5">
+            <h3 className="text-lg font-semibold">Lavi Fogel</h3>
+            <Badge variant="outline" className="w-fit">Cleaner</Badge>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <span className="text-muted-foreground">Phone:</span>
-            <span className="font-medium">+1234567890</span>
-          </div>
-          <div className="flex justify-between py-2 border-b">
-            <span className="text-muted-foreground">Start Date:</span>
-            <span className="font-medium">January 15, 2023</span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-muted-foreground">Role:</span>
-            <span className="font-medium">Cleaner</span>
-          </div>
+        </div>
+        <div className="flex items-center justify-center py-3">
+          <Logo size="lg" variant="default" disableClick={disableLogoClick} />
         </div>
       </CardContent>
     </Card>
