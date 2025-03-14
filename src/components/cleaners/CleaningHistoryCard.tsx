@@ -20,6 +20,15 @@ const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHisto
     ? cleaningsHistory.filter(cleaning => cleaning.shiftId === currentShiftId)
     : cleaningsHistory;
   
+  // Function to format date string to DD/MM/YYYY
+  function formatDateToDDMMYYYY(dateStr: string): string {
+    const date = new Date(dateStr);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  
   return (
     <>
       <Card>
@@ -47,7 +56,7 @@ const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHisto
                       </div>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Calendar className="h-3.5 w-3.5 mr-1" />
-                        <p className="mr-3">{cleaning.date}</p>
+                        <p className="mr-3">{formatDateToDDMMYYYY(cleaning.date)}</p>
                         <Clock className="h-3.5 w-3.5 mr-1" />
                         <p>{cleaning.startTime} - {cleaning.endTime}</p>
                       </div>

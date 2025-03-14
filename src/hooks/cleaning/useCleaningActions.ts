@@ -21,6 +21,14 @@ export function useCleaningActions(
 ) {
   const { toast } = useToast();
 
+  // Format date to DD/MM/YYYY
+  const formatDateToDDMMYYYY = (date: Date): string => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   // Start a new cleaning session with QR code data
   const startCleaning = async (qrData: string) => {
     if (!activeShiftId) {
@@ -108,11 +116,11 @@ export function useCleaningActions(
         notes
       );
       
-      // Update the local state
+      // Update the local state with formatted date
       const newCleaning = {
         id: cleaningId,
         location: activeCleaning.location,
-        date: new Date().toISOString().split('T')[0],
+        date: formatDateToDDMMYYYY(new Date()),
         startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
         endTime: endTime.toTimeString().slice(0, 5),
         duration: `${Math.floor((endTime.getTime() - activeCleaning.startTime.getTime()) / 60000)}m`,

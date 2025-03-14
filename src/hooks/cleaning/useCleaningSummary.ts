@@ -20,6 +20,14 @@ export function useCleaningSummary(
 ) {
   const { images, addImage, removeImage, isUploading, saveImagesToDatabase, resetImages } = useCleaningImages({ maxImages: 5 });
 
+  // Format date to DD/MM/YYYY
+  const formatDateToDDMMYYYY = (date: Date): string => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   // Prepare cleaning summary for completion
   const prepareSummary = (withScan: boolean, qrData?: string) => {
     if (!activeCleaning) return;
@@ -65,11 +73,11 @@ export function useCleaningSummary(
         await saveImagesToDatabase(cleaningId);
       }
       
-      // Update the local state
+      // Update the local state with formatted date
       const newCleaning = {
         id: cleaningId,
         location: activeCleaning.location,
-        date: new Date().toISOString().split('T')[0],
+        date: formatDateToDDMMYYYY(new Date()),
         startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
         endTime: endTime.toTimeString().slice(0, 5),
         duration: `${Math.floor(cleaningElapsedTime / 60)}m`,

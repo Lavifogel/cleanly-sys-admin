@@ -35,9 +35,21 @@ const CleaningItem = ({ cleaning, onImageSelect }: CleaningItemProps) => {
     }
   }, [cleaning.isActive, cleaning.elapsedTime]);
 
+  // Format date to DD/MM/YYYY
+  const formattedDate = cleaning.date ? formatDateToDDMMYYYY(cleaning.date) : '';
+  
   const hasImages = cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0;
   const firstImageUrl = hasImages ? cleaning.imageUrls![0] : '';
   const hasNotes = cleaning.notes && cleaning.notes.trim() !== '';
+
+  // Function to format date string to DD/MM/YYYY
+  function formatDateToDDMMYYYY(dateStr: string): string {
+    const date = new Date(dateStr);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 
   return (
     <div className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
@@ -65,7 +77,7 @@ const CleaningItem = ({ cleaning, onImageSelect }: CleaningItemProps) => {
       <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mt-2">
         <div className="flex items-center">
           <CalendarIcon className="h-3 w-3 mr-1" />
-          <span>{cleaning.date}</span>
+          <span>{formattedDate}</span>
         </div>
         <div className="flex items-center">
           <Clock className="h-3 w-3 mr-1" />
