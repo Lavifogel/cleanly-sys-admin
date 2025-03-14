@@ -54,7 +54,7 @@ const CleaningTab = ({
 
       {cleaningsHistory.length > 0 && (
         <CleaningHistoryCard
-          cleanings={cleaningsHistory}
+          cleaningsHistory={cleaningsHistory}
         />
       )}
     </div>

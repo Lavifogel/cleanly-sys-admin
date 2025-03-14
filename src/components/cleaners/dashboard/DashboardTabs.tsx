@@ -57,11 +57,9 @@ const DashboardTabs = ({
           cleaningElapsedTime={cleaningElapsedTime}
           cleaningsHistory={cleaningsHistory}
           shiftsHistory={shiftsHistory}
-          handleEndShiftWithScan={handleEndShiftWithScan}
-          handleEndShiftWithoutScan={handleEndShiftWithoutScan}
-          handleStartCleaning={handleStartCleaning}
-          handleEndCleaningWithScan={handleEndCleaningWithScan}
-          handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
+          onEndShiftWithScan={handleEndShiftWithScan}
+          onEndShiftWithoutScan={handleEndShiftWithoutScan}
+          onStartCleaning={handleStartCleaning}
         />
       </TabsContent>
 
@@ -79,7 +77,10 @@ const DashboardTabs = ({
       </TabsContent>
 
       <TabsContent value="profile" className="mt-6">
-        <ProfileTab />
+        <ProfileTab 
+          shiftsHistory={shiftsHistory}
+          cleaningsHistory={cleaningsHistory}
+        />
       </TabsContent>
     </Tabs>
   );

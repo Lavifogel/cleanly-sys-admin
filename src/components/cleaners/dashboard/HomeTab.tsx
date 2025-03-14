@@ -15,6 +15,7 @@ interface HomeTabProps {
   } | null;
   cleaningElapsedTime: number;
   cleaningsHistory: CleaningHistoryItem[];
+  shiftsHistory: any[]; // Adding the missing prop
   onEndShiftWithScan: () => void;
   onEndShiftWithoutScan: () => void;
   onStartCleaning: () => void;
@@ -26,6 +27,7 @@ const HomeTab = ({
   activeCleaning,
   cleaningElapsedTime,
   cleaningsHistory,
+  shiftsHistory, // Adding the missing prop
   onEndShiftWithScan,
   onEndShiftWithoutScan,
   onStartCleaning
