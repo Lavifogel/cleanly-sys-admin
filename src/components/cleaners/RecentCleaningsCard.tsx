@@ -31,16 +31,6 @@ const RecentCleaningsCard = ({
   const [cleaningsWithImages, setCleaningsWithImages] = useState<CleaningHistoryItem[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  // Format date to DD/MM/YYYY
-  const formatDate = (dateString: string) => {
-    if (dateString.includes('/')) return dateString; // Already in DD/MM/YYYY format
-    
-    const [year, month, day] = dateString.split('-');
-    if (!year || !month || !day) return dateString; // Return as-is if parsing fails
-    
-    return `${day}/${month}/${year}`;
-  };
-  
   // Filter cleanings to only show those from the current shift if a shift is active
   const filteredCleanings = currentShiftId 
     ? cleaningsWithImages.filter(cleaning => cleaning.shiftId === currentShiftId) 
@@ -52,7 +42,7 @@ const RecentCleaningsCard = ({
         {
           id: "active",
           location: activeCleaning.location,
-          date: formatDate(new Date().toISOString().split('T')[0]),
+          date: new Date().toISOString().split('T')[0],
           startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
           endTime: "--:--",
           duration: formatTime(cleaningElapsedTime),
@@ -86,15 +76,9 @@ const RecentCleaningsCard = ({
           
         // Create a copy of cleanings history with image URLs
         const updatedCleanings = cleaningsHistory.map(cleaning => {
-          // Format the date in DD/MM/YYYY format
-          const formattedCleaning = {
-            ...cleaning,
-            date: formatDate(cleaning.date)
-          };
-          
           if (cleaning.images > 0 && cleaning.imageUrls) {
             // If imageUrls are already set, use them
-            return formattedCleaning;
+            return cleaning;
           } else if (cleaning.images > 0) {
             // Simulate image URLs - in a real app, you would have a relation 
             // between cleanings and their images in the database
@@ -108,9 +92,9 @@ const RecentCleaningsCard = ({
               return '';
             }).filter(url => url !== '');
               
-            return { ...formattedCleaning, imageUrls: mockImageUrls };
+            return { ...cleaning, imageUrls: mockImageUrls };
           } else {
-            return formattedCleaning;
+            return cleaning;
           }
         });
           
@@ -181,4 +165,3 @@ const RecentCleaningsCard = ({
 };
 
 export default RecentCleaningsCard;
-

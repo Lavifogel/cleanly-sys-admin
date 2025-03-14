@@ -23,16 +23,6 @@ interface ShiftHistoryCardProps {
 const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
   const [selectedShift, setSelectedShift] = useState<ShiftHistoryItem | null>(null);
   
-  // Helper function to format date display (assuming date is in YYYY-MM-DD format)
-  const formatDate = (dateString: string) => {
-    if (dateString.includes('/')) return dateString; // Already in DD/MM/YYYY format
-    
-    const [year, month, day] = dateString.split('-');
-    if (!year || !month || !day) return dateString; // Return as-is if parsing fails
-    
-    return `${day}/${month}/${year}`;
-  };
-  
   // Mock cleaning data for demonstration - in a real app, this would come from an API
   const mockCleanings: CleaningHistoryItem[] = [
     {
@@ -113,7 +103,7 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
                   <div className="space-y-2">
                     <div className="flex items-center">
                       <Calendar className="h-5 w-5 mr-2 text-primary" />
-                      <h4 className="font-medium text-lg">{formatDate(shift.date)}</h4>
+                      <h4 className="font-medium text-lg">{shift.date}</h4>
                     </div>
                     <div className="flex items-center text-muted-foreground">
                       <Clock className="h-4 w-4 mr-2" />
@@ -140,7 +130,7 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Cleanings on {selectedShift ? formatDate(selectedShift.date) : ""} ({selectedShift?.startTime} - {selectedShift?.endTime})
+              Cleanings on {selectedShift?.date} ({selectedShift?.startTime} - {selectedShift?.endTime})
             </DialogTitle>
           </DialogHeader>
           
@@ -157,4 +147,3 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
 };
 
 export default ShiftHistoryCard;
-
