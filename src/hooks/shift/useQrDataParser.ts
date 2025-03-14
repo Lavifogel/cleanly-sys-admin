@@ -10,7 +10,9 @@ export function parseQrData(qrData: string) {
     let qrDataObj;
     try {
       qrDataObj = JSON.parse(qrData);
+      console.log("Parsed JSON data:", qrDataObj);
     } catch (parseError) {
+      console.log("Not valid JSON, trying URL parameters");
       // If not JSON, try parsing as URL parameters
       const params = new URLSearchParams(qrData);
       if (params.has('areaId') || params.has('location')) {
@@ -18,10 +20,16 @@ export function parseQrData(qrData: string) {
           areaId: params.get('areaId') || params.get('location'),
           areaName: params.get('areaName') || params.get('locationName') || params.get('location')
         };
+        console.log("Parsed URL params:", qrDataObj);
+      } else {
+        // If not URL params, use as plain text
+        console.log("Using as plain text");
+        qrDataObj = {
+          areaId: qrData,
+          areaName: `Area from ${qrData}`
+        };
       }
     }
-    
-    console.log("Parsed QR data:", qrDataObj);
     
     if (qrDataObj && (qrDataObj.areaId || qrDataObj.locationId)) {
       return {
@@ -49,10 +57,13 @@ export function parseQrData(qrData: string) {
  * Create a mock QR code data object for simulation
  */
 export function createMockQrData(areaId: string, areaName: string, type = 'Shift') {
-  return JSON.stringify({
+  const mockData = {
     areaId: areaId,
     areaName: areaName,
     type: type,
     timestamp: Date.now()
-  });
+  };
+  
+  console.log("Created mock QR data:", mockData);
+  return JSON.stringify(mockData);
 }

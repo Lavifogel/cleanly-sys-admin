@@ -83,6 +83,8 @@ export async function createCleaning(cleaningId: string, shiftId: string, startT
  * Updates a cleaning in the database when it ends
  */
 export async function updateCleaningEnd(cleaningId: string, endTime: string, status: string, notes: string) {
+  console.log("Updating cleaning end with ID:", cleaningId);
+  
   const { error } = await supabase
     .from('cleanings')
     .update({
@@ -97,6 +99,7 @@ export async function updateCleaningEnd(cleaningId: string, endTime: string, sta
     throw new Error(`Failed to end cleaning: ${error.message}`);
   }
   
+  console.log("Cleaning ended successfully");
   return true;
 }
 
@@ -105,6 +108,8 @@ export async function updateCleaningEnd(cleaningId: string, endTime: string, sta
  */
 export async function saveCleaningImages(cleaningId: string, imageUrls: string[]) {
   if (!imageUrls.length) return [];
+  
+  console.log("Saving cleaning images for cleaning ID:", cleaningId, "Image count:", imageUrls.length);
   
   const imagesToInsert = imageUrls.map(url => ({
     id: uuidv4(),

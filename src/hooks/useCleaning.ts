@@ -104,6 +104,7 @@ export function useCleaning(activeShiftId: string | undefined) {
       
       // Update local state
       setActiveCleaning({
+        id: cleaningId, // Add cleaning ID to state
         location: locationFromQR,
         startTime: startTime,
         timer: 0,
@@ -145,10 +146,11 @@ export function useCleaning(activeShiftId: string | undefined) {
     if (!activeCleaning || !activeShiftId) return false;
     
     try {
-      // Create a new cleaning history item with a proper UUID
-      const cleaningId = uuidv4();
+      const cleaningId = activeCleaning.id || uuidv4(); // Use existing ID or create one
       const endTime = new Date();
       const status = "finished with scan";
+      
+      console.log("Completing cleaning with ID:", cleaningId);
       
       // Save the cleaning data to the database
       await updateCleaningEnd(
