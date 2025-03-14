@@ -61,7 +61,7 @@ const DashboardContent = ({
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={18} />
-          <span>Back to Home</span>
+          <span>Back</span>
         </Button>
       </div>
       
