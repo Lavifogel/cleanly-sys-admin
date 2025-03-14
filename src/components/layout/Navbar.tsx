@@ -53,8 +53,17 @@ const Navbar = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left section with logo and username */}
-        <div className="flex items-center gap-4">
+        {/* Left section with welcome text */}
+        <div className="flex-1">
+          {userName && !isIndexPage && (
+            <div className="flex items-center text-sm font-medium">
+              <span>Welcome, {userName}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Center section with logo */}
+        <div className="flex-1 flex justify-center">
           {/* Logo (non-interactive) */}
           <div 
             className="flex items-center gap-2 pointer-events-none" 
@@ -76,17 +85,10 @@ const Navbar = () => {
               <span className="text-xs text-muted-foreground">Smart Cleaning Management</span>
             </div>
           </div>
-
-          {/* User name display */}
-          {userName && !isIndexPage && (
-            <div className="flex items-center text-sm font-medium ml-2">
-              <span>Welcome, {userName}</span>
-            </div>
-          )}
         </div>
 
         {/* Right section with navigation and profile */}
-        <div className="flex items-center space-x-2">
+        <div className="flex-1 flex items-center justify-end space-x-2">
           {/* Desktop Navigation */}
           <NavbarRoutes 
             routes={routes} 
