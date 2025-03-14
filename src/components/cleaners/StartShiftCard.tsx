@@ -2,12 +2,26 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scan } from "lucide-react";
+import { useState } from "react";
 
 interface StartShiftCardProps {
   onStartShift: () => void;
 }
 
 const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const handleStartShift = async () => {
+    setIsLoading(true);
+    try {
+      await onStartShift();
+    } catch (error) {
+      console.error("Error starting shift:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/20">
       <CardHeader className="text-center">
@@ -20,9 +34,14 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
         <div className="mb-6 bg-primary/10 p-6 rounded-full">
           <Scan className="h-16 w-16 text-primary/80" />
         </div>
-        <Button onClick={onStartShift} className="w-full text-lg py-6" size="lg">
+        <Button 
+          onClick={handleStartShift} 
+          className="w-full text-lg py-6" 
+          size="lg"
+          disabled={isLoading}
+        >
           <Scan className="mr-2 h-5 w-5" />
-          Scan to Start Shift
+          {isLoading ? "Starting..." : "Scan to Start Shift"}
         </Button>
       </CardContent>
     </Card>

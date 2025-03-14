@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from "uuid";
 
 export interface Shift {
   startTime: Date;
@@ -46,44 +48,144 @@ export function useShift() {
   ]);
 
   // Handle startShift
-  const startShift = (qrData: string) => {
-    const newShiftId = `shift-${Date.now()}`;
-    
-    setActiveShift({
-      startTime: new Date(),
-      timer: 0,
-      id: newShiftId,
-    });
-    setElapsedTime(0);
+  const startShift = async (qrData: string) => {
+    try {
+      const newShiftId = uuidv4();
+      const startTime = new Date();
+      
+      // Parse QR code data if it exists
+      let qrId = null;
+      try {
+        const qrDataObj = JSON.parse(qrData);
+        if (qrDataObj && qrDataObj.areaId) {
+          // Get the QR code ID from the database using area ID
+          const { data: qrCodes, error: qrError } = await supabase
+            .from('qr_codes')
+            .select('qr_id')
+            .eq('area_id', qrDataObj.areaId)
+            .eq('type', 'Shift')
+            .limit(1);
+          
+          if (qrError) {
+            console.error("Error fetching QR code:", qrError);
+          } else if (qrCodes && qrCodes.length > 0) {
+            qrId = qrCodes[0].qr_id;
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing QR data:", e);
+        // Continue with null qrId if parsing fails
+      }
+      
+      // Create a temporary user ID (in a real app, get this from auth)
+      const temporaryUserId = "temp-user-id";
+      
+      // Store the shift in the database
+      const { data, error } = await supabase
+        .from('shifts')
+        .insert({
+          id: newShiftId,
+          user_id: temporaryUserId,
+          start_time: startTime.toISOString(),
+          status: 'active',
+          qr_id: qrId
+        });
+      
+      if (error) {
+        console.error("Error storing shift:", error);
+        toast({
+          title: "Error",
+          description: "Failed to start shift. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log("Shift stored successfully:", data);
+      
+      // Update the local state
+      setActiveShift({
+        startTime: startTime,
+        timer: 0,
+        id: newShiftId,
+      });
+      setElapsedTime(0);
+      
+      toast({
+        title: "Shift Started",
+        description: "Your shift has been started successfully.",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error in startShift:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle endShift
-  const endShift = (withScan: boolean, qrData?: string) => {
-    const newShift = {
-      id: (shiftsHistory.length + 1).toString(),
-      date: new Date().toISOString().split('T')[0],
-      startTime: activeShift!.startTime.toTimeString().slice(0, 5),
-      endTime: new Date().toTimeString().slice(0, 5),
-      duration: `${Math.floor(elapsedTime / 3600)}h ${Math.floor((elapsedTime % 3600) / 60)}m`,
-      status: withScan ? "finished with scan" : "finished without scan",
-      cleanings: 0,
-    };
+  const endShift = async (withScan: boolean, qrData?: string) => {
+    if (!activeShift) return;
+    
+    try {
+      const endTime = new Date();
+      
+      // Update the shift in the database
+      const { error } = await supabase
+        .from('shifts')
+        .update({
+          end_time: endTime.toISOString(),
+          status: withScan ? "finished with scan" : "finished without scan"
+        })
+        .eq('id', activeShift.id);
+      
+      if (error) {
+        console.error("Error updating shift:", error);
+        toast({
+          title: "Error",
+          description: "Failed to end shift. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update the local state
+      const newShift = {
+        id: activeShift.id,
+        date: new Date().toISOString().split('T')[0],
+        startTime: activeShift.startTime.toTimeString().slice(0, 5),
+        endTime: endTime.toTimeString().slice(0, 5),
+        duration: `${Math.floor(elapsedTime / 3600)}h ${Math.floor((elapsedTime % 3600) / 60)}m`,
+        status: withScan ? "finished with scan" : "finished without scan",
+        cleanings: 0,
+      };
 
-    setShiftsHistory([newShift, ...shiftsHistory]);
-    setActiveShift(null);
-    setElapsedTime(0);
-    
-    // Show success toast
-    toast({
-      title: "Shift Ended",
-      description: "Your shift has been successfully completed.",
-      duration: 3000,
-    });
-    
-    // Redirect to the login page
-    setTimeout(() => {
-      navigate("/");
-    }, 1500);
+      setShiftsHistory([newShift, ...shiftsHistory]);
+      setActiveShift(null);
+      setElapsedTime(0);
+      
+      // Show success toast
+      toast({
+        title: "Shift Ended",
+        description: "Your shift has been successfully completed.",
+        duration: 3000,
+      });
+      
+      // Redirect to the login page
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+    } catch (error) {
+      console.error("Error in endShift:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Timer effect for tracking shift time
