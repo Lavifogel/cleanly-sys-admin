@@ -1,9 +1,17 @@
 
 import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { Cleaning, CleaningHistoryItem, CleaningSummary } from "@/types/cleaning";
 import { useCleaningImages } from "./useCleaningImages";
 import { useCleaningTimer } from "./useCleaningTimer";
 import { formatTime } from "@/utils/timeUtils";
+import { 
+  createOrFindCleaningQrCode, 
+  createCleaning, 
+  updateCleaningEnd,
+  saveCleaningImages 
+} from "@/hooks/shift/useCleaningDatabase";
+import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
 
 export function useCleaning(activeShiftId: string | undefined) {
   const [activeCleaning, setActiveCleaning] = useState<null | Cleaning>(null);
@@ -53,18 +61,59 @@ export function useCleaning(activeShiftId: string | undefined) {
   
   useCleaningTimer(activeCleaning, setCleaningElapsedTime);
 
-  const startCleaning = (qrData: string) => {
-    const locationFromQR = qrData.includes("location=") 
-      ? qrData.split("location=")[1].split("&")[0] 
-      : "Conference Room B";
-
-    setActiveCleaning({
-      location: locationFromQR,
-      startTime: new Date(),
-      timer: 0,
-      paused: false,
-    });
-    setCleaningElapsedTime(0);
+  const startCleaning = async (qrData: string) => {
+    if (!activeShiftId) {
+      console.error("Cannot start cleaning without an active shift");
+      return;
+    }
+    
+    try {
+      // Generate cleaning ID
+      const cleaningId = uuidv4();
+      const startTime = new Date();
+      
+      // Parse QR code data
+      const { areaId, areaName, isValid } = parseQrData(qrData);
+      const locationFromQR = areaName || "Unknown Location";
+      
+      // If QR data isn't valid, create a mock QR data string
+      const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);
+      
+      // Find or create QR code in database
+      let qrId = null;
+      try {
+        qrId = await createOrFindCleaningQrCode(areaId, areaName, qrDataToUse);
+        console.log("QR code ID for cleaning:", qrId);
+      } catch (error: any) {
+        console.error("Error with cleaning QR code:", error);
+      }
+      
+      // Store the cleaning in the database
+      try {
+        await createCleaning(
+          cleaningId, 
+          activeShiftId, 
+          startTime.toISOString(), 
+          qrId,
+          locationFromQR
+        );
+        console.log("Cleaning stored successfully");
+      } catch (error: any) {
+        console.error("Error storing cleaning:", error);
+      }
+      
+      // Update local state
+      setActiveCleaning({
+        location: locationFromQR,
+        startTime: startTime,
+        timer: 0,
+        paused: false,
+      });
+      setCleaningElapsedTime(0);
+      
+    } catch (error) {
+      console.error("Failed to start cleaning:", error);
+    }
   };
 
   const togglePauseCleaning = () => {
@@ -92,29 +141,53 @@ export function useCleaning(activeShiftId: string | undefined) {
     setShowSummary(true);
   };
 
-  const completeSummary = () => {
-    if (!activeCleaning) return false;
+  const completeSummary = async () => {
+    if (!activeCleaning || !activeShiftId) return false;
     
-    const newCleaning = {
-      id: (cleaningsHistory.length + 1).toString(),
-      location: activeCleaning.location,
-      date: new Date().toISOString().split('T')[0],
-      startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
-      endTime: new Date().toTimeString().slice(0, 5),
-      duration: `${Math.floor(cleaningElapsedTime / 60)}m`,
-      status: "finished with scan",
-      images: images.length,
-      notes: summaryNotes,
-      shiftId: activeShiftId,
-      imageUrls: images
-    };
+    try {
+      // Create a new cleaning history item with a proper UUID
+      const cleaningId = uuidv4();
+      const endTime = new Date();
+      const status = "finished with scan";
+      
+      // Save the cleaning data to the database
+      await updateCleaningEnd(
+        cleaningId,
+        endTime.toISOString(),
+        status,
+        summaryNotes
+      );
+      
+      // Save any images
+      if (images.length > 0) {
+        await saveCleaningImages(cleaningId, images);
+      }
+      
+      // Update the local state
+      const newCleaning = {
+        id: cleaningId,
+        location: activeCleaning.location,
+        date: new Date().toISOString().split('T')[0],
+        startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
+        endTime: endTime.toTimeString().slice(0, 5),
+        duration: `${Math.floor(cleaningElapsedTime / 60)}m`,
+        status: status,
+        images: images.length,
+        notes: summaryNotes,
+        shiftId: activeShiftId,
+        imageUrls: images
+      };
 
-    setCleaningsHistory([newCleaning, ...cleaningsHistory]);
-    setActiveCleaning(null);
-    setCleaningElapsedTime(0);
-    setShowSummary(false);
-    
-    return true;
+      setCleaningsHistory([newCleaning, ...cleaningsHistory]);
+      setActiveCleaning(null);
+      setCleaningElapsedTime(0);
+      setShowSummary(false);
+      
+      return true;
+    } catch (error) {
+      console.error("Error completing cleaning summary:", error);
+      return false;
+    }
   };
 
   return {

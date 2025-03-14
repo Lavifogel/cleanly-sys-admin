@@ -11,6 +11,7 @@ interface CleaningTabProps {
   onPauseCleaning: () => void;
   onEndCleaningWithScan: () => void;
   onEndCleaningWithoutScan: () => void;
+  activeShiftId?: string; // Added for database connection
 }
 
 const CleaningTab = ({
@@ -18,7 +19,8 @@ const CleaningTab = ({
   cleaningElapsedTime,
   onPauseCleaning,
   onEndCleaningWithScan,
-  onEndCleaningWithoutScan
+  onEndCleaningWithoutScan,
+  activeShiftId
 }: CleaningTabProps) => {
   if (!activeCleaning) return null;
   
