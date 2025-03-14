@@ -1,152 +1,62 @@
 
-import { useToast } from "@/hooks/use-toast";
-import { ScannerPurpose } from "@/hooks/useQRScanner";
+import { useState } from "react";
+import { ScannerPurpose } from "@/types/qrScanner";
 
-type ScanHandlerProps = {
-  activeShift: any;
-  activeCleaning: any;
-  scannerPurpose: ScannerPurpose; // Add scannerPurpose as a prop
-  startShift: (qrData: string) => void;
-  endShift: (withScan: boolean, qrData?: string) => void;
-  startCleaning: (qrData: string) => void;
-  prepareSummary: (withScan: boolean, qrData?: string) => void;
-  openScanner: (purpose: ScannerPurpose) => void;
-  setActiveTab: (tab: string) => void;
-  showConfirmationDialog: (title: string, description: string, action: () => void) => void;
-};
+interface ScanHandlerProps {
+  onStartShiftScan: (qrData: string) => void;
+  onEndShiftScan: (qrData: string) => void;
+  onStartCleaningScan: (qrData: string) => void;
+  onEndCleaningScan: (qrData: string) => void;
+}
 
 export function useQRScannerHandlers({
-  activeShift,
-  activeCleaning,
-  scannerPurpose, // Add scannerPurpose to the destructured props
-  startShift,
-  endShift,
-  startCleaning,
-  prepareSummary,
-  openScanner,
-  setActiveTab,
-  showConfirmationDialog
+  onStartShiftScan,
+  onEndShiftScan,
+  onStartCleaningScan,
+  onEndCleaningScan
 }: ScanHandlerProps) {
-  const { toast } = useToast();
-
-  // Handle scanning QR code
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
+  
+  const closeScanner = () => {
+    setShowQRScanner(false);
+  };
+  
+  const handleQRScannerStart = (purpose: ScannerPurpose) => {
+    setScannerPurpose(purpose);
+    setShowQRScanner(true);
+  };
+  
   const handleQRScan = (decodedText: string) => {
-    console.log("QR Code scanned:", decodedText);
-
-    switch (scannerPurpose) {
-      case "startShift":
-        startShift(decodedText);
-        break;
-      case "endShift":
-        endShift(true, decodedText);
-        break;
-      case "startCleaning":
-        startCleaning(decodedText);
-        setActiveTab("cleaning");
-        break;
-      case "endCleaning":
-        prepareSummary(true, decodedText);
-        break;
-      default:
-        break;
-    }
-  };
-
-  // Handle starting a shift
-  const handleStartShift = () => {
-    if (activeShift) {
-      toast({
-        title: "Shift Already Active",
-        description: "You already have an active shift.",
-        variant: "destructive",
-      });
-      return;
-    }
+    setShowQRScanner(false);
     
-    openScanner("startShift");
-  };
-
-  // Handle ending a shift
-  const handleEndShift = (withScan = true) => {
-    if (!activeShift) {
-      toast({
-        title: "No Active Shift",
-        description: "You don't have an active shift to end.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (activeCleaning) {
-      toast({
-        title: "Active Cleaning Detected",
-        description: "Please finish your current cleaning before ending your shift.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!withScan) {
-      showConfirmationDialog(
-        "End Shift Without Scan",
-        "Are you sure you want to end your shift without scanning? This action cannot be undone.",
-        () => endShift(withScan)
-      );
-    } else {
-      openScanner("endShift");
+    try {
+      console.log(`QR scanned for purpose: ${scannerPurpose}, data: ${decodedText}`);
+      
+      switch (scannerPurpose) {
+        case 'startShift':
+          onStartShiftScan(decodedText);
+          break;
+        case 'endShift':
+          onEndShiftScan(decodedText);
+          break;
+        case 'startCleaning':
+          onStartCleaningScan(decodedText);
+          break;
+        case 'endCleaning':
+          onEndCleaningScan(decodedText);
+          break;
+      }
+    } catch (error) {
+      console.error("Error processing QR scan:", error);
     }
   };
-
-  // Handle starting a cleaning
-  const handleStartCleaning = () => {
-    if (!activeShift) {
-      toast({
-        title: "No Active Shift",
-        description: "You need to start a shift before you can begin cleaning.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (activeCleaning) {
-      toast({
-        title: "Cleaning Already Active",
-        description: "You already have an active cleaning. Please finish it first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    openScanner("startCleaning");
-  };
-
-  // Handle ending a cleaning
-  const handleEndCleaning = (withScan = true) => {
-    if (!activeCleaning) {
-      toast({
-        title: "No Active Cleaning",
-        description: "You don't have an active cleaning to end.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!withScan) {
-      showConfirmationDialog(
-        "End Cleaning Without Scan",
-        "Are you sure you want to end this cleaning without scanning? This action cannot be undone.",
-        () => prepareSummary(withScan)
-      );
-    } else {
-      openScanner("endCleaning");
-    }
-  };
-
+  
   return {
+    showQRScanner,
+    scannerPurpose,
     handleQRScan,
-    handleStartShift,
-    handleEndShift,
-    handleStartCleaning,
-    handleEndCleaning
+    handleQRScannerStart,
+    closeScanner
   };
 }

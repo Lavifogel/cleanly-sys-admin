@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useShift } from "@/hooks/useShift";
-import { useCleaning } from "@/hooks/useCleaning";
+import { useCleaning } from "@/hooks/cleaning";
 import { useTabManagement } from "@/hooks/useTabManagement";
 import { useQRScannerHandlers } from "@/hooks/useQRScannerHandlers";
 import { useDashboardConfirmations } from "@/hooks/useDashboardConfirmations";
@@ -39,18 +39,23 @@ export function useDashboardHandlers() {
     setShowSummary
   } = useCleaning(activeShift?.id);
   
+  // Initialize the QR scanner handlers with the correct callback functions
+  const qrScannerHandlers = useQRScannerHandlers({
+    onStartShiftScan: (qrData) => startShift(qrData),
+    onEndShiftScan: (qrData) => endShift(true, qrData),
+    onStartCleaningScan: (qrData) => startCleaning(qrData),
+    onEndCleaningScan: (qrData) => prepareSummary(true, qrData)
+  });
+
   const {
     showQRScanner,
     scannerPurpose,
     handleQRScan,
     handleQRScannerStart,
     closeScanner
-  } = useQRScannerHandlers({
-    onStartShiftScan: startShift,
-    onEndShiftScan: endShift,
-    onStartCleaningScan: startCleaning,
-    onEndCleaningScan: prepareSummary
-  });
+  } = qrScannerHandlers;
+  
+  const confirmationHandlers = useDashboardConfirmations();
   
   const {
     showConfirmDialog,
@@ -58,7 +63,7 @@ export function useDashboardHandlers() {
     setShowConfirmDialog,
     handleConfirmEndShiftWithoutQR,
     handleConfirmEndCleaningWithoutQR
-  } = useDashboardConfirmations();
+  } = confirmationHandlers;
   
   // Event handlers
   const handleStartShift = () => {
@@ -70,7 +75,7 @@ export function useDashboardHandlers() {
   };
   
   const handleEndShiftWithoutScan = () => {
-    handleConfirmEndShiftWithoutQR(endShift);
+    handleConfirmEndShiftWithoutQR(() => endShift(false));
   };
 
   const handleAutoEndShift = () => {
@@ -95,7 +100,7 @@ export function useDashboardHandlers() {
   };
   
   const handleEndCleaningWithoutScan = () => {
-    handleConfirmEndCleaningWithoutQR(prepareSummary);
+    handleConfirmEndCleaningWithoutQR(() => prepareSummary(false));
   };
   
   const handleCompleteSummary = async () => {
@@ -105,6 +110,7 @@ export function useDashboardHandlers() {
   };
   
   return {
+    // State
     activeTab,
     setActiveTab,
     activeShift,
@@ -122,6 +128,8 @@ export function useDashboardHandlers() {
     confirmAction,
     isUploading,
     images,
+    
+    // Actions
     handleQRScan,
     handleStartShift,
     handleEndShiftWithScan,
