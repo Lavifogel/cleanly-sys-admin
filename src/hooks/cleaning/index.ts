@@ -54,6 +54,7 @@ export function useCleaning(activeShiftId: string | undefined) {
     setCleaningsHistory,
     setCleaningSummary,
     summaryNotes,
+    setSummaryNotes,
     setShowSummary
   );
   
