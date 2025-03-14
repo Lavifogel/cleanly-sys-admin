@@ -1,5 +1,7 @@
 
 import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import NoShiftView from "@/components/cleaners/dashboard/NoShiftView";
 import DashboardTabs from "@/components/cleaners/dashboard/DashboardTabs";
 import { Shift } from "@/hooks/useShift";
@@ -40,12 +42,29 @@ const DashboardContent = ({
   handleEndCleaningWithoutScan,
   handleStartShift
 }: DashboardContentProps) => {
+  // Get navigate function from useNavbar hook
+  const navigate = () => {
+    window.location.href = '/';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Back button */}
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={navigate} 
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft size={18} />
+          <span>Back to Home</span>
+        </Button>
+      </div>
+      
       {!activeShift ? (
         <NoShiftView onStartShift={handleStartShift} />
       ) : (
