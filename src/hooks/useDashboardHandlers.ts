@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/cleaning";
@@ -41,11 +40,13 @@ export function useDashboardHandlers() {
   } = useCleaning(activeShift?.id);
   
   // Initialize the QR scanner handlers with the correct callback functions
+  // and pass setActiveTab to enable tab switching after scanning
   const qrScannerHandlers = useQRScannerHandlers({
     onStartShiftScan: (qrData) => startShift(qrData),
     onEndShiftScan: (qrData) => endShift(true, qrData),
     onStartCleaningScan: (qrData) => startCleaning(qrData),
-    onEndCleaningScan: (qrData) => prepareSummary(true, qrData)
+    onEndCleaningScan: (qrData) => prepareSummary(true, qrData),
+    setActiveTab: setActiveTab // Pass setActiveTab to enable tab switching
   });
 
   const {
