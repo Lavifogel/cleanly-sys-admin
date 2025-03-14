@@ -73,6 +73,7 @@ const DashboardTabs = ({
           handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
           togglePauseCleaning={togglePauseCleaning}
           handleAutoEndCleaning={handleAutoEndCleaning || (() => {})}
+          activeShiftId={activeShift?.id} // Pass the active shift ID
         />
       </TabsContent>
 

@@ -14,6 +14,7 @@ interface CleaningTabProps {
   handleEndCleaningWithoutScan: () => void;
   togglePauseCleaning: () => void;
   handleAutoEndCleaning: () => void;
+  activeShiftId?: string; // Add activeShiftId prop
 }
 
 const CleaningTab = ({
@@ -24,7 +25,8 @@ const CleaningTab = ({
   handleEndCleaningWithScan,
   handleEndCleaningWithoutScan,
   togglePauseCleaning,
-  handleAutoEndCleaning
+  handleAutoEndCleaning,
+  activeShiftId // Add activeShiftId prop
 }: CleaningTabProps) => {
   return (
     <div className="space-y-6">
@@ -55,6 +57,7 @@ const CleaningTab = ({
       {cleaningsHistory.length > 0 && (
         <CleaningHistoryCard
           cleaningsHistory={cleaningsHistory}
+          currentShiftId={activeShiftId}
         />
       )}
     </div>

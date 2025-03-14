@@ -9,22 +9,32 @@ import ImagePreview from "./cleaningComponents/ImagePreview";
 
 interface CleaningHistoryCardProps {
   cleaningsHistory: CleaningHistoryItem[];
+  currentShiftId?: string;
 }
 
-const CleaningHistoryCard = ({ cleaningsHistory }: CleaningHistoryCardProps) => {
+const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHistoryCardProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Filter cleanings to only show those from the current shift if a shift ID is provided
+  const filteredCleanings = currentShiftId 
+    ? cleaningsHistory.filter(cleaning => cleaning.shiftId === currentShiftId)
+    : cleaningsHistory;
   
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle>Cleaning History</CardTitle>
-          <CardDescription>View your recent cleanings</CardDescription>
+          <CardDescription>
+            {currentShiftId 
+              ? "Cleanings completed in your current shift" 
+              : "View your recent cleanings"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {cleaningsHistory.length > 0 ? (
-              cleaningsHistory.map((cleaning) => (
+            {filteredCleanings.length > 0 ? (
+              filteredCleanings.map((cleaning) => (
                 <div 
                   key={cleaning.id} 
                   className="border rounded-lg overflow-hidden p-4"
@@ -90,7 +100,9 @@ const CleaningHistoryCard = ({ cleaningsHistory }: CleaningHistoryCardProps) => 
               ))
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                No cleaning history available
+                {currentShiftId 
+                  ? "No cleanings completed in this shift yet" 
+                  : "No cleaning history available"}
               </div>
             )}
           </div>
