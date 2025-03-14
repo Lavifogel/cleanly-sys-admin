@@ -64,7 +64,7 @@ export function useShift() {
       }
       
       // Generate a temporary user ID
-      const temporaryUserId = generateTemporaryUserId();
+      const temporaryUserId = await generateTemporaryUserId();
       
       // Store the shift in the database
       try {

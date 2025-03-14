@@ -57,13 +57,16 @@ export async function createOrFindQrCode(areaId: string, areaName: string, qrDat
  * Creates a new shift in the database
  */
 export async function createShift(shiftId: string, userId: string, startTime: string, qrId: string | null) {
-  console.log("Creating shift with ID:", shiftId, "for user:", userId, "QR ID:", qrId);
+  // Get or create a proper UUID for the user
+  const properUserId = await getOrCreateUserUUID(userId);
+  
+  console.log("Creating shift with ID:", shiftId, "for user:", properUserId, "QR ID:", qrId);
   
   const { data, error } = await supabase
     .from('shifts')
     .insert({
       id: shiftId,
-      user_id: userId,
+      user_id: properUserId,
       start_time: startTime,
       status: 'active',
       qr_id: qrId
@@ -99,52 +102,56 @@ export async function updateShiftEnd(shiftId: string, endTime: string, status: s
 }
 
 /**
- * Returns the fixed user ID for Lavi Fogel
+ * Returns the user ID for Lavi Fogel, generating a valid UUID if needed
  */
 export function generateTemporaryUserId() {
-  // Fixed ID for Lavi Fogel from the image
-  // Using a consistent ID for this specific user
-  const laviUserId = "lavi-fogel-972527868115";
+  // Use a consistent UUID for Lavi Fogel
+  const laviUserIdInfo = "lavi-fogel-972527868115";
   
   // First check if this user already exists in the database
-  createOrFindUser(laviUserId).catch(err => {
+  // This will convert the string ID to a proper UUID if needed
+  return getOrCreateUserUUID(laviUserIdInfo).catch(err => {
     console.error("Error ensuring user exists:", err);
+    // Fallback to a random UUID if there's an error
+    return uuidv4();
   });
-  
-  return laviUserId;
 }
 
 /**
- * Creates or finds the user in the database
+ * Creates or finds the user in the database and returns a proper UUID
  */
-async function createOrFindUser(userId: string) {
-  // Check if user already exists
-  const { data: existingUser, error: lookupError } = await supabase
+async function getOrCreateUserUUID(userIdInfo: string): Promise<string> {
+  // First check if we already have a mapping for this user ID
+  const { data: existingMapping, error: lookupError } = await supabase
     .from('users')
     .select('id')
-    .eq('id', userId)
+    .eq('phone', userIdInfo)
     .limit(1);
   
   if (lookupError) {
-    console.error("Error looking up user:", lookupError);
+    console.error("Error looking up user mapping:", lookupError);
     throw new Error(`Failed to lookup user: ${lookupError.message}`);
   }
   
-  if (existingUser && existingUser.length > 0) {
-    // User already exists
-    console.log("Found existing user:", existingUser[0]);
-    return existingUser[0].id;
+  if (existingMapping && existingMapping.length > 0) {
+    // User already exists, return their UUID
+    console.log("Found existing user UUID:", existingMapping[0].id);
+    return existingMapping[0].id;
   } else {
-    // Create a new user in the database (from the image provided)
+    // Create a new user with a proper UUID
+    const newUUID = uuidv4();
+    console.log("Generated new UUID for user:", newUUID);
+    
+    // Create the user entry
     const { data: newUser, error: userInsertError } = await supabase
       .from('users')
       .insert({
-        id: userId,
+        id: newUUID,
         first_name: "Lavi",
         last_name: "Fogel",
-        phone: "+972527868115",
+        phone: userIdInfo,
         role: "cleaner",
-        start_date: "2025-03-14",
+        start_date: "2023-03-14",
         active: true,
         email: "lavi.fogel@example.com" // Added required email field
       })
@@ -160,7 +167,7 @@ async function createOrFindUser(userId: string) {
       throw new Error("Failed to create user: No data returned");
     }
     
-    console.log("Created new user:", newUser);
+    console.log("Created new user with UUID:", newUser.id);
     return newUser.id;
   }
 }
