@@ -7,14 +7,14 @@ import { Camera, Calendar, Clock } from "lucide-react";
 interface CleaningItemProps {
   cleaning: CleaningHistoryItem;
   onImageSelect?: (imageUrl: string) => void;
-  onClick?: () => void; // Add onClick handler prop
+  onClick?: () => void;
 }
 
 const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) => {
   // Generate badge color based on status
   const getBadgeVariant = (status: string) => {
     if (status === "open" || status === "active") return "default";
-    if (status.includes("scan")) return "secondary"; // Changed from "success" to "secondary"
+    if (status.includes("scan")) return "secondary";
     return "secondary";
   };
 
@@ -34,43 +34,36 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
   return (
     <div 
       className={`p-4 rounded-lg border ${cleaning.isActive ? 'bg-muted/50 border-primary/20 cursor-pointer' : 'bg-card'}`}
-      onClick={onClick} // Add onClick handler to the entire item
+      onClick={onClick}
     >
-      <div className="flex justify-between items-start">
-        <div>
+      <div className="space-y-2">
+        <div className="flex justify-between items-start">
           <h3 className="font-medium text-base">{cleaning.location}</h3>
-          <div className="flex items-center text-muted-foreground text-sm mt-1">
-            <Calendar className="h-3.5 w-3.5 mr-1" />
-            <span>{formattedDate}</span>
-          </div>
-          
-          {cleaning.isActive ? (
-            <div className="flex items-center text-sm mt-1">
-              <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-              <span>Duration: {cleaning.duration}</span>
-            </div>
-          ) : (
-            <div className="flex items-center text-sm mt-1">
-              <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
-              <span>{cleaning.startTime} - {cleaning.endTime}</span>
-            </div>
-          )}
-        </div>
-        <Badge variant={getBadgeVariant(cleaning.status)}>
-          {cleaning.isActive ? "In Progress" : cleaning.status}
-        </Badge>
-      </div>
-      
-      <div className="flex justify-between items-center mt-3">
-        <div className="flex-1">
-          {!cleaning.isActive && (
-            <div className="text-xs text-muted-foreground">
-              Duration: {cleaning.duration}
-            </div>
-          )}
+          <Badge variant={getBadgeVariant(cleaning.status)}>
+            {cleaning.isActive ? "In Progress" : cleaning.status}
+          </Badge>
         </div>
         
-        {cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0 && (
+        <div className="flex items-center text-muted-foreground text-sm">
+          <Calendar className="h-3.5 w-3.5 mr-1" />
+          <span>{formattedDate}</span>
+        </div>
+        
+        <div className="flex items-center text-sm">
+          <Clock className="h-3.5 w-3.5 mr-1 text-primary" />
+          <span>
+            {cleaning.startTime} 
+            {!cleaning.isActive && ` - ${cleaning.endTime}`}
+          </span>
+        </div>
+        
+        <div className="flex items-center text-sm text-muted-foreground">
+          <span className="ml-4">Duration: {cleaning.duration}</span>
+        </div>
+      </div>
+      
+      {cleaning.images > 0 && cleaning.imageUrls && cleaning.imageUrls.length > 0 && (
+        <div className="flex justify-end items-center mt-3">
           <div className="flex items-center space-x-1">
             <Camera className="h-4 w-4 text-muted-foreground" />
             <div className="flex -space-x-2">
@@ -85,8 +78,8 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
               ))}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       
       {cleaning.notes && (
         <div className="mt-3 text-sm text-muted-foreground border-t pt-2">
