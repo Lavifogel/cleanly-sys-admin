@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -10,7 +11,8 @@ import Logo from '@/components/ui/logo';
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>('cleaner'); // Default to cleaner for Lavi
+  const [userName, setUserName] = useState<string | null>("Lavi Fogel"); // Default to Lavi Fogel
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -35,17 +37,23 @@ const Navbar = () => {
       if (session?.user) {
         const { data, error } = await supabase
           .from('users')
-          .select('role')
+          .select('role, first_name, last_name')
           .eq('id', session.user.id)
           .single();
         
         if (data) {
           setUserRole(data.role);
+          if (data.first_name && data.last_name) {
+            setUserName(`${data.first_name} ${data.last_name}`);
+          }
         } else {
-          setUserRole(null);
+          setUserRole('cleaner'); // Fallback to cleaner (for Lavi)
+          setUserName("Lavi Fogel"); // Set name for Lavi
         }
       } else {
-        setUserRole(null);
+        // When not authenticated, use Lavi's defaults
+        setUserRole('cleaner');
+        setUserName("Lavi Fogel");
       }
     };
 
@@ -68,7 +76,10 @@ const Navbar = () => {
   const getRoutes = () => {
     // If user is not logged in, don't show any routes
     if (!session) {
-      return [];
+      // For Lavi, show the cleaner dashboard
+      return [
+        { path: '/cleaners/dashboard', label: 'Dashboard' }
+      ];
     }
 
     // If user is logged in, only show their relevant dashboard
@@ -121,6 +132,13 @@ const Navbar = () => {
         <Link to="/" className="transition-opacity hover:opacity-80">
           <Logo size="md" variant="default" />
         </Link>
+
+        {/* User name display */}
+        {userName && !isIndexPage && (
+          <div className="hidden md:flex items-center mr-auto ml-6 text-sm font-medium">
+            <span>Welcome, {userName}</span>
+          </div>
+        )}
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1">

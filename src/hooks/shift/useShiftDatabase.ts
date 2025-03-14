@@ -93,8 +93,68 @@ export async function updateShiftEnd(shiftId: string, endTime: string, status: s
 }
 
 /**
- * Generates a temporary user ID (in a real app, this would come from authentication)
+ * Returns the fixed user ID for Lavi Fogel
  */
 export function generateTemporaryUserId() {
-  return uuidv4();
+  // Fixed ID for Lavi Fogel from the image
+  // Using a consistent ID for this specific user
+  const laviUserId = "lavi-fogel-972527868115";
+  
+  // First check if this user already exists in the database
+  createOrFindUser(laviUserId).catch(err => {
+    console.error("Error ensuring user exists:", err);
+  });
+  
+  return laviUserId;
+}
+
+/**
+ * Creates or finds the user in the database
+ */
+async function createOrFindUser(userId: string) {
+  // Check if user already exists
+  const { data: existingUser, error: lookupError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', userId)
+    .limit(1);
+  
+  if (lookupError) {
+    console.error("Error looking up user:", lookupError);
+    throw new Error(`Failed to lookup user: ${lookupError.message}`);
+  }
+  
+  if (existingUser && existingUser.length > 0) {
+    // User already exists
+    console.log("Found existing user:", existingUser[0]);
+    return existingUser[0].id;
+  } else {
+    // Create a new user in the database (from the image provided)
+    const { data: newUser, error: userInsertError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        first_name: "Lavi",
+        last_name: "Fogel",
+        phone: "+972527868115",
+        role: "cleaner",
+        start_date: "2025-03-14",
+        active: true,
+        email: "lavi.fogel@example.com" // Added required email field
+      })
+      .select('id')
+      .single();
+    
+    if (userInsertError) {
+      console.error("Error creating user:", userInsertError);
+      throw new Error(`Failed to create user: ${userInsertError.message}`);
+    }
+    
+    if (!newUser) {
+      throw new Error("Failed to create user: No data returned");
+    }
+    
+    console.log("Created new user:", newUser);
+    return newUser.id;
+  }
 }
