@@ -30,6 +30,7 @@ const ActiveShiftCard = ({
         <CardTitle>Active Shift</CardTitle>
         <CardDescription>
           Started at {startTime.toLocaleTimeString()}
+          <div className="mt-1">{formattedDate}</div>
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -38,7 +39,6 @@ const ActiveShiftCard = ({
             {formatTime(elapsedTime)}
           </div>
           <p className="text-muted-foreground">Elapsed Time</p>
-          <p className="text-sm text-muted-foreground mt-2">{formattedDate}</p>
         </div>
         <div className="flex flex-col gap-2">
           <Button
