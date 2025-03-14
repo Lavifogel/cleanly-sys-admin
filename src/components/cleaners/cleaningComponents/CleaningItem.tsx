@@ -14,7 +14,7 @@ const CleaningItem = ({ cleaning, onImageSelect, onClick }: CleaningItemProps) =
   // Generate badge color based on status
   const getBadgeVariant = (status: string) => {
     if (status === "open" || status === "active") return "default";
-    if (status.includes("scan")) return "success";
+    if (status.includes("scan")) return "secondary"; // Changed from "success" to "secondary"
     return "secondary";
   };
 
