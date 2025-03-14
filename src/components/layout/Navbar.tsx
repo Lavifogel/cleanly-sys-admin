@@ -71,12 +71,13 @@ const Navbar = () => {
 
         {/* Center section with logo */}
         <div className="flex-1 flex justify-center">
-          {/* Logo (always interactive) */}
+          {/* Logo (conditionally interactive) */}
           <Logo 
             variant="default"
             size="md"
-            onClick={handleLogoClick}
-            className="cursor-pointer"
+            onClick={isCleanerDashboard ? undefined : handleLogoClick}
+            className={isCleanerDashboard ? "" : "cursor-pointer"}
+            disableClick={isCleanerDashboard}
           />
         </div>
 
