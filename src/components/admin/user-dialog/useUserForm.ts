@@ -108,12 +108,16 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           
           if (error) throw error;
           
-          // Display the credentials
-          if (result && result.activation_code && result.password) {
-            setCredentials({
-              activation_code: result.activation_code,
-              password: result.password
-            });
+          // Display the credentials - properly type-check result
+          if (result && typeof result === 'object') {
+            // Type check that the result has the correct properties
+            const resultObj = result as { activation_code?: string; password?: string };
+            if (resultObj.activation_code && resultObj.password) {
+              setCredentials({
+                activation_code: resultObj.activation_code,
+                password: resultObj.password
+              });
+            }
           }
           
           toast({
