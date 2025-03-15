@@ -7,7 +7,6 @@ import DashboardTabs from "@/components/cleaners/dashboard/DashboardTabs";
 import { Shift } from "@/hooks/useShift";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 interface DashboardContentProps {
   activeShift: Shift | null;
@@ -48,19 +47,10 @@ const DashboardContent = ({
   handleAutoEndShift,
   handleAutoEndCleaning
 }: DashboardContentProps) => {
-  // Get navigate function for redirection
-  const navigate = useNavigate();
-
-  // Based on tab, redirect to the appropriate page
-  useEffect(() => {
-    if (activeTab === "home") {
-      navigate('/cleaners/dashboard');
-    } else if (activeTab === "cleaning") {
-      navigate('/cleaners/cleaning');
-    } else if (activeTab === "profile") {
-      navigate('/cleaners/profile');
-    }
-  }, [activeTab, navigate]);
+  // Get navigate function from useNavbar hook
+  const navigate = () => {
+    window.location.href = '/';
+  };
 
   // Auto-close shift after 16 hours (16 * 60 * 60 = 57600 seconds)
   useEffect(() => {
@@ -82,7 +72,7 @@ const DashboardContent = ({
       <div className="mb-6">
         <Button 
           variant="ghost" 
-          onClick={() => navigate('/')} 
+          onClick={navigate} 
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={18} />
