@@ -14,9 +14,6 @@ import NotFound from "./pages/NotFound";
 
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const CleanersDashboard = lazy(() => import("./pages/cleaners/Dashboard"));
-const CleanersHome = lazy(() => import("./pages/cleaners/Home"));
-const CleanersCleaning = lazy(() => import("./pages/cleaners/Cleaning"));
-const CleanersProfile = lazy(() => import("./pages/cleaners/Profile"));
 
 const queryClient = new QueryClient();
 
@@ -37,9 +34,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                <Route path="/cleaners/dashboard" element={<CleanersHome />} />
-                <Route path="/cleaners/cleaning" element={<CleanersCleaning />} />
-                <Route path="/cleaners/profile" element={<CleanersProfile />} />
+                <Route path="/cleaners/dashboard" element={<CleanersDashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
