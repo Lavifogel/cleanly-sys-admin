@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { MapPin, PauseCircle, Scan } from "lucide-react";
 import { formatTime } from "@/utils/timeUtils";
 import { useEffect } from "react";
-import { Cleaning } from "@/types/cleaning";
 
 interface ActiveCleaningCardProps {
   location: string;
@@ -15,8 +14,6 @@ interface ActiveCleaningCardProps {
   onEndCleaningWithScan: () => void;
   onEndCleaningWithoutScan: () => void;
   onAutoEndCleaning?: () => void;
-  // Add the cleaning prop as an alternative way to provide data
-  cleaning?: Cleaning;
 }
 
 const ActiveCleaningCard = ({
@@ -28,32 +25,26 @@ const ActiveCleaningCard = ({
   onEndCleaningWithScan,
   onEndCleaningWithoutScan,
   onAutoEndCleaning,
-  cleaning, // Add the cleaning prop
 }: ActiveCleaningCardProps) => {
-  // If cleaning is provided, use its properties instead
-  const actualLocation = cleaning?.location || location;
-  const actualStartTime = cleaning?.startTime || startTime;
-  const actualIsPaused = cleaning?.paused ?? isPaused;
-
   // Auto-close cleaning after 5 hours (5 * 60 * 60 = 18000 seconds)
   useEffect(() => {
     const MAX_CLEANING_DURATION = 18000; // 5 hours in seconds
     
-    if (!actualIsPaused && cleaningElapsedTime >= MAX_CLEANING_DURATION && onAutoEndCleaning) {
+    if (!isPaused && cleaningElapsedTime >= MAX_CLEANING_DURATION && onAutoEndCleaning) {
       console.log("Cleaning exceeded 5 hours, automatically ending it");
       onAutoEndCleaning();
     }
-  }, [cleaningElapsedTime, actualIsPaused, onAutoEndCleaning]);
+  }, [cleaningElapsedTime, isPaused, onAutoEndCleaning]);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
           <MapPin className="h-5 w-5 mr-2 text-primary" />
-          {actualLocation}
+          {location}
         </CardTitle>
         <CardDescription>
-          Started at {actualStartTime.toLocaleTimeString()}
+          Started at {startTime.toLocaleTimeString()}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -62,17 +53,17 @@ const ActiveCleaningCard = ({
             {formatTime(cleaningElapsedTime)}
           </div>
           <p className="text-muted-foreground">
-            {actualIsPaused ? "PAUSED" : "Elapsed Time"}
+            {isPaused ? "PAUSED" : "Elapsed Time"}
           </p>
         </div>
         <div className="flex flex-col gap-2">
           <Button
-            variant={actualIsPaused ? "default" : "outline"}
+            variant={isPaused ? "default" : "outline"}
             onClick={onPauseCleaning}
             className="w-full"
           >
             <PauseCircle className="mr-2 h-4 w-4" />
-            {actualIsPaused ? "Resume Cleaning" : "Pause Cleaning"}
+            {isPaused ? "Resume Cleaning" : "Pause Cleaning"}
           </Button>
           <Button
             variant="destructive"

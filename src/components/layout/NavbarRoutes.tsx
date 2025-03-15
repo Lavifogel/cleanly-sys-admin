@@ -1,28 +1,37 @@
 
-import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
-export const NavbarRoutes = () => {
-  const { userRole } = useAuth();
+interface Route {
+  path: string;
+  label: string;
+}
 
+interface NavbarRoutesProps {
+  routes: Route[];
+  isActive: (path: string) => boolean;
+  className?: string;
+}
+
+const NavbarRoutes = ({ routes, isActive, className }: NavbarRoutesProps) => {
   return (
-    <div className="flex gap-x-2 ml-auto">
-      {userRole === "admin" && (
+    <nav className={className}>
+      {routes.map((route) => (
         <Link
-          to="/admin/dashboard"
-          className="text-sm font-medium transition-colors hover:text-primary"
+          key={route.path}
+          to={route.path}
+          className={cn(
+            'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200',
+            isActive(route.path)
+              ? 'text-primary bg-primary/10'
+              : 'text-foreground/70 hover:text-foreground hover:bg-foreground/5'
+          )}
         >
-          Admin
+          {route.label}
         </Link>
-      )}
-      {userRole === "cleaner" && (
-        <Link
-          to="/cleaners/dashboard"
-          className="text-sm font-medium transition-colors hover:text-primary"
-        >
-          Dashboard
-        </Link>
-      )}
-    </div>
+      ))}
+    </nav>
   );
 };
+
+export default NavbarRoutes;

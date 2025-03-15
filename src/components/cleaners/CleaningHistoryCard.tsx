@@ -8,29 +8,17 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import ImagePreview from "./cleaningComponents/ImagePreview";
 
 interface CleaningHistoryCardProps {
-  cleaningsHistory?: CleaningHistoryItem[];
-  cleanings?: CleaningHistoryItem[]; // Add this prop as an alternative
+  cleaningsHistory: CleaningHistoryItem[];
   currentShiftId?: string;
-  title?: string;
-  emptyMessage?: string;
 }
 
-const CleaningHistoryCard = ({ 
-  cleaningsHistory = [], 
-  cleanings = [], // Add default value
-  currentShiftId,
-  title = "Cleaning History",
-  emptyMessage = "No cleaning history available"
-}: CleaningHistoryCardProps) => {
+const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHistoryCardProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  
-  // Use cleanings if provided, otherwise use cleaningsHistory
-  const allCleanings = cleanings.length > 0 ? cleanings : cleaningsHistory;
   
   // Filter cleanings to only show those from the current shift if a shift ID is provided
   const filteredCleanings = currentShiftId 
-    ? allCleanings.filter(cleaning => cleaning.shiftId === currentShiftId)
-    : allCleanings;
+    ? cleaningsHistory.filter(cleaning => cleaning.shiftId === currentShiftId)
+    : cleaningsHistory;
   
   // Function to format date string to DD/MM/YYYY
   function formatDateToDDMMYYYY(dateStr: string): string {
@@ -45,7 +33,7 @@ const CleaningHistoryCard = ({
     <>
       <Card>
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
+          <CardTitle>Cleaning History</CardTitle>
           <CardDescription>
             {currentShiftId 
               ? "Cleanings completed in your current shift" 
@@ -123,7 +111,7 @@ const CleaningHistoryCard = ({
               <div className="text-center py-6 text-muted-foreground">
                 {currentShiftId 
                   ? "No cleanings completed in this shift yet" 
-                  : emptyMessage}
+                  : "No cleaning history available"}
               </div>
             )}
           </div>
