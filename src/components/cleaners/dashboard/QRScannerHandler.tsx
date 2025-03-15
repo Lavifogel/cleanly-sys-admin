@@ -3,19 +3,23 @@ import { useEffect } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { ScannerPurpose } from "@/hooks/useQRScanner";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 interface QRScannerHandlerProps {
   showQRScanner: boolean;
   scannerPurpose: ScannerPurpose;
   closeScanner: () => void;
   onQRScan: (decodedText: string) => void;
+  activeShift?: boolean;
 }
 
 const QRScannerHandler = ({
   showQRScanner,
   scannerPurpose,
   closeScanner,
-  onQRScan
+  onQRScan,
+  activeShift = false
 }: QRScannerHandlerProps) => {
   
   // Monitor when the QR scanner is closed and ensure camera is properly released
@@ -37,19 +41,34 @@ const QRScannerHandler = ({
 
   if (!showQRScanner) return null;
 
+  // If 'startShift' and no active shift, show a close button
+  const canClose = scannerPurpose === 'startShift' && !activeShift;
+
   return (
-    <QRCodeScanner 
-      onScanSuccess={(decodedText) => {
-        onQRScan(decodedText);
-        // Ensure camera is stopped after successful scan
-        stopAllVideoStreams();
-      }}
-      onClose={() => {
-        closeScanner();
-        // Double-ensure camera is stopped
-        stopAllVideoStreams();
-      }}
-    />
+    <div className="relative">
+      {canClose && (
+        <div className="absolute top-4 right-4 z-50">
+          <Button variant="ghost" size="icon" onClick={closeScanner} className="bg-background/50 backdrop-blur-sm hover:bg-background/80">
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
+      <QRCodeScanner 
+        onScanSuccess={(decodedText) => {
+          onQRScan(decodedText);
+          // Ensure camera is stopped after successful scan
+          stopAllVideoStreams();
+        }}
+        onClose={() => {
+          // Only allow closing if it's the initial scanner
+          if (canClose) {
+            closeScanner();
+          }
+          // Double-ensure camera is stopped
+          stopAllVideoStreams();
+        }}
+      />
+    </div>
   );
 };
 

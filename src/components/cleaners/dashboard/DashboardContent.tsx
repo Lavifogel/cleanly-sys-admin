@@ -71,40 +71,40 @@ const DashboardContent = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Back button */}
-      <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={handleNavigateToHome} 
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={18} />
-          <span>Back</span>
-        </Button>
-      </div>
+      {/* Only show back button if no active shift */}
+      {!activeShift && (
+        <div className="mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={handleNavigateToHome} 
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft size={18} />
+            <span>Back</span>
+          </Button>
+        </div>
+      )}
       
       {!activeShift ? (
         <NoShiftView onStartShift={handleStartShift} />
       ) : (
-        <>
-          <DashboardTabs 
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            activeShift={activeShift}
-            elapsedTime={elapsedTime}
-            activeCleaning={activeCleaning}
-            cleaningElapsedTime={cleaningElapsedTime}
-            cleaningsHistory={cleaningsHistory}
-            shiftsHistory={shiftsHistory}
-            togglePauseCleaning={togglePauseCleaning}
-            handleEndShiftWithScan={handleEndShiftWithScan}
-            handleEndShiftWithoutScan={handleEndShiftWithoutScan}
-            handleStartCleaning={handleStartCleaning}
-            handleEndCleaningWithScan={handleEndCleaningWithScan}
-            handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
-            handleAutoEndCleaning={handleAutoEndCleaning}
-          />
-        </>
+        <DashboardTabs 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          activeShift={activeShift}
+          elapsedTime={elapsedTime}
+          activeCleaning={activeCleaning}
+          cleaningElapsedTime={cleaningElapsedTime}
+          cleaningsHistory={cleaningsHistory}
+          shiftsHistory={shiftsHistory}
+          togglePauseCleaning={togglePauseCleaning}
+          handleEndShiftWithScan={handleEndShiftWithScan}
+          handleEndShiftWithoutScan={handleEndShiftWithoutScan}
+          handleStartCleaning={handleStartCleaning}
+          handleEndCleaningWithScan={handleEndCleaningWithScan}
+          handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
+          handleAutoEndCleaning={handleAutoEndCleaning}
+        />
       )}
     </motion.div>
   );

@@ -21,13 +21,11 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
   const { error } = scannerState;
 
+  // The parent QRScannerHandler will control whether the close button is visible
+  // This component will always handle the close function since it needs to clean up resources
+  
   return (
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
-      <div className="absolute right-4 top-4 z-10">
-        <Button variant="ghost" size="icon" onClick={handleClose}>
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
       <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
         <div className="mb-4 text-center">
           <h3 className="text-lg font-semibold">Scan QR Code</h3>

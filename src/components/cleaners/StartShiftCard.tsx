@@ -19,7 +19,7 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
       await onStartShift();
       toast({
         title: "QR Scanner opened",
-        description: "Please scan a QR code or use the simulation button.",
+        description: "Please scan a QR code or close the scanner if you're not ready.",
         duration: 3000,
       });
     } catch (error: any) {
@@ -55,6 +55,9 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
           <Scan className="mr-2 h-5 w-5" />
           {isLoading ? "Starting..." : "Scan to Start Shift"}
         </Button>
+        <p className="mt-3 text-center text-sm text-muted-foreground">
+          You can close the scanner if you're not ready to start your shift.
+        </p>
       </CardContent>
     </Card>
   );

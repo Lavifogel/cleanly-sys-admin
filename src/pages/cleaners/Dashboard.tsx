@@ -69,6 +69,7 @@ const CleanerDashboard = () => {
         scannerPurpose={scannerPurpose}
         closeScanner={closeScanner}
         onQRScan={handleQRScan}
+        activeShift={!!activeShift}
       />
 
       <DashboardDialogs 
