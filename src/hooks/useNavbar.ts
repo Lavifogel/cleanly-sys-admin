@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUserData } from '@/hooks/useUserData';
-import { getNavRoutes } from '@/utils/navbarUtils';
 
 export const useNavbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -10,14 +9,6 @@ export const useNavbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userRole, userName, session } = useUserData();
-
-  // Get routes based on user role
-  const routes = getNavRoutes(session, userRole);
-  
-  // Function to check if a route is active
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
 
   // Check if current page is login or index page
   const isLoginPage = location.pathname === '/login';
@@ -64,8 +55,6 @@ export const useNavbar = () => {
     isLoginPage,
     isIndexPage,
     isAdminPage,
-    shouldHideProfileIcon,
-    routes,
-    isActive
+    shouldHideProfileIcon
   };
 };

@@ -3,11 +3,11 @@ import { UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ProfileButtonProps {
-  onClick?: () => void;
+  onClick: () => void;
   'aria-label'?: string;
 }
 
-const ProfileButton = ({ onClick = () => {}, 'aria-label': ariaLabel = 'Profile' }: ProfileButtonProps) => {
+const ProfileButton = ({ onClick, 'aria-label': ariaLabel = 'Profile' }: ProfileButtonProps) => {
   return (
     <Button
       variant="ghost"
