@@ -1,15 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { CleaningHistoryItem } from "@/types/cleaning";
+import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
 import CleaningItem from "./cleaningComponents/CleaningItem";
 import ImagePreview from "./cleaningComponents/ImagePreview";
 import { formatTime } from "@/utils/timeUtils";
 import { Scan } from "lucide-react";
 
 interface RecentCleaningsCardProps {
-  cleaningsHistory: CleaningHistoryItem[];
+  cleaningsHistory?: CleaningHistoryItem[];
+  cleanings?: CleaningHistoryItem[]; // Add this prop as an alternative
   currentShiftId?: string;
   activeCleaning?: {
     location: string;
@@ -21,7 +23,8 @@ interface RecentCleaningsCardProps {
 }
 
 const RecentCleaningsCard = ({ 
-  cleaningsHistory, 
+  cleaningsHistory = [], 
+  cleanings = [], // Add default value
   currentShiftId,
   activeCleaning,
   cleaningElapsedTime = 0,
@@ -30,6 +33,9 @@ const RecentCleaningsCard = ({
 }: RecentCleaningsCardProps) => {
   const [cleaningsWithImages, setCleaningsWithImages] = useState<CleaningHistoryItem[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Use cleanings if provided, otherwise use cleaningsHistory
+  const historyToUse = cleanings.length > 0 ? cleanings : cleaningsHistory;
   
   const filteredCleanings = currentShiftId 
     ? cleaningsWithImages.filter(cleaning => cleaning.shiftId === currentShiftId) 
@@ -64,13 +70,13 @@ const RecentCleaningsCard = ({
           
         if (error) {
           console.error("Error fetching images from storage:", error);
-          setCleaningsWithImages(cleaningsHistory);
+          setCleaningsWithImages(historyToUse);
           return;
         }
           
         console.log("Available files in storage:", files);
           
-        const updatedCleanings = cleaningsHistory.map(cleaning => {
+        const updatedCleanings = historyToUse.map(cleaning => {
           if (cleaning.images > 0 && cleaning.imageUrls) {
             return cleaning;
           } else if (cleaning.images > 0) {
@@ -93,12 +99,12 @@ const RecentCleaningsCard = ({
         setCleaningsWithImages(updatedCleanings);
       } catch (error) {
         console.error("Error processing storage data:", error);
-        setCleaningsWithImages(cleaningsHistory);
+        setCleaningsWithImages(historyToUse);
       }
     };
       
     fetchCleaningImages();
-  }, [cleaningsHistory]);
+  }, [historyToUse]);
 
   const handleCleaningItemClick = (cleaning: CleaningHistoryItem) => {
     if (cleaning.isActive && onActiveCleaningClick) {

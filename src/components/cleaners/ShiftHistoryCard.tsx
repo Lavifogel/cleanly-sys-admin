@@ -17,11 +17,18 @@ interface ShiftHistoryItem {
 }
 
 interface ShiftHistoryCardProps {
-  shiftsHistory: ShiftHistoryItem[];
+  shiftsHistory?: ShiftHistoryItem[];
+  shifts?: ShiftHistoryItem[]; // Add this prop as an alternative
 }
 
-const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
+const ShiftHistoryCard = ({ 
+  shiftsHistory = [], 
+  shifts = [] 
+}: ShiftHistoryCardProps) => {
   const [selectedShift, setSelectedShift] = useState<ShiftHistoryItem | null>(null);
+  
+  // Use shifts if provided, otherwise use shiftsHistory
+  const allShifts = shifts.length > 0 ? shifts : shiftsHistory;
   
   // Mock cleaning data for demonstration - in a real app, this would come from an API
   const mockCleanings: CleaningHistoryItem[] = [
@@ -93,7 +100,7 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {shiftsHistory.map((shift) => (
+            {allShifts.map((shift) => (
               <div 
                 key={shift.id} 
                 className="border rounded-lg overflow-hidden cursor-pointer hover:border-primary transition-colors p-4"

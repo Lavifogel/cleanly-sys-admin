@@ -8,17 +8,29 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import ImagePreview from "./cleaningComponents/ImagePreview";
 
 interface CleaningHistoryCardProps {
-  cleaningsHistory: CleaningHistoryItem[];
+  cleaningsHistory?: CleaningHistoryItem[];
+  cleanings?: CleaningHistoryItem[]; // Add this prop as an alternative
   currentShiftId?: string;
+  title?: string;
+  emptyMessage?: string;
 }
 
-const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHistoryCardProps) => {
+const CleaningHistoryCard = ({ 
+  cleaningsHistory = [], 
+  cleanings = [], // Add default value
+  currentShiftId,
+  title = "Cleaning History",
+  emptyMessage = "No cleaning history available"
+}: CleaningHistoryCardProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  // Use cleanings if provided, otherwise use cleaningsHistory
+  const allCleanings = cleanings.length > 0 ? cleanings : cleaningsHistory;
   
   // Filter cleanings to only show those from the current shift if a shift ID is provided
   const filteredCleanings = currentShiftId 
-    ? cleaningsHistory.filter(cleaning => cleaning.shiftId === currentShiftId)
-    : cleaningsHistory;
+    ? allCleanings.filter(cleaning => cleaning.shiftId === currentShiftId)
+    : allCleanings;
   
   // Function to format date string to DD/MM/YYYY
   function formatDateToDDMMYYYY(dateStr: string): string {
@@ -33,7 +45,7 @@ const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHisto
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Cleaning History</CardTitle>
+          <CardTitle>{title}</CardTitle>
           <CardDescription>
             {currentShiftId 
               ? "Cleanings completed in your current shift" 
@@ -111,7 +123,7 @@ const CleaningHistoryCard = ({ cleaningsHistory, currentShiftId }: CleaningHisto
               <div className="text-center py-6 text-muted-foreground">
                 {currentShiftId 
                   ? "No cleanings completed in this shift yet" 
-                  : "No cleaning history available"}
+                  : emptyMessage}
               </div>
             )}
           </div>
