@@ -1,31 +1,37 @@
 
-import { Link } from "react-router-dom";
-import { NavRoute } from "@/utils/navbarUtils";
-import { cn } from "@/lib/utils";
+import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+
+interface Route {
+  path: string;
+  label: string;
+}
 
 interface NavbarRoutesProps {
-  routes: NavRoute[];
+  routes: Route[];
   isActive: (path: string) => boolean;
   className?: string;
 }
 
-export const NavbarRoutes = ({ routes, isActive, className }: NavbarRoutesProps) => {
+const NavbarRoutes = ({ routes, isActive, className }: NavbarRoutesProps) => {
   return (
-    <div className={cn("flex gap-x-2", className)}>
+    <nav className={className}>
       {routes.map((route) => (
         <Link
           key={route.path}
           to={route.path}
           className={cn(
-            "text-sm font-medium transition-colors",
-            isActive(route.path) 
-              ? "text-primary" 
-              : "hover:text-primary"
+            'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200',
+            isActive(route.path)
+              ? 'text-primary bg-primary/10'
+              : 'text-foreground/70 hover:text-foreground hover:bg-foreground/5'
           )}
         >
           {route.label}
         </Link>
       ))}
-    </div>
+    </nav>
   );
 };
+
+export default NavbarRoutes;

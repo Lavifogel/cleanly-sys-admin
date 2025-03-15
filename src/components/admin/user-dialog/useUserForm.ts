@@ -6,15 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase, createUser } from "@/integrations/supabase/client";
 import { UserFormValues, userSchema, getNames, UserDialogProps } from "./userFormSchema";
 
-interface Credentials {
-  activation_code: string;
-  password: string;
-}
-
 export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [credentials, setCredentials] = useState<Credentials | null>(null);
   
   const { firstName, lastName } = getNames(user?.name);
   
@@ -41,7 +35,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         isActive: user?.status !== "inactive",
         role: (user?.role as "admin" | "cleaner") || "cleaner"
       });
-      setCredentials(null);
     }
   }, [open, user, reset]);
 
@@ -70,9 +63,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           title: "User Updated",
           description: "User information has been updated successfully",
         });
-        
-        onOpenChange(false);
-        onSuccess();
       } else {
         // Create new user
         console.log("Creating new user with data:", {
@@ -95,39 +85,50 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
         
         try {
           // Use the database function to create a new user
-          const { data: result, error } = await supabase.rpc('create_user', {
-            user_id: userId,
-            first_name: data.firstName,
-            last_name: data.lastName,
-            email: defaultEmail,
-            phone_number: data.phoneNumber,
-            role: data.role,
-            start_date: data.startDate,
-            is_active: data.isActive
-          });
-          
-          if (error) throw error;
-          
-          // Display the credentials
-          if (result && typeof result === 'object') {
-            const jsonResult = result as { activation_code: string; password: string };
-            setCredentials({
-              activation_code: jsonResult.activation_code,
-              password: jsonResult.password
-            });
-          }
+          await createUser(
+            userId,
+            data.firstName,
+            data.lastName,
+            defaultEmail, // Use default email
+            data.phoneNumber,
+            data.role,
+            data.startDate,
+            data.isActive
+          );
           
           toast({
             title: `${data.role === 'admin' ? 'Admin' : 'Cleaner'} Created`,
             description: `New ${data.role} has been created successfully.`,
           });
-          
-          // Don't close the dialog when credentials need to be shown
         } catch (error) {
           console.error("Error creating user:", error);
-          throw error;
+          
+          // If function doesn't exist or fails, fall back to direct insert
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: userId,
+              first_name: data.firstName,
+              last_name: data.lastName,
+              email: defaultEmail, // Use default email
+              phone: data.phoneNumber,
+              role: data.role,
+              start_date: data.startDate,
+              active: data.isActive
+            });
+          
+          if (insertError) throw insertError;
+          
+          toast({
+            title: `${data.role === 'admin' ? 'Admin' : 'Cleaner'} Created`,
+            description: `New ${data.role} has been created successfully.`,
+          });
         }
       }
+      
+      onOpenChange(false);
+      onSuccess();
+      
     } catch (error) {
       console.error('Error saving user:', error);
       toast({
@@ -151,7 +152,6 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     isActiveValue,
     roleValue,
     onSubmit,
-    setValue,
-    credentials
+    setValue
   };
 };

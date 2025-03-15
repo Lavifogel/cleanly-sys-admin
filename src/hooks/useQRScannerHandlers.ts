@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
 import { ScannerPurpose } from "@/hooks/useQRScanner";
@@ -21,6 +22,7 @@ export function useQRScannerHandlers({
 }: ScanHandlerProps) {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
+  const navigate = useNavigate();
   
   const closeScanner = () => {
     setShowQRScanner(false);
@@ -46,10 +48,8 @@ export function useQRScannerHandlers({
           break;
         case 'startCleaning':
           onStartCleaningScan(decodedText);
-          // Switch to cleaning tab after starting a cleaning
-          if (setActiveTab) {
-            setActiveTab('cleaning');
-          }
+          // Navigate to cleaning page after starting a cleaning
+          navigate('/cleaners/cleaning');
           break;
         case 'endCleaning':
           onEndCleaningScan(decodedText);
