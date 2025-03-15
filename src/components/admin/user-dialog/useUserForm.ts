@@ -109,10 +109,11 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
           if (error) throw error;
           
           // Display the credentials
-          if (result && result.activation_code && result.password) {
+          if (result && typeof result === 'object') {
+            const jsonResult = result as { activation_code: string; password: string };
             setCredentials({
-              activation_code: result.activation_code,
-              password: result.password
+              activation_code: jsonResult.activation_code,
+              password: jsonResult.password
             });
           }
           

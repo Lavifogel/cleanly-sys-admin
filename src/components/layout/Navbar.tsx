@@ -1,7 +1,7 @@
 
 import { cn } from '@/lib/utils';
 import { useNavbar } from '@/hooks/useNavbar';
-import NavbarRoutes from './NavbarRoutes';
+import { NavbarRoutes } from './NavbarRoutes';
 import MobileMenu from './MobileMenu';
 import { getNavRoutes } from '@/utils/navbarUtils';
 import Logo from '@/components/ui/logo';
