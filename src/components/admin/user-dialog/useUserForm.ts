@@ -14,18 +14,21 @@ interface CreateUserResponse {
 }
 
 export const useUserForm = (
-  user: {
-    id?: string;
-    phoneNumber?: string;
-    name?: string;
-    email?: string;
-    startDate?: string;
-    status?: string;
-    role?: string;
-  } | null,
-  onOpenChange: (open: boolean) => void,
-  onSuccess: () => void
+  props: {
+    user: {
+      id?: string;
+      phoneNumber?: string;
+      name?: string;
+      email?: string;
+      startDate?: string;
+      status?: string;
+      role?: string;
+    } | null,
+    onOpenChange: (open: boolean) => void,
+    onSuccess: () => void
+  }
 ) => {
+  const { user, onOpenChange, onSuccess } = props;
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activationCode, setActivationCode] = useState("");
@@ -46,7 +49,13 @@ export const useUserForm = (
     }
   });
 
-  const handleSubmit = async (data: UserFormValues) => {
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = form;
+  
+  // Watch values for reactive updates
+  const isActiveValue = watch("isActive");
+  const roleValue = watch("role");
+
+  const onSubmit = async (data: UserFormValues) => {
     setIsSubmitting(true);
     
     try {
@@ -91,8 +100,8 @@ export const useUserForm = (
         
         if (error) throw error;
         
-        // Type assertion to handle the response properly
-        const typedResponse = responseData as CreateUserResponse;
+        // Cast responseData to the expected type using type assertion with 'as unknown as'
+        const typedResponse = responseData as unknown as CreateUserResponse;
         
         if (typedResponse && typedResponse.success) {
           setActivationCode(typedResponse.activation_code || "");
@@ -128,13 +137,18 @@ export const useUserForm = (
   };
 
   return {
-    form,
+    register,
+    handleSubmit,
+    errors,
     isSubmitting,
+    isActiveValue,
+    onSubmit,
+    setValue,
+    roleValue,
     activationCode,
     password,
     showCredentials,
     setShowCredentials,
-    handleSubmit: form.handleSubmit(handleSubmit),
     closeDialog
   };
 };

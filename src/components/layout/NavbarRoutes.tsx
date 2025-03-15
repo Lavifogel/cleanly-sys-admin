@@ -1,19 +1,22 @@
 
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-
-interface Route {
-  path: string;
-  label: string;
-}
+import { getNavRoutes } from '@/utils/navbarUtils';
+import { useLocation } from 'react-router-dom';
 
 interface NavbarRoutesProps {
-  routes: Route[];
-  isActive: (path: string) => boolean;
+  userRole: string | null;
   className?: string;
 }
 
-const NavbarRoutes = ({ routes, isActive, className }: NavbarRoutesProps) => {
+const NavbarRoutes = ({ userRole, className }: NavbarRoutesProps) => {
+  const location = useLocation();
+  const routes = getNavRoutes(true, userRole); // Assuming we're always authenticated for the routes
+
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
   return (
     <nav className={className}>
       {routes.map((route) => (
