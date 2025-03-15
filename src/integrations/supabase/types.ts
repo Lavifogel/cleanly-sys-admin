@@ -169,39 +169,48 @@ export type Database = {
       }
       users: {
         Row: {
+          activation_code: string | null
           active: boolean | null
           created_at: string
           email: string
           first_name: string | null
           full_name: string | null
           id: string
+          is_first_login: boolean | null
           last_name: string | null
+          password: string | null
           phone: string | null
           role: string
           start_date: string | null
           updated_at: string
         }
         Insert: {
+          activation_code?: string | null
           active?: boolean | null
           created_at?: string
           email: string
           first_name?: string | null
           full_name?: string | null
           id: string
+          is_first_login?: boolean | null
           last_name?: string | null
+          password?: string | null
           phone?: string | null
           role?: string
           start_date?: string | null
           updated_at?: string
         }
         Update: {
+          activation_code?: string | null
           active?: boolean | null
           created_at?: string
           email?: string
           first_name?: string | null
           full_name?: string | null
           id?: string
+          is_first_login?: boolean | null
           last_name?: string | null
+          password?: string | null
           phone?: string | null
           role?: string
           start_date?: string | null
@@ -226,6 +235,13 @@ export type Database = {
           is_active: boolean
         }
         Returns: Json
+      }
+      generate_activation_credentials: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          activation_code: string
+          password: string
+        }[]
       }
       generate_area_id: {
         Args: {

@@ -1,139 +1,119 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, createUser } from "@/integrations/supabase/client";
-import { UserFormValues, userSchema, getNames, UserDialogProps } from "./userFormSchema";
+import { supabase } from "@/integrations/supabase/client";
+import { getNames, userSchema, type UserFormValues } from "./userFormSchema";
 
-export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogProps) => {
+interface CreateUserResponse {
+  success: boolean;
+  message: string;
+  activation_code?: string;
+  password?: string;
+}
+
+export const useUserForm = (
+  user: {
+    id?: string;
+    phoneNumber?: string;
+    name?: string;
+    email?: string;
+    startDate?: string;
+    status?: string;
+    role?: string;
+  } | null,
+  onOpenChange: (open: boolean) => void,
+  onSuccess: () => void
+) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [activationCode, setActivationCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [showCredentials, setShowCredentials] = useState(false);
+
   const { firstName, lastName } = getNames(user?.name);
-  
-  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<UserFormValues>({
+
+  const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
     defaultValues: {
-      firstName,
-      lastName,
+      firstName: firstName,
+      lastName: lastName,
       phoneNumber: user?.phoneNumber || "",
-      startDate: user?.startDate || new Date().toISOString().split('T')[0],
+      startDate: user?.startDate || new Date().toISOString().split("T")[0],
       isActive: user?.status !== "inactive",
       role: (user?.role as "admin" | "cleaner") || "cleaner"
     }
   });
 
-  useEffect(() => {
-    if (open) {
-      const { firstName, lastName } = getNames(user?.name);
-      reset({
-        firstName,
-        lastName,
-        phoneNumber: user?.phoneNumber || "",
-        startDate: user?.startDate || new Date().toISOString().split('T')[0],
-        isActive: user?.status !== "inactive",
-        role: (user?.role as "admin" | "cleaner") || "cleaner"
-      });
-    }
-  }, [open, user, reset]);
-
-  const onSubmit = async (data: UserFormValues) => {
+  const handleSubmit = async (data: UserFormValues) => {
     setIsSubmitting(true);
     
     try {
       if (user?.id) {
         // Update existing user
-        const { error: userError } = await supabase
+        const { error } = await supabase
           .from('users')
           .update({
             first_name: data.firstName,
             last_name: data.lastName,
             phone: data.phoneNumber,
-            role: data.role,
             start_date: data.startDate,
             active: data.isActive,
+            role: data.role,
             updated_at: new Date().toISOString()
           })
           .eq('id', user.id);
         
-        if (userError) throw userError;
-        
+        if (error) throw error;
+
         toast({
           title: "User Updated",
           description: "User information has been updated successfully",
         });
+
+        onOpenChange(false);
+        onSuccess();
       } else {
-        // Create new user
-        console.log("Creating new user with data:", {
-          firstName: data.firstName,
-          lastName: data.lastName, 
+        // Create new user with UUID
+        const userId = crypto.randomUUID();
+        
+        const { data: responseData, error } = await supabase.rpc('create_user', {
+          user_id: userId,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: `${data.phoneNumber}@example.com`, // Temporary email
+          phone_number: data.phoneNumber,
           role: data.role,
-          phoneNumber: data.phoneNumber
+          start_date: data.startDate,
+          is_active: data.isActive
         });
         
-        // Generate a UUID for the user
-        const userId = crypto.randomUUID?.() || 
-          'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-          });
+        if (error) throw error;
         
-        // Create a default email derived from name for database requirements
-        const defaultEmail = `${data.firstName.toLowerCase()}.${data.lastName.toLowerCase()}@example.com`;
+        // Type assertion to handle the response properly
+        const typedResponse = responseData as CreateUserResponse;
         
-        try {
-          // Use the database function to create a new user
-          await createUser(
-            userId,
-            data.firstName,
-            data.lastName,
-            defaultEmail, // Use default email
-            data.phoneNumber,
-            data.role,
-            data.startDate,
-            data.isActive
-          );
-          
-          toast({
-            title: `${data.role === 'admin' ? 'Admin' : 'Cleaner'} Created`,
-            description: `New ${data.role} has been created successfully.`,
-          });
-        } catch (error) {
-          console.error("Error creating user:", error);
-          
-          // If function doesn't exist or fails, fall back to direct insert
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert({
-              id: userId,
-              first_name: data.firstName,
-              last_name: data.lastName,
-              email: defaultEmail, // Use default email
-              phone: data.phoneNumber,
-              role: data.role,
-              start_date: data.startDate,
-              active: data.isActive
-            });
-          
-          if (insertError) throw insertError;
-          
-          toast({
-            title: `${data.role === 'admin' ? 'Admin' : 'Cleaner'} Created`,
-            description: `New ${data.role} has been created successfully.`,
-          });
+        if (typedResponse && typedResponse.success) {
+          setActivationCode(typedResponse.activation_code || "");
+          setPassword(typedResponse.password || "");
+          setShowCredentials(true);
+        } else {
+          throw new Error("Failed to create user");
         }
+        
+        toast({
+          title: "User Created",
+          description: "New user has been created successfully",
+        });
+        
+        onSuccess();
       }
-      
-      onOpenChange(false);
-      onSuccess();
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving user:', error);
       toast({
-        title: "Operation Failed",
-        description: `Could not save user information: ${error.message}`,
+        title: "Error",
+        description: error.message || "Failed to save user information",
         variant: "destructive",
       });
     } finally {
@@ -141,17 +121,20 @@ export const useUserForm = ({ user, open, onOpenChange, onSuccess }: UserDialogP
     }
   };
 
-  const isActiveValue = watch("isActive");
-  const roleValue = watch("role");
+  const closeDialog = () => {
+    setShowCredentials(false);
+    onOpenChange(false);
+    form.reset();
+  };
 
   return {
-    register,
-    handleSubmit,
-    errors,
+    form,
     isSubmitting,
-    isActiveValue,
-    roleValue,
-    onSubmit,
-    setValue
+    activationCode,
+    password,
+    showCredentials,
+    setShowCredentials,
+    handleSubmit: form.handleSubmit(handleSubmit),
+    closeDialog
   };
 };

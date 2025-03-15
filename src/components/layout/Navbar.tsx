@@ -1,101 +1,98 @@
-
-import { cn } from '@/lib/utils';
-import { useNavbar } from '@/hooks/useNavbar';
-import NavbarRoutes from './NavbarRoutes';
-import MobileMenu from './MobileMenu';
-import { getNavRoutes } from '@/utils/navbarUtils';
-import Logo from '@/components/ui/logo';
+import { useNavbar } from "@/hooks/useNavbar";
+import NavbarRoutes from "./NavbarRoutes";
+import MobileMenu from "./MobileMenu";
+import ProfileButton from "./ProfileButton";
+import Logo from "@/components/ui/logo";
 
 const Navbar = () => {
   const {
     isScrolled,
     isMobileMenuOpen,
+    setIsMobileMenuOpen,
     userRole,
     userName,
-    navigate,
     location,
+    navigate,
     session,
+    isLoginPage,
     isIndexPage,
+    isAdminPage,
     shouldHideProfileIcon
   } = useNavbar();
 
-  const routes = getNavRoutes(session, userRole);
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-  
-  // Check if current page is cleaner dashboard
-  const isCleanerDashboard = location.pathname.includes('/cleaners/dashboard');
-
-  // Handle profile icon click
   const handleProfileClick = () => {
-    if (location.pathname.includes('/cleaners/dashboard')) {
-      // Already on dashboard, dispatch event to show profile tab
-      const event = new CustomEvent('set-profile-tab');
+    if (location.pathname.includes("/cleaners/dashboard")) {
+      // If already on dashboard, switch to profile tab
+      const event = new CustomEvent('set-active-tab', { detail: 'profile' });
       window.dispatchEvent(event);
     } else {
-      // Navigate to dashboard with profile tab
-      if (userRole === 'cleaner') {
-        navigate('/cleaners/dashboard');
-        // Need a delay to ensure component is mounted before trying to set tab
-        setTimeout(() => {
-          const event = new CustomEvent('set-profile-tab');
-          window.dispatchEvent(event);
-        }, 100);
-      }
+      // Otherwise navigate to cleaners dashboard
+      navigate("/cleaners/dashboard");
+      
+      // Set profile tab after navigation
+      setTimeout(() => {
+        const event = new CustomEvent('set-active-tab', { detail: 'profile' });
+        window.dispatchEvent(event);
+      }, 100);
     }
   };
 
-  // Handle logo click - navigate to index page
-  const handleLogoClick = () => {
-    navigate('/');
-  };
-
   return (
-    <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out py-4 px-6',
-        isScrolled ? 'bg-background/80 backdrop-blur-md border-b' : 'bg-transparent'
-      )}
+    <header 
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 
+        ${isScrolled ? 'bg-white/95 shadow-sm backdrop-blur-sm' : 'bg-white/80'}
+        ${isLoginPage ? 'hidden' : ''}
+      `}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left section with welcome text */}
-        <div className="flex-1">
-          {userName && !isIndexPage && (
-            <div className="flex items-center text-sm font-medium">
-              <span>Welcome, {userName}</span>
-            </div>
+      <div className="container mx-auto px-4 md:px-6 flex items-center justify-between h-20">
+        {/* Logo */}
+        <div className="flex items-center">
+          <Logo className="h-10 w-auto" />
+        </div>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-2">
+          <NavbarRoutes userRole={userRole} />
+          
+          {!shouldHideProfileIcon && (
+            <ProfileButton onClick={handleProfileClick} />
           )}
         </div>
 
-        {/* Center section with logo */}
-        <div className="flex-1 flex justify-center">
-          {/* Logo (conditionally interactive) */}
-          <Logo 
-            variant="default"
-            size="md"
-            onClick={isCleanerDashboard ? undefined : handleLogoClick}
-            className={isCleanerDashboard ? "" : "cursor-pointer"}
-            disableClick={isCleanerDashboard}
-          />
-        </div>
-
-        {/* Right section with navigation */}
-        <div className="flex-1 flex items-center justify-end space-x-2">
-          {/* Desktop Navigation */}
-          <NavbarRoutes 
-            routes={routes} 
-            isActive={isActive} 
-            className="hidden md:flex items-center space-x-1" 
-          />
-          
-          {/* Profile button removed */}
-        </div>
+        {/* Mobile menu button */}
+        <button 
+          className="md:hidden flex items-center p-2 rounded-md"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Menu"
+        >
+          <div className="relative w-6 h-5">
+            <span 
+              className={`block absolute h-0.5 bg-gray-700 transform transition-all duration-300 ${
+                isMobileMenuOpen ? 'top-2 -rotate-45 w-6' : 'top-0 w-5'
+              }`}
+            />
+            <span 
+              className={`block absolute h-0.5 bg-gray-700 top-2 transition-all duration-300 ${
+                isMobileMenuOpen ? 'opacity-0 w-0' : 'opacity-100 w-6'
+              }`}
+            />
+            <span 
+              className={`block absolute h-0.5 bg-gray-700 transform transition-all duration-300 ${
+                isMobileMenuOpen ? 'top-2 rotate-45 w-6' : 'top-4 w-4'
+              }`}
+            />
+          </div>
+        </button>
       </div>
 
       {/* Mobile Menu */}
-      <MobileMenu isOpen={isMobileMenuOpen} routes={routes} isActive={isActive} />
+      <MobileMenu 
+        isOpen={isMobileMenuOpen} 
+        userRole={userRole} 
+        onClose={() => setIsMobileMenuOpen(false)}
+        onProfileClick={handleProfileClick}
+        shouldHideProfileIcon={shouldHideProfileIcon}
+      />
     </header>
   );
 };

@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
 import CleaningHistoryCard from "@/components/cleaners/CleaningHistoryCard";
@@ -28,6 +29,21 @@ const CleaningTab = ({
   handleAutoEndCleaning,
   activeShiftId // Add activeShiftId prop
 }: CleaningTabProps) => {
+  // Auto-close cleaning after 5 hours (5 * 60 * 60 = 18000 seconds)
+  useEffect(() => {
+    const MAX_CLEANING_DURATION = 18000; // 5 hours in seconds
+    
+    if (activeCleaning && cleaningElapsedTime >= MAX_CLEANING_DURATION) {
+      console.log("Cleaning exceeded 5 hours, automatically ending it");
+      handleAutoEndCleaning();
+    }
+    
+    // Clean up timer on unmount
+    return () => {
+      // Any cleanup if needed
+    };
+  }, [activeCleaning, cleaningElapsedTime, handleAutoEndCleaning]);
+
   return (
     <div className="space-y-6">
       {!activeCleaning ? (

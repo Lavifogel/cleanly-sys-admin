@@ -4,6 +4,7 @@ import { Cleaning, CleaningHistoryItem, CleaningSummary } from "@/types/cleaning
 import { useCleaningImages } from "@/hooks/useCleaningImages";
 import { updateCleaningEnd } from "@/hooks/shift/useCleaningDatabase";
 import { formatTime } from "@/utils/timeUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export function useCleaningSummary(
   activeShiftId: string | undefined,
@@ -18,6 +19,7 @@ export function useCleaningSummary(
   setSummaryNotes: (notes: string) => void,
   setShowSummary: (show: boolean) => void
 ) {
+  const { toast } = useToast();
   const { images, addImage, removeImage, isUploading, saveImagesToDatabase, resetImages } = useCleaningImages({ maxImages: 5 });
 
   // Format date to DD/MM/YYYY
@@ -30,7 +32,14 @@ export function useCleaningSummary(
 
   // Prepare cleaning summary for completion
   const prepareSummary = (withScan: boolean, qrData?: string) => {
-    if (!activeCleaning) return;
+    if (!activeCleaning) {
+      toast({
+        title: "Error",
+        description: "No active cleaning to prepare summary for.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Reset summary notes and images when opening the summary form
     setSummaryNotes("");
@@ -50,7 +59,14 @@ export function useCleaningSummary(
 
   // Complete the cleaning with summary and save to DB
   const completeSummary = async () => {
-    if (!activeCleaning || !activeShiftId) return false;
+    if (!activeCleaning || !activeShiftId) {
+      toast({
+        title: "Error",
+        description: "Cannot complete summary: missing active cleaning or shift.",
+        variant: "destructive",
+      });
+      return false;
+    }
     
     try {
       // Now this is valid since we added the id property to the Cleaning interface
@@ -70,7 +86,16 @@ export function useCleaningSummary(
       
       // Save any images
       if (images.length > 0) {
-        await saveImagesToDatabase(cleaningId);
+        try {
+          await saveImagesToDatabase(cleaningId);
+        } catch (imageError) {
+          console.error("Error saving images:", imageError);
+          toast({
+            title: "Warning",
+            description: "Cleaning saved but there was an issue uploading images.",
+            variant: "destructive",
+          });
+        }
       }
       
       // Update the local state with formatted date
@@ -93,9 +118,19 @@ export function useCleaningSummary(
       setCleaningElapsedTime(0);
       setShowSummary(false);
       
+      toast({
+        title: "Success",
+        description: "Cleaning completed successfully.",
+      });
+      
       return true;
     } catch (error) {
       console.error("Error completing cleaning summary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete cleaning. Please try again.",
+        variant: "destructive",
+      });
       return false;
     }
   };

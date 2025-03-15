@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/cleaning";
@@ -73,14 +74,31 @@ export function useDashboardHandlers() {
   };
   
   const handleEndShiftWithScan = () => {
+    if (!activeShift) {
+      toast({
+        title: "Error",
+        description: "No active shift to end.",
+        variant: "destructive",
+      });
+      return;
+    }
     handleQRScannerStart('endShift');
   };
   
   const handleEndShiftWithoutScan = () => {
+    if (!activeShift) {
+      toast({
+        title: "Error",
+        description: "No active shift to end.",
+        variant: "destructive",
+      });
+      return;
+    }
     handleConfirmEndShiftWithoutQR(() => endShift(false));
   };
 
   const handleAutoEndShift = () => {
+    if (!activeShift) return;
     autoEndShift();
   };
   
@@ -98,20 +116,46 @@ export function useDashboardHandlers() {
   };
   
   const handleEndCleaningWithScan = () => {
+    if (!activeCleaning) {
+      toast({
+        title: "Error",
+        description: "No active cleaning to end.",
+        variant: "destructive",
+      });
+      return;
+    }
     handleQRScannerStart('endCleaning');
   };
   
   const handleEndCleaningWithoutScan = () => {
+    if (!activeCleaning) {
+      toast({
+        title: "Error",
+        description: "No active cleaning to end.",
+        variant: "destructive",
+      });
+      return;
+    }
     handleConfirmEndCleaningWithoutQR(() => prepareSummary(false));
   };
   
   const handleAutoEndCleaning = () => {
+    if (!activeCleaning) return;
     autoEndCleaning();
   };
   
   const handleCompleteSummary = async () => {
-    if (await completeSummary()) {
-      setActiveTab('home');
+    try {
+      if (await completeSummary()) {
+        setActiveTab('home');
+      }
+    } catch (error) {
+      console.error("Error completing summary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete the cleaning summary. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   

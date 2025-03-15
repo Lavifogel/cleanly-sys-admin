@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import NoShiftView from "@/components/cleaners/dashboard/NoShiftView";
 import DashboardTabs from "@/components/cleaners/dashboard/DashboardTabs";
 import { Shift } from "@/hooks/useShift";
@@ -47,9 +48,11 @@ const DashboardContent = ({
   handleAutoEndShift,
   handleAutoEndCleaning
 }: DashboardContentProps) => {
-  // Get navigate function from useNavbar hook
-  const navigate = () => {
-    window.location.href = '/';
+  // Use React Router's useNavigate hook
+  const navigate = useNavigate();
+
+  const handleNavigateToHome = () => {
+    navigate('/');
   };
 
   // Auto-close shift after 16 hours (16 * 60 * 60 = 57600 seconds)
@@ -72,7 +75,7 @@ const DashboardContent = ({
       <div className="mb-6">
         <Button 
           variant="ghost" 
-          onClick={navigate} 
+          onClick={handleNavigateToHome} 
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={18} />
