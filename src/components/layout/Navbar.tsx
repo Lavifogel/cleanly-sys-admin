@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { NavbarRoutes } from "./NavbarRoutes";
-import { MobileMenu } from "./MobileMenu";
+import NavbarRoutes from "./NavbarRoutes";
+import MobileMenu from "./MobileMenu";
 
 import {
   Check,
@@ -13,22 +13,28 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { getNavRoutes } from "@/utils/navbarUtils";
-import { Logo } from "@/components/ui/logo";
+import Logo from "@/components/ui/logo";
 import ProfileButton from "@/components/layout/ProfileButton";
 import { motion } from "framer-motion";
 import { useNavbar } from "@/hooks/useNavbar";
 import { useUserData } from "@/hooks/useUserData";
 
 const Navbar = () => {
-  const location = useLocation();
+  const { isScrolled, isMobileMenuOpen, setIsMobileMenuOpen, userRole, userName, location, navigate, session, isLoginPage, isIndexPage, isAdminPage, shouldHideProfileIcon } = useNavbar();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const { session, userRole } = useUserData();
+  const { session: userData, userRole: role } = useUserData();
 
   const toggleMobileMenu = () => {
     setShowMobileMenu(!showMobileMenu);
   };
-
-  const { routes, isActive } = useNavbar();
+  
+  // Get routes based on user role
+  const routes = getNavRoutes(userData, role);
+  
+  // Function to check if a route is active
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   // Close mobile menu when location changes
   useEffect(() => {
@@ -99,7 +105,7 @@ const Navbar = () => {
         <div className="flex items-center gap-3">
           {/* Show profile button when logged in */}
           {session && (
-            <ProfileButton />
+            <ProfileButton onClick={() => console.log("Profile clicked")} />
           )}
           
           {/* Mobile menu toggle */}
@@ -115,7 +121,7 @@ const Navbar = () => {
       
       {/* Mobile menu */}
       {showMobileMenu && (
-        <MobileMenu routes={routes} isActive={isActive} />
+        <MobileMenu isOpen={showMobileMenu} routes={routes} isActive={isActive} />
       )}
     </motion.div>
   );
