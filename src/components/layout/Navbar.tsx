@@ -1,102 +1,123 @@
 
-import { cn } from '@/lib/utils';
-import { useNavbar } from '@/hooks/useNavbar';
-import NavbarRoutes from './NavbarRoutes';
-import MobileMenu from './MobileMenu';
-import { getNavRoutes } from '@/utils/navbarUtils';
-import Logo from '@/components/ui/logo';
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { NavbarRoutes } from "./NavbarRoutes";
+import { MobileMenu } from "./MobileMenu";
+
+import {
+  Check,
+  Menu,
+  X
+} from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { getNavRoutes } from "@/utils/navbarUtils";
+import { Logo } from "@/components/ui/logo";
+import ProfileButton from "@/components/layout/ProfileButton";
+import { motion } from "framer-motion";
+import { useNavbar } from "@/hooks/useNavbar";
+import { useUserData } from "@/hooks/useUserData";
 
 const Navbar = () => {
-  const {
-    isScrolled,
-    isMobileMenuOpen,
-    userRole,
-    userName,
-    navigate,
-    location,
-    session,
-    isIndexPage,
-    shouldHideProfileIcon
-  } = useNavbar();
+  const location = useLocation();
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const { session, userRole } = useUserData();
 
-  const routes = getNavRoutes(session, userRole);
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const toggleMobileMenu = () => {
+    setShowMobileMenu(!showMobileMenu);
   };
+
+  const { routes, isActive } = useNavbar();
+
+  // Close mobile menu when location changes
+  useEffect(() => {
+    setShowMobileMenu(false);
+  }, [location]);
   
-  // Check if current page is cleaner dashboard
-  const isCleanerDashboard = location.pathname.includes('/cleaners/dashboard');
+  // Check if we're on the index page
+  const isIndex = location.pathname === "/";
+  const isAdminDashboard = location.pathname.includes("/admin/dashboard");
+  const isCleanerDashboard = location.pathname.includes("/cleaners/dashboard") || location.pathname.includes("/cleaners/welcome");
+  
+  // If not on index, determine the app context for the header text
+  let appContext = "";
+  
+  if (isAdminDashboard) {
+    appContext = "Admin Portal";
+  } else if (isCleanerDashboard) {
+    appContext = "CleanersCheck";
+  }
 
-  // Handle profile icon click
-  const handleProfileClick = () => {
-    if (location.pathname.includes('/cleaners/dashboard')) {
-      // Already on dashboard, dispatch event to show profile tab
-      const event = new CustomEvent('set-profile-tab');
-      window.dispatchEvent(event);
-    } else {
-      // Navigate to dashboard with profile tab
-      if (userRole === 'cleaner') {
-        navigate('/cleaners/dashboard');
-        // Need a delay to ensure component is mounted before trying to set tab
-        setTimeout(() => {
-          const event = new CustomEvent('set-profile-tab');
-          window.dispatchEvent(event);
-        }, 100);
-      }
-    }
-  };
-
-  // Handle logo click - navigate to index page
-  const handleLogoClick = () => {
-    navigate('/');
-  };
-
+  // Show the logo on navbar
+  const showLogo = isIndex || isAdminDashboard;
+  
+  // Special styling for cleaners dashboard
+  const isCleanersApp = location.pathname.includes("/cleaners");
+  
   return (
-    <header
+    <motion.div 
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out py-4 px-6',
-        isScrolled ? 'bg-background/80 backdrop-blur-md border-b' : 'bg-transparent'
+        "fixed top-0 left-0 right-0 border-b z-50 bg-background shadow-sm",
+        isCleanersApp && "bg-white"
       )}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.3 }}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left section with welcome text */}
-        <div className="flex-1">
-          {userName && !isIndexPage && (
-            <div className="flex items-center text-sm font-medium">
-              <span>Welcome, {userName}</span>
+      <div className="flex items-center h-20 px-4 md:px-6 justify-between">
+        {/* Left side of navbar */}
+        <div className="flex items-center gap-3">
+          {showLogo && (
+            <Logo className="w-10 h-10" />
+          )}
+          
+          {isCleanersApp && (
+            <div className="flex items-center gap-2">
+              <div className="bg-primary rounded-full p-2">
+                <Check className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-primary text-xl font-semibold">
+                {appContext}
+              </span>
+            </div>
+          )}
+          
+          {!isCleanersApp && appContext && (
+            <div className="text-xl font-medium">
+              {appContext}
             </div>
           )}
         </div>
-
-        {/* Center section with logo */}
-        <div className="flex-1 flex justify-center">
-          {/* Logo (conditionally interactive) */}
-          <Logo 
-            variant="default"
-            size="md"
-            onClick={isCleanerDashboard ? undefined : handleLogoClick}
-            className={isCleanerDashboard ? "" : "cursor-pointer"}
-            disableClick={isCleanerDashboard}
-          />
+        
+        {/* Desktop Nav Links */}
+        <div className="hidden md:flex">
+          <NavbarRoutes routes={routes} isActive={isActive} className="flex space-x-1" />
         </div>
-
-        {/* Right section with navigation */}
-        <div className="flex-1 flex items-center justify-end space-x-2">
-          {/* Desktop Navigation */}
-          <NavbarRoutes 
-            routes={routes} 
-            isActive={isActive} 
-            className="hidden md:flex items-center space-x-1" 
-          />
+        
+        {/* Right side of navbar */}
+        <div className="flex items-center gap-3">
+          {/* Show profile button when logged in */}
+          {session && (
+            <ProfileButton />
+          )}
           
-          {/* Profile button removed */}
+          {/* Mobile menu toggle */}
+          {(routes.length > 0 || session) && (
+            <div className="md:hidden">
+              <Button variant="outline" size="icon" onClick={toggleMobileMenu}>
+                {showMobileMenu ? <X /> : <Menu />}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Mobile Menu */}
-      <MobileMenu isOpen={isMobileMenuOpen} routes={routes} isActive={isActive} />
-    </header>
+      
+      {/* Mobile menu */}
+      {showMobileMenu && (
+        <MobileMenu routes={routes} isActive={isActive} />
+      )}
+    </motion.div>
   );
 };
 

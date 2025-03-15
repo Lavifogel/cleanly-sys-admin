@@ -1,4 +1,6 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/cleaning";
 import { useTabManagement } from "@/hooks/useTabManagement";
@@ -8,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function useDashboardHandlers() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { activeTab, setActiveTab } = useTabManagement();
   
   const {
@@ -18,6 +21,13 @@ export function useDashboardHandlers() {
     endShift,
     autoEndShift
   } = useShift();
+  
+  // If there's no active shift, redirect to welcome page
+  useEffect(() => {
+    if (!activeShift) {
+      navigate("/cleaners/welcome");
+    }
+  }, [activeShift, navigate]);
   
   const {
     activeCleaning,

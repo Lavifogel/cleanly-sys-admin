@@ -2,7 +2,6 @@
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import NoShiftView from "@/components/cleaners/dashboard/NoShiftView";
 import DashboardTabs from "@/components/cleaners/dashboard/DashboardTabs";
 import { Shift } from "@/hooks/useShift";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
@@ -23,7 +22,6 @@ interface DashboardContentProps {
   handleStartCleaning: () => void;
   handleEndCleaningWithScan: () => void;
   handleEndCleaningWithoutScan: () => void;
-  handleStartShift: () => void;
   handleAutoEndShift: () => void;
   handleAutoEndCleaning?: () => void;
 }
@@ -43,11 +41,10 @@ const DashboardContent = ({
   handleStartCleaning,
   handleEndCleaningWithScan,
   handleEndCleaningWithoutScan,
-  handleStartShift,
   handleAutoEndShift,
   handleAutoEndCleaning
 }: DashboardContentProps) => {
-  // Get navigate function from useNavbar hook
+  // Get navigate function
   const navigate = () => {
     window.location.href = '/';
   };
@@ -80,29 +77,24 @@ const DashboardContent = ({
         </Button>
       </div>
       
-      {!activeShift ? (
-        <NoShiftView onStartShift={handleStartShift} />
-      ) : (
-        <>
-          <DashboardTabs 
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            activeShift={activeShift}
-            elapsedTime={elapsedTime}
-            activeCleaning={activeCleaning}
-            cleaningElapsedTime={cleaningElapsedTime}
-            cleaningsHistory={cleaningsHistory}
-            shiftsHistory={shiftsHistory}
-            togglePauseCleaning={togglePauseCleaning}
-            handleEndShiftWithScan={handleEndShiftWithScan}
-            handleEndShiftWithoutScan={handleEndShiftWithoutScan}
-            handleStartCleaning={handleStartCleaning}
-            handleEndCleaningWithScan={handleEndCleaningWithScan}
-            handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
-            handleAutoEndCleaning={handleAutoEndCleaning}
-          />
-        </>
-      )}
+      {/* Always show tabs since we're guaranteed an active shift */}
+      <DashboardTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        activeShift={activeShift!}
+        elapsedTime={elapsedTime}
+        activeCleaning={activeCleaning}
+        cleaningElapsedTime={cleaningElapsedTime}
+        cleaningsHistory={cleaningsHistory}
+        shiftsHistory={shiftsHistory}
+        togglePauseCleaning={togglePauseCleaning}
+        handleEndShiftWithScan={handleEndShiftWithScan}
+        handleEndShiftWithoutScan={handleEndShiftWithoutScan}
+        handleStartCleaning={handleStartCleaning}
+        handleEndCleaningWithScan={handleEndCleaningWithScan}
+        handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
+        handleAutoEndCleaning={handleAutoEndCleaning}
+      />
     </motion.div>
   );
 };
