@@ -28,26 +28,34 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<Login />} />
+            {/* The login page is now accessible without authentication */}
+            <Route path="/login" element={
+              <>
+                <Navbar />
+                <main className="pt-20">
+                  <Login />
+                </main>
+              </>
+            } />
+            
+            <Route path="/" element={
+              <>
+                <Navbar />
+                <main className="pt-20">
+                  <AnimatePresence mode="wait">
+                    <Suspense fallback={
+                      <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
+                        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                      </div>
+                    }>
+                      <Index />
+                    </Suspense>
+                  </AnimatePresence>
+                </main>
+              </>
+            } />
             
             <Route element={<AuthGuard />}>
-              <Route path="/" element={
-                <>
-                  <Navbar />
-                  <main className="pt-20">
-                    <AnimatePresence mode="wait">
-                      <Suspense fallback={
-                        <div className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
-                          <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                        </div>
-                      }>
-                        <Index />
-                      </Suspense>
-                    </AnimatePresence>
-                  </main>
-                </>
-              } />
-              
               <Route path="/admin/dashboard" element={
                 <>
                   <Navbar />

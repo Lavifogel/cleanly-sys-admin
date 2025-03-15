@@ -12,7 +12,8 @@ const Index = () => {
   };
 
   const handleCleanerClick = () => {
-    navigate('/cleaners/dashboard');
+    // Navigate to login page instead of directly to dashboard
+    navigate('/login');
   };
 
   return (
@@ -94,8 +95,6 @@ const Index = () => {
             <p className="text-muted-foreground">View assignments, track completed tasks, and manage your cleaning schedule with ease.</p>
           </div>
         </motion.div>
-        
-        {/* Removed the redundant buttons that were previously shown on mobile */}
       </motion.div>
     </div>
   );
