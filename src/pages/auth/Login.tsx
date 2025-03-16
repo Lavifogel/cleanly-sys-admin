@@ -32,7 +32,11 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const success = await loginWithCredentials(phoneNumber, password);
+      // Ensure the phone number is properly formatted
+      const formattedPhoneNumber = phoneNumber.trim();
+      console.log("Attempting login with:", formattedPhoneNumber, password);
+      
+      const success = await loginWithCredentials(formattedPhoneNumber, password);
       
       if (success) {
         toast({
@@ -90,7 +94,7 @@ const Login = () => {
                 <Label htmlFor="phoneNumber">Phone Number</Label>
                 <Input
                   id="phoneNumber"
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your phone number (e.g. +972526768666)"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   required
