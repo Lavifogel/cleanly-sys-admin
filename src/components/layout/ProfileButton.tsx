@@ -11,7 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
 
-const ProfileButton = () => {
+interface ProfileButtonProps {
+  onClick?: () => void;
+}
+
+const ProfileButton = ({ onClick }: ProfileButtonProps) => {
   const { userName, logout, userRole } = useAuth();
   
   // Get initials from name for avatar
@@ -26,7 +30,11 @@ const ProfileButton = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button 
+          variant="ghost" 
+          className="relative h-8 w-8 rounded-full"
+          onClick={onClick}
+        >
           <Avatar className="h-8 w-8">
             <AvatarFallback>{getInitials()}</AvatarFallback>
           </Avatar>

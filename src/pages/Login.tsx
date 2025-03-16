@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Logo } from '@/components/ui/logo';
+import Logo from '@/components/ui/logo';
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
