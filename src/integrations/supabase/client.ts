@@ -91,7 +91,7 @@ export const createUser = async (
   return data;
 };
 
-// Reset user password function
+// Reset user password function - updated to only use password, no activation code
 export const resetUserPassword = async (userId: string) => {
   // Generate a random password (8 characters)
   const password = Array(8)

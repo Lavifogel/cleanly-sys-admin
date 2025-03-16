@@ -18,7 +18,7 @@ interface CredentialsDialogProps {
   password: string;
   title: string;
   description: string;
-  activationCode?: string; // Made optional for backward compatibility
+  activationCode?: string; // Optional
 }
 
 const CredentialsDialog = ({

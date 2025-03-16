@@ -236,6 +236,20 @@ export type Database = {
         }
         Returns: Json
       }
+      create_user_with_password: {
+        Args: {
+          user_id: string
+          first_name: string
+          last_name: string
+          email: string
+          phone_number: string
+          role: string
+          start_date: string
+          is_active: boolean
+          password: string
+        }
+        Returns: Json
+      }
       generate_activation_credentials: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -247,6 +261,10 @@ export type Database = {
         Args: {
           area_name: string
         }
+        Returns: string
+      }
+      generate_password: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_user_info: {

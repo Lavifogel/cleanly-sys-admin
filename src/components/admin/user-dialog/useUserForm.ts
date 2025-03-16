@@ -90,6 +90,7 @@ export const useUserForm = (
           .map(() => Math.random().toString(36).charAt(2))
           .join('');
         
+        // Use the new create_user_with_password function
         const { data: responseData, error } = await supabase.rpc('create_user_with_password', {
           user_id: userId,
           first_name: data.firstName,

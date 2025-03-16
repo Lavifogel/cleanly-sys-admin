@@ -61,10 +61,9 @@ const UserManagement = () => {
         <CredentialsDialog
           open={!!resetCredentials}
           onClose={closeCredentialsDialog}
-          activationCode={resetCredentials.activationCode}
           password={resetCredentials.password}
           title="Reset Password"
-          description="New credentials have been generated for this user."
+          description="New password has been generated for this user."
         />
       )}
     </div>
