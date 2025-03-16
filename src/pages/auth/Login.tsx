@@ -40,13 +40,15 @@ const Login = () => {
           description: "You have successfully logged in",
         });
         
-        // Navigate to cleaners dashboard with profile tab
-        navigate("/cleaners/dashboard");
+        // Navigate to cleaners dashboard
+        navigate("/cleaners/dashboard", { replace: true });
         
-        // Trigger profile tab selection after navigation
+        // Set the activeTab to profile with a custom event
+        window.localStorage.setItem('dashboard_active_tab', 'profile');
+        
+        // Dispatch custom event to set active tab
         setTimeout(() => {
-          const event = new CustomEvent('set-active-tab', { detail: 'profile' });
-          window.dispatchEvent(event);
+          window.dispatchEvent(new CustomEvent('set-active-tab', { detail: 'profile' }));
         }, 100);
       } else {
         toast({
