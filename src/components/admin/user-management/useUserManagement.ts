@@ -43,7 +43,8 @@ export const useUserManagement = () => {
             role: user.role || 'cleaner',
             startDate: user.start_date || '',
             status: (user.active === false) ? "inactive" : "active",
-            email: user.email || ''
+            email: user.email || '',
+            password: user.password || ''
           };
         });
         
@@ -76,10 +77,16 @@ export const useUserManagement = () => {
       setIsLoading(true);
       const credentials = await resetUserPassword(userId);
       
-      setResetCredentials({
-        password: credentials.password,
-        userId: userId
-      });
+      // Update the user in the local state with the new password
+      setUsers(users.map(user => {
+        if (user.id === userId) {
+          return {
+            ...user,
+            password: credentials.password
+          };
+        }
+        return user;
+      }));
       
       toast({
         title: "Password Reset",

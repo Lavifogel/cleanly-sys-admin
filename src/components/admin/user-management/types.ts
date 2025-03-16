@@ -7,4 +7,5 @@ export type CleanerUser = {
   startDate: string;
   status: "active" | "inactive";
   email: string;
+  password?: string;
 };

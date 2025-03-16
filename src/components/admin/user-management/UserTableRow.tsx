@@ -19,7 +19,7 @@ const UserTableRow = ({
   onResetPassword 
 }: UserTableRowProps) => {
   return (
-    <div className="grid grid-cols-6 p-4 items-center">
+    <div className="grid grid-cols-7 p-4 items-center">
       <div>{user.phoneNumber}</div>
       <div>{user.name}</div>
       <div>{user.role}</div>
@@ -34,6 +34,13 @@ const UserTableRow = ({
         >
           {user.status}
         </span>
+      </div>
+      <div>
+        {user.password ? (
+          <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{user.password}</span>
+        ) : (
+          <span className="text-gray-400">No password</span>
+        )}
       </div>
       <div className="flex justify-end gap-2">
         <Button

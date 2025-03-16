@@ -4,7 +4,6 @@ import UserSearchBar from "./UserSearchBar";
 import UserActionButtons from "./UserActionButtons";
 import UserTable from "./UserTable";
 import AddEditUserDialog from "../AddEditUserDialog";
-import CredentialsDialog from "./CredentialsDialog";
 
 const UserManagement = () => {
   const {
@@ -15,8 +14,6 @@ const UserManagement = () => {
     dialogOpen,
     setDialogOpen,
     currentUser,
-    resetCredentials,
-    closeCredentialsDialog,
     handleAddUser,
     handleEditUser,
     handleResetPassword,
@@ -56,16 +53,6 @@ const UserManagement = () => {
         user={currentUser}
         onSuccess={fetchUsers}
       />
-
-      {resetCredentials && (
-        <CredentialsDialog
-          open={!!resetCredentials}
-          onClose={closeCredentialsDialog}
-          password={resetCredentials.password}
-          title="Reset Password"
-          description="New password has been generated for this user."
-        />
-      )}
     </div>
   );
 };
