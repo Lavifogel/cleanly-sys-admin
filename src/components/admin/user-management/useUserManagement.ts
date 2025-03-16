@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, resetUserPassword } from "@/integrations/supabase/client";
 import { CleanerUser } from "./types";
 
 export const useUserManagement = () => {
@@ -11,6 +11,11 @@ export const useUserManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<CleanerUser | null>(null);
+  const [resetCredentials, setResetCredentials] = useState<{ 
+    activationCode: string; 
+    password: string;
+    userId: string;
+  } | null>(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -67,11 +72,35 @@ export const useUserManagement = () => {
     setDialogOpen(true);
   };
 
-  const handleResetPassword = (phoneNumber: string) => {
-    toast({
-      title: "Password Reset Link Sent",
-      description: `A password reset link has been sent to ${phoneNumber}`,
-    });
+  const handleResetPassword = async (userId: string) => {
+    try {
+      setIsLoading(true);
+      const credentials = await resetUserPassword(userId);
+      
+      setResetCredentials({
+        activationCode: credentials.activation_code,
+        password: credentials.password,
+        userId: userId
+      });
+      
+      toast({
+        title: "Password Reset",
+        description: "New credentials have been generated",
+      });
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Reset Failed",
+        description: error.message || "Could not reset password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const closeCredentialsDialog = () => {
+    setResetCredentials(null);
   };
 
   const toggleStatus = async (user: CleanerUser) => {
@@ -152,6 +181,8 @@ export const useUserManagement = () => {
     setDialogOpen,
     currentUser,
     setCurrentUser,
+    resetCredentials,
+    closeCredentialsDialog,
     handleAddUser,
     handleEditUser,
     handleResetPassword,

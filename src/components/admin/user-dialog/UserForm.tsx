@@ -13,8 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
-const UserForm = (props: UserDialogProps) => {
+interface ExtendedUserDialogProps extends UserDialogProps {
+  onCredentialsGenerated?: (activationCode: string, password: string) => void;
+}
+
+const UserForm = (props: ExtendedUserDialogProps) => {
   const { 
     register, 
     handleSubmit, 

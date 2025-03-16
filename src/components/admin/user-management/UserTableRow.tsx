@@ -8,7 +8,7 @@ interface UserTableRowProps {
   onEdit: (user: CleanerUser) => void;
   onDelete: (userId: string) => void;
   onToggleStatus: (user: CleanerUser) => void;
-  onResetPassword: (phoneNumber: string) => void;
+  onResetPassword: (userId: string) => void;
 }
 
 const UserTableRow = ({ 
@@ -39,7 +39,7 @@ const UserTableRow = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onResetPassword(user.phoneNumber)}
+          onClick={() => onResetPassword(user.id)}
           title="Reset Password"
         >
           <Lock className="h-4 w-4" />

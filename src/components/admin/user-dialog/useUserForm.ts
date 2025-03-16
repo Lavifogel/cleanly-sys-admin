@@ -25,15 +25,13 @@ export const useUserForm = (
       role?: string;
     } | null,
     onOpenChange: (open: boolean) => void,
-    onSuccess: () => void
+    onSuccess?: () => void,
+    onCredentialsGenerated?: (activationCode: string, password: string) => void
   }
 ) => {
-  const { user, onOpenChange, onSuccess } = props;
+  const { user, onOpenChange, onSuccess, onCredentialsGenerated } = props;
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activationCode, setActivationCode] = useState("");
-  const [password, setPassword] = useState("");
-  const [showCredentials, setShowCredentials] = useState(false);
 
   const { firstName, lastName } = getNames(user?.name);
 
@@ -82,7 +80,7 @@ export const useUserForm = (
         });
 
         onOpenChange(false);
-        onSuccess();
+        if (onSuccess) onSuccess();
       } else {
         // Create new user with UUID
         const userId = crypto.randomUUID();
@@ -100,13 +98,13 @@ export const useUserForm = (
         
         if (error) throw error;
         
-        // Cast responseData to the expected type using type assertion with 'as unknown as'
+        // Cast responseData to the expected type
         const typedResponse = responseData as unknown as CreateUserResponse;
         
         if (typedResponse && typedResponse.success) {
-          setActivationCode(typedResponse.activation_code || "");
-          setPassword(typedResponse.password || "");
-          setShowCredentials(true);
+          if (typedResponse.activation_code && typedResponse.password && onCredentialsGenerated) {
+            onCredentialsGenerated(typedResponse.activation_code, typedResponse.password);
+          }
         } else {
           throw new Error("Failed to create user");
         }
@@ -116,7 +114,7 @@ export const useUserForm = (
           description: "New user has been created successfully",
         });
         
-        onSuccess();
+        if (onSuccess) onSuccess();
       }
     } catch (error: any) {
       console.error('Error saving user:', error);
@@ -130,12 +128,6 @@ export const useUserForm = (
     }
   };
 
-  const closeDialog = () => {
-    setShowCredentials(false);
-    onOpenChange(false);
-    form.reset();
-  };
-
   return {
     register,
     handleSubmit,
@@ -144,11 +136,6 @@ export const useUserForm = (
     isActiveValue,
     onSubmit,
     setValue,
-    roleValue,
-    activationCode,
-    password,
-    showCredentials,
-    setShowCredentials,
-    closeDialog
+    roleValue
   };
 };
