@@ -14,7 +14,7 @@ export interface UserDialogProps {
     role?: string;
   } | null;
   onSuccess?: () => void;
-  onCredentialsGenerated?: (activationCode: string, password: string) => void;
+  onCredentialsGenerated?: (password: string) => void;
 }
 
 export const userSchema = z.object({

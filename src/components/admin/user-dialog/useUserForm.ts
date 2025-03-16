@@ -9,7 +9,6 @@ import { getNames, userSchema, type UserFormValues } from "./userFormSchema";
 interface CreateUserResponse {
   success: boolean;
   message: string;
-  activation_code?: string;
   password?: string;
 }
 
@@ -26,7 +25,7 @@ export const useUserForm = (
     } | null,
     onOpenChange: (open: boolean) => void,
     onSuccess?: () => void,
-    onCredentialsGenerated?: (activationCode: string, password: string) => void
+    onCredentialsGenerated?: (password: string) => void
   }
 ) => {
   const { user, onOpenChange, onSuccess, onCredentialsGenerated } = props;
@@ -85,7 +84,13 @@ export const useUserForm = (
         // Create new user with UUID
         const userId = crypto.randomUUID();
         
-        const { data: responseData, error } = await supabase.rpc('create_user', {
+        // Generate a random password (8 characters)
+        const password = Array(8)
+          .fill(0)
+          .map(() => Math.random().toString(36).charAt(2))
+          .join('');
+        
+        const { data: responseData, error } = await supabase.rpc('create_user_with_password', {
           user_id: userId,
           first_name: data.firstName,
           last_name: data.lastName,
@@ -93,7 +98,8 @@ export const useUserForm = (
           phone_number: data.phoneNumber,
           role: data.role,
           start_date: data.startDate,
-          is_active: data.isActive
+          is_active: data.isActive,
+          password: password
         });
         
         if (error) throw error;
@@ -102,8 +108,8 @@ export const useUserForm = (
         const typedResponse = responseData as unknown as CreateUserResponse;
         
         if (typedResponse && typedResponse.success) {
-          if (typedResponse.activation_code && typedResponse.password && onCredentialsGenerated) {
-            onCredentialsGenerated(typedResponse.activation_code, typedResponse.password);
+          if (typedResponse.password && onCredentialsGenerated) {
+            onCredentialsGenerated(typedResponse.password);
           }
         } else {
           throw new Error("Failed to create user");

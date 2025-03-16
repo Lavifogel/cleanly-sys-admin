@@ -12,7 +12,6 @@ export const useUserManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<CleanerUser | null>(null);
   const [resetCredentials, setResetCredentials] = useState<{ 
-    activationCode: string; 
     password: string;
     userId: string;
   } | null>(null);
@@ -78,14 +77,13 @@ export const useUserManagement = () => {
       const credentials = await resetUserPassword(userId);
       
       setResetCredentials({
-        activationCode: credentials.activation_code,
         password: credentials.password,
         userId: userId
       });
       
       toast({
         title: "Password Reset",
-        description: "New credentials have been generated",
+        description: "New password has been generated",
       });
     } catch (error: any) {
       console.error('Error resetting password:', error);

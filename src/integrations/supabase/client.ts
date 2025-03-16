@@ -93,28 +93,22 @@ export const createUser = async (
 
 // Reset user password function
 export const resetUserPassword = async (userId: string) => {
-  // Call the generate_activation_credentials function to get new credentials
-  const { data, error } = await supabase.rpc('generate_activation_credentials');
+  // Generate a random password (8 characters)
+  const password = Array(8)
+    .fill(0)
+    .map(() => Math.random().toString(36).charAt(2))
+    .join('');
+    
+  // Update the user with the new password
+  const { error: updateError } = await supabase
+    .from('users')
+    .update({
+      password,
+      is_first_login: true
+    })
+    .eq('id', userId);
   
-  if (error) throw error;
+  if (updateError) throw updateError;
   
-  if (data && data.length > 0) {
-    const { activation_code, password } = data[0];
-    
-    // Update the user with the new credentials
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        activation_code,
-        password,
-        is_first_login: true
-      })
-      .eq('id', userId);
-    
-    if (updateError) throw updateError;
-    
-    return { activation_code, password };
-  } else {
-    throw new Error("Failed to generate new credentials");
-  }
+  return { password };
 };

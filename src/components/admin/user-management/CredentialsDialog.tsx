@@ -15,19 +15,19 @@ import { useToast } from "@/hooks/use-toast";
 interface CredentialsDialogProps {
   open: boolean;
   onClose: () => void;
-  activationCode: string;
   password: string;
   title: string;
   description: string;
+  activationCode?: string; // Made optional for backward compatibility
 }
 
 const CredentialsDialog = ({
   open,
   onClose,
-  activationCode,
   password,
   title,
-  description
+  description,
+  activationCode
 }: CredentialsDialogProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState<string | null>(null);
@@ -55,22 +55,24 @@ const CredentialsDialog = ({
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <div className="text-sm font-medium">Activation Code</div>
-            <div className="flex items-center gap-2">
-              <div className="bg-muted p-2 rounded-md flex-1 font-mono">
-                {activationCode}
+          {activationCode && (
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Activation Code</div>
+              <div className="flex items-center gap-2">
+                <div className="bg-muted p-2 rounded-md flex-1 font-mono">
+                  {activationCode}
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => handleCopy(activationCode, "Activation code")}
+                  className={copied === "Activation code" ? "bg-green-50 text-green-700" : ""}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
               </div>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => handleCopy(activationCode, "Activation code")}
-                className={copied === "Activation code" ? "bg-green-50 text-green-700" : ""}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
             </div>
-          </div>
+          )}
           
           <div className="space-y-2">
             <div className="text-sm font-medium">Password</div>
@@ -93,7 +95,10 @@ const CredentialsDialog = ({
         <DialogFooter>
           <Button 
             onClick={() => {
-              const fullText = `Activation Code: ${activationCode}\nPassword: ${password}`;
+              let fullText = `Password: ${password}`;
+              if (activationCode) {
+                fullText = `Activation Code: ${activationCode}\n${fullText}`;
+              }
               handleCopy(fullText, "All credentials");
             }}
             className={copied === "All credentials" ? "bg-green-600" : ""}

@@ -13,17 +13,14 @@ import CredentialsDialog from "./user-management/CredentialsDialog";
 
 const AddEditUserDialog = (props: UserDialogProps) => {
   const { open, onOpenChange, user } = props;
-  const [credentials, setCredentials] = useState<{
-    activationCode: string;
-    password: string;
-  } | null>(null);
+  const [password, setPassword] = useState<string | null>(null);
 
-  const handleCredentialsGenerated = (activationCode: string, password: string) => {
-    setCredentials({ activationCode, password });
+  const handleCredentialsGenerated = (password: string) => {
+    setPassword(password);
   };
 
   const closeCredentialsDialog = () => {
-    setCredentials(null);
+    setPassword(null);
     props.onOpenChange(false);
     if (props.onSuccess) props.onSuccess();
   };
@@ -48,14 +45,13 @@ const AddEditUserDialog = (props: UserDialogProps) => {
         </DialogContent>
       </Dialog>
 
-      {credentials && (
+      {password && (
         <CredentialsDialog
-          open={!!credentials}
+          open={!!password}
           onClose={closeCredentialsDialog}
-          activationCode={credentials.activationCode}
-          password={credentials.password}
+          password={password}
           title="New User Created"
-          description="Share these credentials with the user. They will need them to log in for the first time."
+          description="Share this password with the user. They will need it to log in with their phone number."
         />
       )}
     </>
