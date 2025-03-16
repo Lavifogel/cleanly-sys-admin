@@ -49,6 +49,11 @@ export const useUserData = () => {
         setUserName(phoneNumber); // Fallback to phone number if no name available
       }
 
+      // Store login state in localStorage for persistence
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('userRole', userData.role);
+      localStorage.setItem('userName', userName || '');
+
       return true;
     } catch (error) {
       console.error("Login error:", error);
@@ -62,7 +67,25 @@ export const useUserData = () => {
     setIsAuthenticated(false);
     setUserRole('cleaner'); // Reset to default
     setUserName("Lavi Fogel"); // Reset to default name
+    
+    // Clear localStorage
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
   };
+
+  // Check localStorage on initial load
+  useEffect(() => {
+    const storedIsAuthenticated = localStorage.getItem('isAuthenticated');
+    const storedUserRole = localStorage.getItem('userRole');
+    const storedUserName = localStorage.getItem('userName');
+    
+    if (storedIsAuthenticated === 'true') {
+      setIsAuthenticated(true);
+      setUserRole(storedUserRole || 'cleaner');
+      setUserName(storedUserName || 'Lavi Fogel');
+    }
+  }, []);
 
   // Fetch user profile to get role
   useEffect(() => {

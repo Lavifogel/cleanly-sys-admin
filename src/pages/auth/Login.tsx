@@ -39,7 +39,15 @@ const Login = () => {
           title: "Welcome back!",
           description: "You have successfully logged in",
         });
+        
+        // Navigate to cleaners dashboard with profile tab
         navigate("/cleaners/dashboard");
+        
+        // Trigger profile tab selection after navigation
+        setTimeout(() => {
+          const event = new CustomEvent('set-active-tab', { detail: 'profile' });
+          window.dispatchEvent(event);
+        }, 100);
       } else {
         toast({
           title: "Login failed",

@@ -5,17 +5,43 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles } from "lucide-react";
+import { useUserData } from "@/hooks/useUserData";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileCardProps {
   disableLogoClick?: boolean;
 }
 
 const ProfileCard = ({ disableLogoClick = false }: ProfileCardProps) => {
+  const { userName, userRole, logout } = useUserData();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  // Get initials for avatar
+  const initials = userName
+    ? userName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .substring(0, 2)
+    : "U";
+    
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out",
+    });
+    navigate("/login");
+  };
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">Your Profile</CardTitle>
-        <Button variant="outline" size="sm" className="h-8 gap-1">
+        <Button variant="outline" size="sm" className="h-8 gap-1" onClick={handleLogout}>
           <LogOut className="h-3.5 w-3.5" />
           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Sign Out</span>
         </Button>
@@ -23,12 +49,12 @@ const ProfileCard = ({ disableLogoClick = false }: ProfileCardProps) => {
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage src="/placeholder.svg" alt="Lavi Fogel" />
-            <AvatarFallback>LF</AvatarFallback>
+            <AvatarImage src="/placeholder.svg" alt={userName || "User"} />
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="grid gap-1.5">
-            <h3 className="text-lg font-semibold">Lavi Fogel</h3>
-            <Badge variant="outline" className="w-fit">Cleaner</Badge>
+            <h3 className="text-lg font-semibold">{userName}</h3>
+            <Badge variant="outline" className="w-fit">{userRole}</Badge>
           </div>
         </div>
         {/* Static logo design (non-interactive) */}
