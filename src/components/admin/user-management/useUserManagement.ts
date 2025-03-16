@@ -24,7 +24,8 @@ export const useUserManagement = () => {
       // Get all users with the schema
       const { data: usersData, error: usersError } = await supabase
         .from('users')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false }); // Order by created_at in descending order
       
       if (usersError) {
         console.error("Error fetching users:", usersError);
