@@ -64,6 +64,70 @@ export async function loginWithPhoneAndPassword(phoneNumber: string, password: s
 }
 
 /**
+ * Creates an admin account with specific credentials if it doesn't exist
+ */
+export async function createAdminAccount(phoneNumber: string, password: string) {
+  try {
+    // Check if the user already exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('phone', phoneNumber)
+      .single();
+    
+    // If there's no error, it means the user exists
+    if (existingUser) {
+      console.log("Admin account already exists");
+      
+      // Update the password if needed
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          password: password,
+          active: true,
+          role: 'admin'
+        })
+        .eq('phone', phoneNumber);
+      
+      if (updateError) {
+        console.error("Error updating admin account:", updateError);
+        return { success: false, error: "Failed to update admin account" };
+      }
+      
+      return { success: true, message: "Admin account updated" };
+    }
+    
+    // Create a new admin account
+    const userId = crypto.randomUUID();
+    const { error: insertError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        phone: phoneNumber,
+        password: password,
+        first_name: 'Admin',
+        last_name: 'User',
+        email: `${phoneNumber}@example.com`,
+        role: 'admin',
+        active: true,
+        is_first_login: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    
+    if (insertError) {
+      console.error("Error creating admin account:", insertError);
+      return { success: false, error: "Failed to create admin account" };
+    }
+    
+    return { success: true, message: "Admin account created successfully" };
+  } catch (error) {
+    console.error("Error in createAdminAccount:", error);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+/**
  * Logs out the current user
  */
 export function logout() {

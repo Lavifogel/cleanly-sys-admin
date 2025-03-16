@@ -8,11 +8,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import Logo from '@/components/ui/logo';
 import { useToast } from '@/hooks/use-toast';
+import { createAdminAccount } from '@/services/authService';
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const { login, isAuthenticated, userRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -73,6 +75,39 @@ const Login = () => {
     }
   };
 
+  const handleCreateAdmin = async () => {
+    setIsCreatingAdmin(true);
+    
+    try {
+      const result = await createAdminAccount('123456789', '4321');
+      
+      if (result.success) {
+        toast({
+          title: "Admin account created",
+          description: "Admin account has been created successfully. You can now log in with phone: 123456789 and password: 4321",
+        });
+        
+        // Pre-fill the login form with the admin credentials
+        setPhoneNumber('123456789');
+        setPassword('4321');
+      } else {
+        toast({
+          title: "Failed to create admin",
+          description: result.error || "An unexpected error occurred",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while creating admin account.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingAdmin(false);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
       <Card className="w-full max-w-md">
@@ -116,6 +151,21 @@ const Login = () => {
               {isLoading ? "Logging in..." : "Log in"}
             </Button>
           </form>
+          
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleCreateAdmin}
+              disabled={isCreatingAdmin}
+            >
+              {isCreatingAdmin ? "Creating Admin..." : "Create Admin Account"}
+            </Button>
+            <p className="text-xs text-center mt-2 text-gray-500">
+              This will create an admin account with phone: 123456789 and password: 4321
+            </p>
+          </div>
         </CardContent>
         <CardFooter className="flex justify-center text-sm text-gray-500">
           Contact an administrator if you need help accessing your account
