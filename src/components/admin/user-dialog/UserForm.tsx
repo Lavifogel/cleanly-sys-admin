@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
+// Updated interface to match the modified UserDialogProps
 interface ExtendedUserDialogProps extends UserDialogProps {
-  onCredentialsGenerated?: (activationCode: string, password: string) => void;
+  // Note: this now only expects password parameter, consistent with UserDialogProps
+  onCredentialsGenerated?: (password: string) => void;
 }
 
 const UserForm = (props: ExtendedUserDialogProps) => {
