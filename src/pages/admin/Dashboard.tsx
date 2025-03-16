@@ -11,6 +11,10 @@ const AdminDashboard = () => {
   const { stats, loading, refreshData } = useAdminDashboardData();
   const navigate = useNavigate();
 
+  const handleBackClick = () => {
+    navigate(-1); // This navigates back one step in the browser history
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6">
       <motion.div
@@ -22,7 +26,7 @@ const AdminDashboard = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate(-1)}
+            onClick={handleBackClick}
             className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
