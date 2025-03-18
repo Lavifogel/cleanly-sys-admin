@@ -19,7 +19,7 @@ export const closeActiveCleaning = async () => {
       .from('cleanings')
       .update({
         end_time: endTime,
-        status: 'finished without scan',
+        status: 'finished automatically',
         notes: 'Automatically closed on logout'
       })
       .eq('id', activeCleaning.id);
@@ -57,7 +57,7 @@ export const closeActiveShift = async () => {
       .from('shifts')
       .update({
         end_time: endTime,
-        status: 'finished without scan'
+        status: 'finished automatically'
       })
       .eq('id', activeShift.id);
     
