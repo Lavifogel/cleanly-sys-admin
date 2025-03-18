@@ -2,10 +2,16 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { ArrowRight, Users } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  
+  // Automatically redirect to dashboard
+  useEffect(() => {
+    navigate('/cleaners/dashboard');
+  }, [navigate]);
 
   const handleCleanerClick = () => {
     navigate('/cleaners/dashboard');

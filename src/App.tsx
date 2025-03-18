@@ -14,7 +14,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const CleanersDashboard = lazy(() => import("./pages/cleaners/Dashboard"));
-const Login = lazy(() => import("./pages/auth/Login"));
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -22,7 +21,7 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   
   // For cleaner routes, check if authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   
   return children;
@@ -34,7 +33,6 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
       <Route 
         path="/cleaners/dashboard" 
         element={
