@@ -12,7 +12,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const handleBackClick = () => {
-    navigate('/'); // Navigate to the home page instead of using browser history
+    navigate('/login'); // Navigate to the login page when back button is clicked
   };
 
   return (
