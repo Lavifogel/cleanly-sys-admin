@@ -42,11 +42,20 @@ export function useShiftState() {
   useEffect(() => {
     if (activeShift) {
       // Store shift data in localStorage for retrieval on logout/refresh
-      localStorage.setItem('activeShift', JSON.stringify({
+      const shiftDataToStore = {
         id: activeShift.id,
-        location: activeShift.location,
-        qrId: activeShift.qrId
-      }));
+      };
+
+      // Only include location and qrId if they exist
+      if (activeShift.location) {
+        shiftDataToStore['location'] = activeShift.location;
+      }
+      
+      if (activeShift.qrId) {
+        shiftDataToStore['qrId'] = activeShift.qrId;
+      }
+      
+      localStorage.setItem('activeShift', JSON.stringify(shiftDataToStore));
       localStorage.setItem('shiftStartTime', activeShift.startTime.toISOString());
     } else {
       // If there's no active shift, remove the stored data

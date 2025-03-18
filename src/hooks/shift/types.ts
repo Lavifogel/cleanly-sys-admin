@@ -6,6 +6,8 @@ export interface Shift {
   startTime: Date;
   timer: number;
   id: string;
+  location?: string;
+  qrId?: string;
 }
 
 /**
