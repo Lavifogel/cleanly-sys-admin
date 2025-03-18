@@ -23,15 +23,16 @@ export function useAdminDashboardData() {
     totalCleanings: 0,
   });
   const { toast } = useToast();
-  const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
+  const [lastRefreshTime, setLastRefreshTime] = useState(0); // Start with 0 to ensure first fetch
 
   // Memoize the fetch function to prevent unnecessary re-creations
   const fetchDashboardData = useCallback(async () => {
     // If it's been less than 30 seconds since the last refresh, don't fetch again
-    if (Date.now() - lastRefreshTime < 30000) {
+    if (Date.now() - lastRefreshTime < 30000 && lastRefreshTime !== 0) {
       return;
     }
     
+    console.log("Fetching dashboard data...");
     setLoading(true);
     try {
       // Use a single Promise.all to make parallel requests for better performance
@@ -66,12 +67,12 @@ export function useAdminDashboardData() {
         // Get total shifts count
         supabase
           .from('shifts')
-          .select('id', { count: 'exact', head: true }),
+          .select('id', { count: 'exact' }),
         
         // Get total cleanings count
         supabase
           .from('cleanings')
-          .select('id', { count: 'exact', head: true }),
+          .select('id', { count: 'exact' }),
         
         // Calculate average cleaning time from completed cleanings
         supabase
@@ -80,6 +81,14 @@ export function useAdminDashboardData() {
           .not('end_time', 'is', null)
           .limit(50) // Reduced from 100 to 50 for better performance
       ]);
+
+      console.log("Dashboard data results:", {
+        activeShifts: activeShiftsResult,
+        cleaningsToday: cleaningsTodayResult,
+        pendingCleanings: pendingCleaningsResult,
+        totalShifts: totalShiftsResult,
+        totalCleanings: totalCleaningsResult
+      });
 
       // Check for errors
       if (activeShiftsResult.error) throw activeShiftsResult.error;
@@ -107,15 +116,19 @@ export function useAdminDashboardData() {
         }
       }
 
-      setStats({
+      // Handle the case where count might be null in the responses
+      const updatedStats = {
         activeCleaners: activeShiftsResult.data?.length || 0,
         areasCleaned: cleaningsTodayResult.data?.length || 0,
         areasPending: pendingCleaningsResult.data?.length || 0,
         avgCleaningTime,
-        totalShifts: totalShiftsResult.count || 0,
-        totalCleanings: totalCleaningsResult.count || 0,
-      });
+        totalShifts: totalShiftsResult.count || totalShiftsResult.data?.length || 0,
+        totalCleanings: totalCleaningsResult.count || totalCleaningsResult.data?.length || 0,
+      };
+
+      console.log("Setting dashboard stats:", updatedStats);
       
+      setStats(updatedStats);
       setLastRefreshTime(Date.now());
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -130,6 +143,7 @@ export function useAdminDashboardData() {
   }, [toast, lastRefreshTime]);
 
   useEffect(() => {
+    console.log("Dashboard data hook initialized, fetching data...");
     fetchDashboardData();
 
     // Set up a refresh interval (every 2 minutes instead of 5)
@@ -140,6 +154,7 @@ export function useAdminDashboardData() {
       if (document.visibilityState === 'visible') {
         // Only refresh if it's been more than 1 minute
         if (Date.now() - lastRefreshTime > 60000) {
+          console.log("Tab became visible, refreshing data...");
           fetchDashboardData();
         }
       }

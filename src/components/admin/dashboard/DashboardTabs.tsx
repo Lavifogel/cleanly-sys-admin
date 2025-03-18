@@ -10,6 +10,7 @@ import CleanerWorkHoursCard from "./CleanerWorkHoursCard";
 import ActivitiesTable from "./ActivitiesTable";
 import { DashboardStats } from "@/hooks/useAdminDashboardData";
 import { useTabActions } from "@/hooks/dashboard";
+import { useEffect } from "react";
 
 interface DashboardTabsProps {
   stats: DashboardStats;
@@ -19,9 +20,29 @@ interface DashboardTabsProps {
 
 const DashboardTabs = ({ stats, loading, refreshData }: DashboardTabsProps) => {
   const { activeTab, setActiveTab } = useTabActions();
+  
+  // Force the active tab to be "dashboard" on initial load if no tab is selected
+  useEffect(() => {
+    console.log("DashboardTabs: Current active tab:", activeTab);
+    if (!activeTab || activeTab === "") {
+      console.log("Setting default tab to dashboard");
+      setActiveTab("dashboard");
+    }
+  }, [activeTab, setActiveTab]);
+
+  // Log stats for debugging
+  useEffect(() => {
+    console.log("DashboardTabs received stats:", stats);
+    console.log("DashboardTabs loading state:", loading);
+  }, [stats, loading]);
 
   return (
-    <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+    <Tabs 
+      defaultValue="dashboard" 
+      value={activeTab || "dashboard"} 
+      onValueChange={setActiveTab} 
+      className="space-y-4"
+    >
       <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="dashboard">
           <BarChart className="h-4 w-4 mr-2" />
