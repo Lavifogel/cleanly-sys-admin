@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserData } from "@/hooks/useUserData";
 import { format, parseISO } from "date-fns";
 import { ShiftHistoryItem } from "@/hooks/shift/types";
+import { checkAuthFromStorage } from "@/utils/authUtils";
 
 interface ProfileTabProps {
   shiftsHistory?: ShiftHistoryItem[];
@@ -16,12 +17,13 @@ interface ProfileTabProps {
 
 const ProfileTab = ({ shiftsHistory: initialShifts = [], cleaningsHistory = [] }: ProfileTabProps) => {
   const [shiftsHistory, setShiftsHistory] = useState<ShiftHistoryItem[]>(initialShifts);
-  const { user } = useUserData();
+  const { userRole } = useUserData();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchShiftsHistory = async () => {
-      if (!user?.id) return;
+      const { userData } = checkAuthFromStorage();
+      if (!userData?.id) return;
       
       try {
         setIsLoading(true);
@@ -34,7 +36,7 @@ const ProfileTab = ({ shiftsHistory: initialShifts = [], cleaningsHistory = [] }
             status,
             qr_codes(area_name)
           `)
-          .eq('user_id', user.id)
+          .eq('user_id', userData.id)
           .order('start_time', { ascending: false })
           .limit(10);
 
@@ -88,7 +90,7 @@ const ProfileTab = ({ shiftsHistory: initialShifts = [], cleaningsHistory = [] }
     };
 
     fetchShiftsHistory();
-  }, [user?.id]);
+  }, []);
 
   return (
     <div className="space-y-6">
