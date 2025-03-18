@@ -27,8 +27,9 @@ export const useUserData = () => {
       if (authToken) {
         try {
           const userData = JSON.parse(authToken);
+          console.log("Found cleaner auth token for:", userData.full_name || `${userData.first_name} ${userData.last_name}`);
           setUserRole('cleaner');
-          setUserName(`${userData.first_name} ${userData.last_name}`);
+          setUserName(userData.full_name || `${userData.first_name} ${userData.last_name}`);
           setIsAuthenticated(true);
         } catch (error) {
           console.error('Error parsing auth token:', error);
@@ -38,8 +39,9 @@ export const useUserData = () => {
       } else if (adminToken) {
         try {
           const userData = JSON.parse(adminToken);
+          console.log("Found admin auth token for:", userData.full_name || `${userData.first_name} ${userData.last_name}`);
           setUserRole('admin');
-          setUserName(`${userData.first_name} ${userData.last_name}`);
+          setUserName(userData.full_name || `${userData.first_name} ${userData.last_name}`);
           setIsAuthenticated(true);
         } catch (error) {
           console.error('Error parsing admin token:', error);
@@ -57,6 +59,8 @@ export const useUserData = () => {
   // Function to authenticate user with phone and password
   const loginWithCredentials = async (phoneNumber: string, password: string) => {
     try {
+      console.log("Attempting login with phone:", phoneNumber);
+      
       // Check for admin login (country code +123 and phone number 4567890)
       if (phoneNumber === '+1234567890' && password === '654321') {
         // Create admin user object
@@ -76,6 +80,7 @@ export const useUserData = () => {
         setUserName(`${adminUser.first_name} ${adminUser.last_name}`);
         setIsAuthenticated(true);
         
+        console.log("Admin login successful");
         return { success: true, user: adminUser };
       }
       
@@ -94,12 +99,14 @@ export const useUserData = () => {
       }
 
       if (cleanerData) {
+        console.log("Cleaner data retrieved:", cleanerData);
+        
         // Store user info in localStorage
         localStorage.setItem('cleanerAuth', JSON.stringify(cleanerData));
         
         // Update state
         setUserRole('cleaner');
-        setUserName(`${cleanerData.first_name} ${cleanerData.last_name}`);
+        setUserName(cleanerData.full_name || `${cleanerData.first_name} ${cleanerData.last_name}`);
         setIsAuthenticated(true);
         
         console.log('Cleaner authenticated successfully:', cleanerData);

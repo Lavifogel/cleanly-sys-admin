@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +17,23 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const { loginWithCredentials } = useUserData();
+  const { loginWithCredentials, isAuthenticated, userRole } = useUserData();
+
+  // Effect to handle redirects when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && userRole) {
+      console.log("Login page detected authenticated state:", { isAuthenticated, userRole });
+      if (userRole === 'admin') {
+        console.log("Redirecting admin to dashboard");
+        navigate("/admin/dashboard", { replace: true });
+      } else if (userRole === 'cleaner') {
+        console.log("Redirecting cleaner to dashboard from effect");
+        navigate("/cleaners/dashboard", { replace: true });
+      }
+    }
+  }, [isAuthenticated, userRole, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +51,8 @@ const Login = () => {
 
     try {
       const fullPhoneNumber = `${countryCode}${phoneNumber}`;
+      console.log("Attempting login with:", fullPhoneNumber);
+      
       const { success, error, user } = await loginWithCredentials(fullPhoneNumber, password);
       
       if (success && user) {
@@ -44,13 +61,22 @@ const Login = () => {
           description: "Logged in successfully",
         });
         
-        // Redirect based on user role
+        // Immediate redirect based on user role
         if (user.role === 'admin') {
-          navigate("/admin/dashboard");
+          console.log("Immediately redirecting admin to dashboard");
+          navigate("/admin/dashboard", { replace: true });
         } else if (user.role === 'cleaner') {
-          // Force navigation to cleaner dashboard
-          console.log("Redirecting cleaner to dashboard...");
+          console.log("Immediately redirecting cleaner to dashboard");
+          // Force navigation with replace to prevent back button returning to login
           navigate("/cleaners/dashboard", { replace: true });
+          
+          // Add a small delay and try again as a fallback
+          setTimeout(() => {
+            console.log("Fallback redirect attempt for cleaner");
+            if (location.pathname === '/login' || location.pathname === '/auth/login') {
+              navigate("/cleaners/dashboard", { replace: true });
+            }
+          }, 100);
         }
       } else {
         throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
