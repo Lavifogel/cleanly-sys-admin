@@ -2,7 +2,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { Activity, formatDuration, extractLocationFromNotes } from "./types";
+import { 
+  Activity, 
+  formatDuration, 
+  extractLocationFromNotes 
+} from "./types";
+import { processShiftsData } from "./dataProcessors/processShiftsData";
+import { processCleaningsData } from "./dataProcessors/processCleaningsData";
 
 export const useActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -64,59 +70,9 @@ export const useActivities = () => {
 
       if (cleaningsError) throw cleaningsError;
 
-      // Process shifts data
-      const shiftActivities: Activity[] = (shiftsData || []).map(shift => {
-        const userName = shift.users?.full_name || 
-                        (shift.users?.first_name && shift.users?.last_name 
-                          ? `${shift.users.first_name} ${shift.users.last_name}` 
-                          : "Unknown User");
-        
-        const startTime = shift.start_time ? new Date(shift.start_time) : new Date();
-        const endTime = shift.end_time ? new Date(shift.end_time) : null;
-        
-        const duration = endTime 
-          ? formatDuration(startTime, endTime) 
-          : "In progress";
-
-        return {
-          id: shift.id,
-          type: "shift",
-          date: format(startTime, "MMM dd, yyyy"),
-          userName,
-          location: shift.qr_codes?.area_name || null,
-          startTime: format(startTime, "HH:mm"),
-          endTime: endTime ? format(endTime, "HH:mm") : null,
-          duration,
-          status: shift.status
-        };
-      });
-
-      // Process cleanings data
-      const cleaningActivities: Activity[] = (cleaningsData || []).map(cleaning => {
-        const userName = cleaning.shifts?.users?.full_name || 
-                        (cleaning.shifts?.users?.first_name && cleaning.shifts?.users?.last_name 
-                          ? `${cleaning.shifts.users.first_name} ${cleaning.shifts.users.last_name}` 
-                          : "Unknown User");
-        
-        const startTime = cleaning.start_time ? new Date(cleaning.start_time) : new Date();
-        const endTime = cleaning.end_time ? new Date(cleaning.end_time) : null;
-        
-        const duration = endTime 
-          ? formatDuration(startTime, endTime) 
-          : "In progress";
-
-        return {
-          id: cleaning.id,
-          type: "cleaning",
-          date: format(startTime, "MMM dd, yyyy"),
-          userName,
-          location: cleaning.qr_codes?.area_name || extractLocationFromNotes(cleaning.notes),
-          startTime: format(startTime, "HH:mm"),
-          endTime: endTime ? format(endTime, "HH:mm") : null,
-          duration,
-          status: cleaning.status
-        };
-      });
+      // Process data
+      const shiftActivities = processShiftsData(shiftsData || []);
+      const cleaningActivities = processCleaningsData(cleaningsData || []);
 
       // Combine and sort activities by date and start time
       const allActivities = [...shiftActivities, ...cleaningActivities].sort((a, b) => {
