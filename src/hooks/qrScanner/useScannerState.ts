@@ -39,31 +39,40 @@ export const useScannerState = ({
       stopInProgressRef.current = true;
       console.log("Stopping camera...");
       
+      // First, try the clean method through the scanner instance
       if (scannerRef.current && isScanning) {
         try {
           await scannerRef.current.stop();
           console.log("Camera stopped successfully from scanner");
         } catch (err) {
-          console.error("Error stopping camera:", err);
+          console.error("Error stopping camera through scanner:", err);
         }
       }
       
-      // Additional cleanup to ensure all camera resources are released
-      // But add a small delay to prevent race conditions
+      // Immediately force stop all video streams as a backup
+      try {
+        stopAllVideoStreams();
+      } catch (err) {
+        console.error("Error in stopAllVideoStreams:", err);
+      }
+      
+      // Update state only if component is still mounted
+      if (mountedRef.current) {
+        setIsScanning(false);
+        setCameraActive(false);
+      }
+      
+      // Add a small delay before resetting the stop flag to prevent race conditions
       setTimeout(() => {
+        stopInProgressRef.current = false;
+        
+        // Double-check to ensure all streams are stopped
         try {
           stopAllVideoStreams();
           console.log("All video streams stopped");
         } catch (err) {
-          console.error("Error in stopAllVideoStreams:", err);
+          console.error("Error in final cleanup:", err);
         }
-        
-        // Update state only if component is still mounted
-        if (mountedRef.current) {
-          setIsScanning(false);
-          setCameraActive(false);
-        }
-        stopInProgressRef.current = false;
       }, 200);
     } catch (error) {
       console.error("Error in stopCamera:", error);

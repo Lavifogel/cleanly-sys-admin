@@ -107,10 +107,11 @@ export const useCameraStart = ({
       const currentAttempt = incrementAttempt();
       console.log(`Attempting to start camera (attempt ${currentAttempt})...`);
 
-      // Start scanning - using facingMode object format for better compatibility
+      // First try with environment camera (rear camera on mobile)
       try {
-        await scannerRef.current.start(
-          { facingMode: { exact: "environment" } },
+        console.log("Starting camera with environment facing mode...");
+        await scannerRef.current?.start(
+          { facingMode: "environment" }, // Use simpler format first
           config,
           qrCodeSuccessCallback,
           (errorMessage) => {
@@ -134,19 +135,20 @@ export const useCameraStart = ({
           return;
         }
         
-        console.log("QR scanner started successfully");
+        console.log("QR scanner started successfully with environment camera");
         setCameraActive(true);
         clearTimeout(timeoutId);
       } catch (err: any) {
-        console.error("Error starting camera:", err);
+        console.error("Error starting environment camera:", err);
         
         // Try fallback camera if initial attempt fails
-        if (currentAttempt <= 2) {
+        if (currentAttempt <= 2 && mountedRef.current) {
           console.log("Trying fallback camera options...");
-          await tryFallbackCamera(config, qrCodeSuccessCallback);
+          const fallbackSuccess = await tryFallbackCamera(config, qrCodeSuccessCallback);
           
-          // Separately check if fallback was successful
-          if (mountedRef.current) {
+          // Check if fallback was successful
+          if (fallbackSuccess && mountedRef.current) {
+            console.log("Fallback camera started successfully");
             setCameraActive(true);
             clearTimeout(timeoutId);
             resetStartingState();

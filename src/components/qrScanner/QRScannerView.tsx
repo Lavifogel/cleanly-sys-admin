@@ -30,14 +30,19 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
       className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-900'}`}
       style={{ minHeight: "320px", minWidth: "300px" }} // Ensure minimum dimensions
     >
-      {/* This is the actual container where the camera feed will be inserted */}
+      {/* This is the container where the camera feed will be inserted */}
       <div 
         id={scannerContainerId} 
-        className="absolute inset-0 z-10"
-      />
+        className="absolute inset-0 z-10 flex items-center justify-center"
+      >
+        {/* Inner element to ensure the scanner UI is visible and properly positioned */}
+        <div className="relative w-full h-full">
+          {/* The Html5QrCode library will insert the video element here */}
+        </div>
+      </div>
       
       {!cameraActive && !simulationActive && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/80">
           <p className="text-white text-sm">Initializing camera...</p>
           <div className="mt-2 animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
         </div>

@@ -25,9 +25,31 @@ export const useCameraInitialization = () => {
       try {
         if (!scannerRef.current && mountedRef.current) {
           console.log("Initializing HTML5QrCode instance");
-          scannerRef.current = new Html5Qrcode(scannerContainerId);
+          
+          // First, ensure the container element exists
+          const containerElement = document.getElementById(scannerContainerId);
+          if (!containerElement) {
+            console.log(`Container element '${scannerContainerId}' not found, will try again later`);
+            return;
+          }
+          
+          // Clean up any existing HTML5QrCode elements to prevent conflicts
+          const existingElements = document.querySelectorAll('.html5-qrcode-element');
+          existingElements.forEach(element => {
+            if (element.parentNode) {
+              try {
+                element.parentNode.removeChild(element);
+              } catch (e) {
+                console.log("Error removing existing scanner element:", e);
+              }
+            }
+          });
+          
+          // Create a new instance with verbose logging turned off
+          scannerRef.current = new Html5Qrcode(scannerContainerId, { verbose: false });
           isInitializedRef.current = true;
           setIsInitialized(true);
+          console.log("HTML5QrCode instance created successfully");
         }
       } catch (error) {
         console.error("Error initializing scanner:", error);

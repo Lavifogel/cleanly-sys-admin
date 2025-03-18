@@ -20,31 +20,52 @@ export const useCameraUtils = ({
   setError
 }: UseCameraUtilsProps) => {
   
-  // Try fallback camera (user-facing) when main camera fails
-  const tryFallbackCamera = useCallback(async (config: any, qrCodeSuccessCallback: (decodedText: string) => void) => {
+  // Try fallback camera options in sequence
+  const tryFallbackCamera = useCallback(async (config: any, qrCodeSuccessCallback: (decodedText: string) => void): Promise<boolean> => {
+    if (!mountedRef.current || !scannerRef.current) return false;
+    
+    // Try simple auto mode first
     try {
-      if (mountedRef.current && scannerRef.current) {
-        console.log("Trying with user-facing camera...");
-        
-        await scannerRef.current.start(
-          { facingMode: "user" },
-          config,
-          (decodedText: string) => {
-            onScanSuccess(decodedText);
-            stopCamera();
-          },
-          () => {}
-        );
-        
-        if (mountedRef.current) {
-          setCameraActive(true);
-          setError(null);
-          return true;
-        }
+      console.log("Trying with auto facing mode...");
+      await scannerRef.current.start(
+        { facingMode: "user" }, // Try user-facing camera
+        config,
+        qrCodeSuccessCallback,
+        () => {}
+      );
+      
+      if (mountedRef.current) {
+        setCameraActive(true);
+        setError(null);
+        console.log("Camera started with user-facing mode");
+        return true;
       }
       return false;
-    } catch (fallbackErr) {
-      console.error("Fallback camera also failed:", fallbackErr);
+    } catch (err) {
+      console.log("User-facing camera failed:", err);
+      
+      // If that fails, try with no specific camera configuration
+      if (mountedRef.current && scannerRef.current) {
+        try {
+          console.log("Trying with default camera...");
+          await scannerRef.current.start(
+            true, // Use any available camera
+            config,
+            qrCodeSuccessCallback,
+            () => {}
+          );
+          
+          if (mountedRef.current) {
+            setCameraActive(true);
+            setError(null);
+            console.log("Camera started with default settings");
+            return true;
+          }
+        } catch (fallbackErr) {
+          console.error("Default camera also failed:", fallbackErr);
+        }
+      }
+      
       if (mountedRef.current) {
         setError("Camera access failed. Please check camera permissions and try again.");
       }
@@ -74,33 +95,13 @@ export const useCameraUtils = ({
     } else if (err.toString().includes("object should have exactly 1 key")) {
       // Special handling for camera configuration error
       setError("Camera initialization failed. Trying alternative approach...");
-      // Try with simple configuration
-      if (scannerRef.current && mountedRef.current) {
-        const config = {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          formatsToSupport: ["QR_CODE"]
-        };
-        tryFallbackCamera(config, (decodedText: string) => {
-          onScanSuccess(decodedText);
-          stopCamera();
-        });
-      }
+      // A config error will already trigger the fallback in startScanner
+    } else if (err.toString().includes("NotFoundError") || err.toString().includes("no camera available")) {
+      setError("No camera found. Please ensure your device has a working camera.");
     } else {
-      setError("Could not access the camera. Please ensure your device has a working camera.");
-      
-      // Try with user-facing camera as fallback
-      const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        formatsToSupport: ["QR_CODE"]
-      };
-      tryFallbackCamera(config, (decodedText: string) => {
-        onScanSuccess(decodedText);
-        stopCamera();
-      });
+      setError("Could not access the camera. Please check permissions and try again.");
     }
-  }, [mountedRef, setError, tryFallbackCamera, scannerRef, onScanSuccess, stopCamera]);
+  }, [mountedRef, setError]);
 
   return {
     tryFallbackCamera,
