@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { QRCodeScannerProps } from "@/types/qrScanner";
@@ -8,6 +8,8 @@ import QRScannerView from "@/components/qrScanner/QRScannerView";
 import { Button } from "./ui/button";
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
+  const scannerMountedRef = useRef(false);
+  
   const {
     scannerState,
     scannerContainerId,
@@ -19,12 +21,20 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   
   // Auto-focus on scanning when component mounts
   useEffect(() => {
-    // Add a small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      console.log("QR scanner mounted, camera active:", cameraActive);
-    }, 100);
+    // Mark component as mounted
+    scannerMountedRef.current = true;
     
-    return () => clearTimeout(timer);
+    // Add a delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (scannerMountedRef.current) {
+        console.log("QR scanner mounted, camera active:", cameraActive);
+      }
+    }, 500);
+    
+    return () => {
+      clearTimeout(timer);
+      scannerMountedRef.current = false;
+    };
   }, [cameraActive]);
 
   return (

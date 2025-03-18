@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { ScannerPurpose } from "@/hooks/useQRScanner";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
@@ -21,12 +21,14 @@ const QRScannerHandler = ({
   onQRScan,
   activeShift = false
 }: QRScannerHandlerProps) => {
+  const scannerMounted = useRef(false);
   
   // Monitor when the QR scanner is shown and ensure it initializes properly
   useEffect(() => {
     let timeoutId: number;
     
     if (showQRScanner) {
+      scannerMounted.current = true;
       // Force a reflow to ensure the scanner container is ready
       timeoutId = window.setTimeout(() => {
         const container = document.getElementById("qr-scanner-container");
@@ -38,17 +40,21 @@ const QRScannerHandler = ({
         }
       }, 300);
     } else {
-      // Ensure any lingering video tracks are stopped
-      stopAllVideoStreams();
-      console.log("Camera resources released when QR scanner hidden");
+      if (scannerMounted.current) {
+        // Ensure any lingering video tracks are stopped
+        stopAllVideoStreams();
+        console.log("Camera resources released when QR scanner hidden");
+        scannerMounted.current = false;
+      }
     }
     
     // Also clean up when unmounting
     return () => {
       window.clearTimeout(timeoutId);
-      if (showQRScanner) {
+      if (scannerMounted.current) {
         stopAllVideoStreams();
         console.log("Camera resources released when QR scanner component unmounted");
+        scannerMounted.current = false;
       }
     };
   }, [showQRScanner]);
