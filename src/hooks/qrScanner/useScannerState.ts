@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
