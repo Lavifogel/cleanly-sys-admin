@@ -1,32 +1,45 @@
 
-import React from "react";
-import { Button } from "@/components/ui/button";
+import React, { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { QRCodeScannerProps } from "@/types/qrScanner";
 import { useQRScannerLogic } from "@/hooks/useQRScannerLogic";
-import QRScannerControls from "@/components/qrScanner/QRScannerControls";
 import QRScannerView from "@/components/qrScanner/QRScannerView";
+import { Button } from "./ui/button";
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const {
     scannerState,
     scannerContainerId,
-    fileInputRef,
     handleClose,
-    handleFileSelect,
     handleManualSimulation
   } = useQRScannerLogic(onScanSuccess, onClose);
 
-  const { error } = scannerState;
+  const { error, cameraActive } = scannerState;
   
+  // Auto-focus on scanning when component mounts
+  useEffect(() => {
+    console.log("QR scanner mounted, camera active:", cameraActive);
+  }, [cameraActive]);
+
   return (
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
       <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
-        <div className="mb-4 text-center">
+        <div className="w-full flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Scan QR Code</h3>
-          <p className="text-sm text-muted-foreground">Position the QR code within the frame</p>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleClose}
+            className="ml-auto"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
+        
+        <p className="text-sm text-muted-foreground mb-4">
+          Position the QR code within the frame
+        </p>
         
         <QRScannerView 
           scannerContainerId={scannerContainerId} 
@@ -34,28 +47,22 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         />
         
         {error && (
-          <div className="mt-4 text-destructive text-center">
+          <div className="mt-4 text-destructive text-center text-sm">
             {error}
           </div>
         )}
 
-        <QRScannerControls 
-          scannerState={scannerState}
-          onTakePicture={() => {}} 
-          onSimulateScan={handleManualSimulation} 
-        />
-        
-        <input 
-          type="file" 
-          accept="image/*" 
-          capture="environment"
-          ref={fileInputRef}
-          onChange={handleFileSelect}
-          className="hidden"
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        />
+        {process.env.NODE_ENV === "development" && (
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={handleManualSimulation}
+              className="w-full"
+            >
+              Simulate Scan (Dev Only)
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

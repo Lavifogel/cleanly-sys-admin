@@ -17,11 +17,12 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   return (
     <div 
       id={scannerContainerId} 
-      className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-100'}`}
+      className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-900'}`}
     >
       {!cameraActive && !simulationActive && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <p className="text-muted-foreground text-sm">Initializing camera...</p>
+          <p className="text-white text-sm">Initializing camera...</p>
+          <div className="mt-2 animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
         </div>
       )}
       
@@ -42,7 +43,7 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 border-2 border-primary/30"></div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-primary"></div>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-white/30 border-dashed"></div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-white/30 border-dashed animate-pulse"></div>
         </div>
       )}
     </div>

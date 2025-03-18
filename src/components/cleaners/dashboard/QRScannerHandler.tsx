@@ -45,7 +45,7 @@ const QRScannerHandler = ({
   const canClose = scannerPurpose === 'startShift' && !activeShift;
 
   return (
-    <div className="relative">
+    <div className="fixed inset-0 z-50">
       {canClose && (
         <div className="absolute top-4 right-4 z-50">
           <Button variant="ghost" size="icon" onClick={closeScanner} className="bg-background/50 backdrop-blur-sm hover:bg-background/80">
