@@ -16,24 +16,8 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const { loginWithCredentials, isAuthenticated, userRole } = useUserData();
-
-  // Effect to handle redirects when authentication state changes
-  useEffect(() => {
-    if (isAuthenticated && userRole) {
-      console.log("Login page detected authenticated state:", { isAuthenticated, userRole });
-      if (userRole === 'admin') {
-        console.log("Redirecting admin to dashboard");
-        navigate("/admin/dashboard", { replace: true });
-      } else if (userRole === 'cleaner') {
-        console.log("Redirecting cleaner to dashboard from effect");
-        navigate("/cleaners/dashboard", { replace: true });
-      }
-    }
-  }, [isAuthenticated, userRole, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,31 +37,14 @@ const Login = () => {
       const fullPhoneNumber = `${countryCode}${phoneNumber}`;
       console.log("Attempting login with:", fullPhoneNumber);
       
-      const { success, error, user } = await loginWithCredentials(fullPhoneNumber, password);
+      const { success, error } = await loginWithCredentials(fullPhoneNumber, password);
       
-      if (success && user) {
+      if (success) {
         toast({
           title: "Success",
           description: "Logged in successfully",
         });
-        
-        // Immediate redirect based on user role
-        if (user.role === 'admin') {
-          console.log("Immediately redirecting admin to dashboard");
-          navigate("/admin/dashboard", { replace: true });
-        } else if (user.role === 'cleaner') {
-          console.log("Immediately redirecting cleaner to dashboard");
-          // Force navigation with replace to prevent back button returning to login
-          navigate("/cleaners/dashboard", { replace: true });
-          
-          // Add a small delay and try again as a fallback
-          setTimeout(() => {
-            console.log("Fallback redirect attempt for cleaner");
-            if (location.pathname === '/login' || location.pathname === '/auth/login') {
-              navigate("/cleaners/dashboard", { replace: true });
-            }
-          }, 100);
-        }
+        // Navigation is handled in loginWithCredentials
       } else {
         throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
       }

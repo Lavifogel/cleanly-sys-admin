@@ -2,11 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const useUserData = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Fetch user session
   const { data: session } = useQuery({
@@ -31,6 +34,11 @@ export const useUserData = () => {
           setUserRole('cleaner');
           setUserName(userData.full_name || `${userData.first_name} ${userData.last_name}`);
           setIsAuthenticated(true);
+          
+          // If on login page, redirect to cleaner dashboard
+          if (location.pathname === '/login' || location.pathname === '/auth/login') {
+            navigate('/cleaners/dashboard', { replace: true });
+          }
         } catch (error) {
           console.error('Error parsing auth token:', error);
           localStorage.removeItem('cleanerAuth');
@@ -43,6 +51,11 @@ export const useUserData = () => {
           setUserRole('admin');
           setUserName(userData.full_name || `${userData.first_name} ${userData.last_name}`);
           setIsAuthenticated(true);
+          
+          // If on login page, redirect to admin dashboard
+          if (location.pathname === '/login' || location.pathname === '/auth/login') {
+            navigate('/admin/dashboard', { replace: true });
+          }
         } catch (error) {
           console.error('Error parsing admin token:', error);
           localStorage.removeItem('adminAuth');
@@ -50,11 +63,16 @@ export const useUserData = () => {
         }
       } else {
         setIsAuthenticated(false);
+        
+        // If not authenticated and not on login page or index page, redirect to login
+        if (!location.pathname.includes('/login') && location.pathname !== '/') {
+          navigate('/login', { replace: true });
+        }
       }
     };
 
     checkAuthState();
-  }, []);
+  }, [location.pathname, navigate]);
 
   // Function to authenticate user with phone and password
   const loginWithCredentials = async (phoneNumber: string, password: string) => {
@@ -81,6 +99,9 @@ export const useUserData = () => {
         setIsAuthenticated(true);
         
         console.log("Admin login successful");
+        
+        // Redirect admin to dashboard
+        navigate('/admin/dashboard', { replace: true });
         return { success: true, user: adminUser };
       }
       
@@ -110,6 +131,9 @@ export const useUserData = () => {
         setIsAuthenticated(true);
         
         console.log('Cleaner authenticated successfully:', cleanerData);
+        
+        // Redirect cleaner to dashboard
+        navigate('/cleaners/dashboard', { replace: true });
         return { success: true, user: cleanerData };
       }
 
@@ -129,7 +153,7 @@ export const useUserData = () => {
     setUserRole(null);
     setUserName(null);
     setIsAuthenticated(false);
-    window.location.href = '/login';
+    navigate('/login', { replace: true });
   };
 
   return {

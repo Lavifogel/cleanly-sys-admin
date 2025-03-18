@@ -37,11 +37,18 @@ export const useAuth = () => {
   return context;
 };
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
+// Protected route component that checks specific roles
+const RoleProtectedRoute = ({ 
+  children, 
+  allowedRoles 
+}: { 
+  children: React.ReactNode, 
+  allowedRoles: string[] 
+}) => {
+  const { isAuthenticated, userRole } = useAuth();
   
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !userRole || !allowedRoles.includes(userRole)) {
+    // Redirect to login if not authenticated or not allowed
     return <Navigate to="/login" replace />;
   }
   
@@ -77,13 +84,20 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
-                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                  <Route 
+                    path="/admin/dashboard" 
+                    element={
+                      <RoleProtectedRoute allowedRoles={['admin']}>
+                        <AdminDashboard />
+                      </RoleProtectedRoute>
+                    } 
+                  />
                   <Route 
                     path="/cleaners/dashboard" 
                     element={
-                      <ProtectedRoute>
+                      <RoleProtectedRoute allowedRoles={['cleaner']}>
                         <CleanersDashboard />
-                      </ProtectedRoute>
+                      </RoleProtectedRoute>
                     } 
                   />
                   <Route path="*" element={<NotFound />} />
