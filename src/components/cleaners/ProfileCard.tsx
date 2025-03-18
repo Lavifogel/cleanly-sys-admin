@@ -5,17 +5,25 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Check, Sparkles } from "lucide-react";
+import { useUserData } from "@/hooks/useUserData";
 
 interface ProfileCardProps {
   disableLogoClick?: boolean;
 }
 
 const ProfileCard = ({ disableLogoClick = false }: ProfileCardProps) => {
+  const { logout } = useUserData();
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">Your Profile</CardTitle>
-        <Button variant="outline" size="sm" className="h-8 gap-1">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-8 gap-1"
+          onClick={logout}
+        >
           <LogOut className="h-3.5 w-3.5" />
           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Sign Out</span>
         </Button>

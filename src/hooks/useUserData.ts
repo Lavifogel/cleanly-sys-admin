@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +10,8 @@ export const useUserData = () => {
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState<boolean>(false);
+  const [hasActiveShift, setHasActiveShift] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -79,25 +80,39 @@ export const useUserData = () => {
     }
   };
 
-  // Function to log out
-  const logout = async () => {
+  // Function to check for active shift
+  const checkForActiveShift = () => {
+    const activeShiftData = localStorage.getItem('activeShift');
+    return !!activeShiftData;
+  };
+
+  // Function to initiate logout process
+  const initiateLogout = () => {
+    if (userRole === 'cleaner') {
+      const hasShift = checkForActiveShift();
+      setHasActiveShift(hasShift);
+      setShowLogoutConfirmation(true);
+    } else {
+      // For admin users, logout directly
+      performLogout();
+    }
+  };
+
+  // Function to perform actual logout
+  const performLogout = async () => {
     if (isLoggingOut) return; // Prevent multiple logout attempts
     
     setIsLoggingOut(true);
     
     try {
-      // If user is a cleaner, check for active cleaning and shift
+      // If user is a cleaner, check for active cleaning
       if (userRole === 'cleaner') {
         try {
           // First close any active cleaning - ensure we await this
           const cleaningClosed = await closeActiveCleaning();
           console.log("Cleaning closed on logout:", cleaningClosed);
-          
-          // Then close any active shift - ensure we await this
-          const shiftClosed = await closeActiveShift();
-          console.log("Shift closed on logout:", shiftClosed);
         } catch (error) {
-          console.error("Error closing active tasks on logout:", error);
+          console.error("Error closing active cleaning on logout:", error);
         }
       }
       
@@ -111,7 +126,13 @@ export const useUserData = () => {
       navigate('/login', { replace: true });
     } finally {
       setIsLoggingOut(false);
+      setShowLogoutConfirmation(false);
     }
+  };
+
+  // Function to close the confirmation dialog
+  const closeLogoutConfirmation = () => {
+    setShowLogoutConfirmation(false);
   };
 
   return {
@@ -120,7 +141,11 @@ export const useUserData = () => {
     session,
     isAuthenticated,
     isLoggingOut,
+    showLogoutConfirmation,
+    hasActiveShift,
     loginWithCredentials: handleLoginWithCredentials,
-    logout
+    logout: initiateLogout,
+    performLogout,
+    closeLogoutConfirmation
   };
 };
