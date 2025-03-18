@@ -15,7 +15,7 @@ interface CleaningTabProps {
   handleEndCleaningWithoutScan: () => void;
   togglePauseCleaning: () => void;
   handleAutoEndCleaning: () => void;
-  activeShiftId?: string; // Add activeShiftId prop
+  activeShiftId?: string;
 }
 
 const CleaningTab = ({
