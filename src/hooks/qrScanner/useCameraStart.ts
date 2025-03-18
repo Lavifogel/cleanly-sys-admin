@@ -103,35 +103,39 @@ export const useCameraStart = ({
       // Set timeout to prevent infinite loading when camera permissions are denied
       const timeoutId = setupCameraTimeout(cameraActive);
 
-      // Start scanning - using string camera id format for better compatibility
-      await scannerRef.current.start(
-        { facingMode: { exact: "environment" } },
-        config,
-        qrCodeSuccessCallback,
-        (errorMessage) => {
-          // Only log essential errors to reduce console noise
-          if (!errorMessage.includes("No MultiFormat Readers")) {
-            console.log("QR Scanner error:", errorMessage);
+      // Start scanning - using facingMode object format for better compatibility
+      try {
+        await scannerRef.current.start(
+          { facingMode: { exact: "environment" } },
+          config,
+          qrCodeSuccessCallback,
+          (errorMessage) => {
+            // Only log essential errors to reduce console noise
+            if (!errorMessage.includes("No MultiFormat Readers")) {
+              console.log("QR Scanner error:", errorMessage);
+            }
           }
-        }
-      );
-      
-      if (!mountedRef.current) {
-        // If unmounted during initialization, stop camera
-        if (scannerRef.current) {
-          try {
-            await scannerRef.current.stop();
-          } catch (err) {
-            console.error("Error stopping camera after unmount:", err);
+        );
+        
+        if (!mountedRef.current) {
+          // If unmounted during initialization, stop camera
+          if (scannerRef.current) {
+            try {
+              await scannerRef.current.stop();
+            } catch (err) {
+              console.error("Error stopping camera after unmount:", err);
+            }
           }
+          resetStartingState();
+          return;
         }
-        resetStartingState();
-        return;
+        
+        console.log("QR scanner started successfully");
+        setCameraActive(true);
+        clearTimeout(timeoutId);
+      } catch (err: any) {
+        handleCameraError(err, incrementAttempt());
       }
-      
-      console.log("QR scanner started successfully");
-      setCameraActive(true);
-      clearTimeout(timeoutId);
     } catch (err: any) {
       handleCameraError(err, incrementAttempt());
     } finally {

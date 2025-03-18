@@ -21,6 +21,7 @@ export const useCameraRetry = ({
     let retryTimeoutId: number | null = null;
     
     if (isScanning && !cameraActive && mountedRef.current && !isStarting()) {
+      console.log("Camera not active but scanning requested, scheduling retry...");
       retryTimeoutId = window.setTimeout(() => {
         if (isScanning && !cameraActive && mountedRef.current && !isStarting()) {
           console.log("Camera not active after timeout, attempting restart...");
