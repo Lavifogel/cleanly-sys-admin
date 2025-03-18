@@ -88,11 +88,6 @@ export const useUserData = () => {
         .eq('role', 'cleaner')
         .single();
 
-      if (cleanerError) {
-        console.error('Login error from database:', cleanerError);
-        return { success: false, error: new Error("Invalid phone number or password") };
-      }
-
       if (cleanerData) {
         // Store user info in localStorage
         localStorage.setItem('cleanerAuth', JSON.stringify(cleanerData));
@@ -102,7 +97,6 @@ export const useUserData = () => {
         setUserName(`${cleanerData.first_name} ${cleanerData.last_name}`);
         setIsAuthenticated(true);
         
-        console.log('Cleaner authenticated successfully:', cleanerData);
         return { success: true, user: cleanerData };
       }
 
