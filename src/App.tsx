@@ -13,21 +13,15 @@ import { useUserData } from "./hooks/useUserData";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const CleanersDashboard = lazy(() => import("./pages/cleaners/Dashboard"));
 const Login = lazy(() => import("./pages/auth/Login"));
 
 // Protected Route Component
-const ProtectedRoute = ({ children, role }: { children: JSX.Element, role?: string }) => {
-  const { isAuthenticated, userRole } = useUserData();
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated } = useUserData();
   
-  // For admin routes, check if user is admin
-  if (role === 'admin' && userRole !== 'admin') {
-    return <Navigate to="/login" replace />;
-  }
-  
-  // For cleaner routes, check if authenticated (admins can also access)
-  if (role === 'cleaner' && !isAuthenticated && userRole !== 'admin') {
+  // For cleaner routes, check if authenticated
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   
@@ -42,17 +36,9 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route 
-        path="/admin/dashboard" 
-        element={
-          <ProtectedRoute role="admin">
-            <AdminDashboard />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
         path="/cleaners/dashboard" 
         element={
-          <ProtectedRoute role="cleaner">
+          <ProtectedRoute>
             <CleanersDashboard />
           </ProtectedRoute>
         } 

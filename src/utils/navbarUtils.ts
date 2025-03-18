@@ -11,15 +11,6 @@ export const getNavRoutes = (session: any, userRole: string | null): NavRoute[] 
     return [];
   }
 
-  // If user is logged in, only show their relevant dashboard
-  if (userRole === 'admin') {
-    return [
-      { path: '/admin/dashboard', label: 'Dashboard' }
-    ];
-  } else if (userRole === 'cleaner') {
-    // Return empty array for cleaner - removing the Dashboard button
-    return [];
-  }
-
+  // Cleaners don't have any navigation items in the navbar
   return [];
 };
