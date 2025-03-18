@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export function useTabManagement() {
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState("dashboard");
   
   return {
     activeTab,
