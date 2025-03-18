@@ -21,9 +21,9 @@ interface DashboardTabsProps {
 const DashboardTabs = ({ stats, loading, refreshData }: DashboardTabsProps) => {
   const { activeTab, setActiveTab } = useTabActions();
   
-  // Force the active tab to be "dashboard" on initial load if no tab is selected
+  // Force the active tab to be "dashboard" on initial load for admin dashboard
   useEffect(() => {
-    console.log("DashboardTabs: Current active tab:", activeTab);
+    console.log("Admin DashboardTabs: Current active tab:", activeTab);
     if (!activeTab || activeTab === "") {
       console.log("Setting default tab to dashboard");
       setActiveTab("dashboard");
