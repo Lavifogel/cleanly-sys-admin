@@ -78,6 +78,9 @@ export const useUserData = () => {
         setUserName(`${adminUser.first_name} ${adminUser.last_name}`);
         setIsAuthenticated(true);
         
+        // Redirect immediately to admin dashboard
+        navigate('/admin/dashboard', { replace: true });
+        
         return { success: true, user: adminUser };
       }
       
@@ -103,6 +106,9 @@ export const useUserData = () => {
         setUserRole('cleaner');
         setUserName(`${cleanerData.first_name} ${cleanerData.last_name}`);
         setIsAuthenticated(true);
+        
+        // Redirect immediately to cleaner dashboard
+        navigate('/cleaners/dashboard', { replace: true });
         
         console.log('Cleaner authenticated successfully:', cleanerData);
         return { success: true, user: cleanerData };

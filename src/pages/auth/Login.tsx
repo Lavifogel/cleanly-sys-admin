@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -36,23 +35,16 @@ const Login = () => {
 
     try {
       const fullPhoneNumber = `${countryCode}${phoneNumber}`;
-      const { success, error, user } = await loginWithCredentials(fullPhoneNumber, password);
+      const { success, error } = await loginWithCredentials(fullPhoneNumber, password);
       
-      if (success && user) {
+      if (success) {
         toast({
           title: "Success",
           description: "Logged in successfully",
         });
         
-        // Redirect based on user role
-        if (user.role === 'admin') {
-          console.log("Redirecting admin to dashboard...");
-          navigate("/admin/dashboard", { replace: true });
-        } else if (user.role === 'cleaner') {
-          // Force navigation to cleaner dashboard
-          console.log("Redirecting cleaner to dashboard...");
-          navigate("/cleaners/dashboard", { replace: true });
-        }
+        // Navigation is now handled directly in the loginWithCredentials function
+        // No need to navigate here
       } else {
         throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
       }
