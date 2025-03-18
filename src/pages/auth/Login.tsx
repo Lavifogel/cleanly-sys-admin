@@ -76,7 +76,7 @@ const Login = () => {
               <Label htmlFor="phoneNumber">Phone Number</Label>
               <Input
                 id="phoneNumber"
-                placeholder="+123456789"
+                placeholder=""
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 autoComplete="tel"
