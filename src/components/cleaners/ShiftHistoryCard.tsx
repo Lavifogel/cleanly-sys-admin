@@ -1,88 +1,86 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, ClipboardCheck, Timer } from "lucide-react";
+import { Calendar, Clock, ClipboardCheck, Timer, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import RecentCleaningsCard from "./RecentCleaningsCard";
 import { CleaningHistoryItem } from "@/types/cleaning";
-
-interface ShiftHistoryItem {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  duration: string;
-  status: string;
-  cleanings: number;
-}
+import { ShiftHistoryItem } from "@/hooks/shift/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { format, parseISO } from "date-fns";
+import CleaningHistoryCard from "./CleaningHistoryCard";
 
 interface ShiftHistoryCardProps {
   shiftsHistory: ShiftHistoryItem[];
+  isLoading?: boolean;
 }
 
-const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
+const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCardProps) => {
   const [selectedShift, setSelectedShift] = useState<ShiftHistoryItem | null>(null);
+  const [shiftCleanings, setShiftCleanings] = useState<CleaningHistoryItem[]>([]);
+  const [isLoadingCleanings, setIsLoadingCleanings] = useState(false);
   
-  // Mock cleaning data for demonstration - in a real app, this would come from an API
-  const mockCleanings: CleaningHistoryItem[] = [
-    {
-      id: "1",
-      location: "Meeting Room A",
-      date: "2023-08-15",
-      startTime: "09:15",
-      endTime: "09:45",
-      duration: "30m",
-      status: "finished with scan",
-      images: 2,
-      notes: "Regular cleaning",
-      shiftId: "1",
-      imageUrls: ["/lovable-uploads/9433ba26-0e8c-4dbe-a022-8df6a3e1468f.png"]
-    },
-    {
-      id: "2",
-      location: "Office Space 101",
-      date: "2023-08-15",
-      startTime: "10:00",
-      endTime: "10:30",
-      duration: "30m",
-      status: "finished with scan",
-      images: 1,
-      notes: "Deep cleaning required next time",
-      shiftId: "1",
-      imageUrls: ["/lovable-uploads/9433ba26-0e8c-4dbe-a022-8df6a3e1468f.png"]
-    },
-    {
-      id: "3",
-      location: "Bathroom Floor 2",
-      date: "2023-08-15",
-      startTime: "11:00",
-      endTime: "11:45",
-      duration: "45m",
-      status: "finished with scan",
-      images: 3,
-      notes: "Restocked supplies",
-      shiftId: "1",
-      imageUrls: ["/lovable-uploads/9433ba26-0e8c-4dbe-a022-8df6a3e1468f.png"]
-    },
-    {
-      id: "4",
-      location: "Kitchen Area",
-      date: "2023-08-14",
-      startTime: "09:00",
-      endTime: "09:30",
-      duration: "30m",
-      status: "finished with scan",
-      images: 1,
-      notes: "Regular cleaning",
-      shiftId: "2",
-      imageUrls: ["/lovable-uploads/9433ba26-0e8c-4dbe-a022-8df6a3e1468f.png"]
+  const handleShiftClick = async (shift: ShiftHistoryItem) => {
+    setSelectedShift(shift);
+    setIsLoadingCleanings(true);
+    
+    try {
+      // Fetch cleanings for this shift
+      const { data: cleanings, error } = await supabase
+        .from('cleanings')
+        .select(`
+          id,
+          start_time,
+          end_time,
+          status,
+          notes,
+          qr_codes(area_name),
+          images(id, image_url)
+        `)
+        .eq('shift_id', shift.id)
+        .order('start_time', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching cleanings:', error);
+        setShiftCleanings([]);
+        return;
+      }
+      
+      const formattedCleanings: CleaningHistoryItem[] = cleanings.map(cleaning => {
+        const startTime = cleaning.start_time ? parseISO(cleaning.start_time) : new Date();
+        const endTime = cleaning.end_time ? parseISO(cleaning.end_time) : null;
+        
+        // Calculate duration
+        let duration = "In progress";
+        if (endTime) {
+          const durationMs = endTime.getTime() - startTime.getTime();
+          const minutes = Math.floor(durationMs / (1000 * 60));
+          duration = `${minutes}m`;
+        }
+        
+        return {
+          id: cleaning.id,
+          location: cleaning.qr_codes?.area_name || "Unknown Location",
+          date: format(startTime, 'yyyy-MM-dd'),
+          startTime: format(startTime, 'HH:mm'),
+          endTime: endTime ? format(endTime, 'HH:mm') : "--:--",
+          duration,
+          status: cleaning.status,
+          images: cleaning.images?.length || 0,
+          notes: cleaning.notes || "",
+          shiftId: shift.id,
+          imageUrls: cleaning.images?.map(img => img.image_url) || []
+        };
+      });
+      
+      setShiftCleanings(formattedCleanings);
+    } catch (error) {
+      console.error('Error processing cleanings data:', error);
+      setShiftCleanings([]);
+    } finally {
+      setIsLoadingCleanings(false);
     }
-  ];
-
-  // Filter cleanings by selected shift
-  const filteredCleanings = mockCleanings.filter(
-    cleaning => cleaning.shiftId === selectedShift?.id
-  );
+  };
 
   return (
     <>
@@ -92,36 +90,57 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
           <CardDescription>View your past shifts</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {shiftsHistory.map((shift) => (
-              <div 
-                key={shift.id} 
-                className="border rounded-lg overflow-hidden cursor-pointer hover:border-primary transition-colors p-4"
-                onClick={() => setSelectedShift(shift)}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <Calendar className="h-5 w-5 mr-2 text-primary" />
-                      <h4 className="font-medium text-lg">{shift.date}</h4>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-36" />
                     </div>
-                    <div className="flex items-center text-muted-foreground">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <p>{shift.startTime} - {shift.endTime}</p>
-                    </div>
-                    <div className="flex items-center text-muted-foreground">
-                      <ClipboardCheck className="h-4 w-4 mr-2" />
-                      <p>{shift.cleanings} cleanings completed</p>
-                    </div>
-                  </div>
-                  <div className="text-sm font-medium flex items-center bg-primary/10 px-3 py-1.5 rounded-full">
-                    <Timer className="h-3.5 w-3.5 mr-1 text-primary" />
-                    {shift.duration}
+                    <Skeleton className="h-8 w-16 rounded-full" />
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : shiftsHistory.length > 0 ? (
+            <div className="space-y-4">
+              {shiftsHistory.map((shift) => (
+                <div 
+                  key={shift.id} 
+                  className="border rounded-lg overflow-hidden cursor-pointer hover:border-primary transition-colors p-4"
+                  onClick={() => handleShiftClick(shift)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <Calendar className="h-5 w-5 mr-2 text-primary" />
+                        <h4 className="font-medium text-lg">{shift.date}</h4>
+                      </div>
+                      <div className="flex items-center text-muted-foreground">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <p>{shift.startTime} - {shift.endTime}</p>
+                      </div>
+                      <div className="flex items-center text-muted-foreground">
+                        <ClipboardCheck className="h-4 w-4 mr-2" />
+                        <p>{shift.cleanings} cleanings completed</p>
+                      </div>
+                    </div>
+                    <div className="text-sm font-medium flex items-center bg-primary/10 px-3 py-1.5 rounded-full">
+                      <Timer className="h-3.5 w-3.5 mr-1 text-primary" />
+                      {shift.duration}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-muted-foreground">
+              No shift history available yet
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -134,12 +153,19 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
             </DialogTitle>
           </DialogHeader>
           
-          <div className="mt-4">
-            <RecentCleaningsCard 
-              cleaningsHistory={filteredCleanings} 
-              currentShiftId={selectedShift?.id}
-            />
-          </div>
+          {isLoadingCleanings ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Loading cleanings...</span>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <CleaningHistoryCard 
+                cleaningsHistory={shiftCleanings} 
+                currentShiftId={selectedShift?.id}
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
