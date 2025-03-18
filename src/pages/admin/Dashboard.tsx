@@ -12,7 +12,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const handleBackClick = () => {
-    navigate(-1); // This navigates back one step in the browser history
+    navigate('/'); // Navigate to the home page instead of using browser history
   };
 
   return (
