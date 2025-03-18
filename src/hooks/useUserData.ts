@@ -74,7 +74,84 @@ export const useUserData = () => {
     checkAuthState();
   }, [location.pathname, navigate]);
 
-  // Function to authenticate user with phone and password
+  // Helper function to close active cleaning
+  const closeActiveCleaning = async () => {
+    // First, check if there's an active cleaning in localStorage
+    const activeCleaningStr = localStorage.getItem('activeCleaning');
+    if (!activeCleaningStr) return false;
+    
+    try {
+      const activeCleaning = JSON.parse(activeCleaningStr);
+      if (!activeCleaning || !activeCleaning.id) return false;
+      
+      console.log("Found active cleaning to close on logout:", activeCleaning.id);
+      
+      // Update the cleaning status in the database
+      const endTime = new Date().toISOString();
+      const { error } = await supabase
+        .from('cleanings')
+        .update({
+          end_time: endTime,
+          status: 'finished without scan',
+          notes: 'Automatically closed on logout'
+        })
+        .eq('id', activeCleaning.id);
+      
+      if (error) {
+        console.error("Error closing active cleaning:", error);
+        return false;
+      }
+      
+      // Remove the active cleaning from localStorage
+      localStorage.removeItem('activeCleaning');
+      return true;
+    } catch (error) {
+      console.error("Error parsing active cleaning:", error);
+      localStorage.removeItem('activeCleaning');
+      return false;
+    }
+  };
+  
+  // Helper function to close active shift
+  const closeActiveShift = async () => {
+    // Check if there's an active shift in localStorage
+    const activeShiftStr = localStorage.getItem('activeShift');
+    if (!activeShiftStr) return;
+    
+    try {
+      const activeShift = JSON.parse(activeShiftStr);
+      if (!activeShift || !activeShift.id) return;
+      
+      console.log("Found active shift to close on logout:", activeShift.id);
+      
+      // Update the shift status in the database
+      const endTime = new Date().toISOString();
+      const { error } = await supabase
+        .from('shifts')
+        .update({
+          end_time: endTime,
+          status: 'finished without scan'
+        })
+        .eq('id', activeShift.id);
+      
+      if (error) {
+        console.error("Error closing active shift:", error);
+        return;
+      }
+      
+      // Remove the active shift from localStorage
+      localStorage.removeItem('activeShift');
+      localStorage.removeItem('shiftStartTime');
+      localStorage.removeItem('shiftTimer');
+    } catch (error) {
+      console.error("Error parsing active shift:", error);
+      localStorage.removeItem('activeShift');
+      localStorage.removeItem('shiftStartTime');
+      localStorage.removeItem('shiftTimer');
+    }
+  };
+
+  // Function to login with credentials
   const loginWithCredentials = async (phoneNumber: string, password: string) => {
     try {
       console.log("Attempting login with phone:", phoneNumber);
@@ -147,7 +224,19 @@ export const useUserData = () => {
   };
 
   // Function to log out
-  const logout = () => {
+  const logout = async () => {
+    // If user is a cleaner, check for active cleaning and shift
+    if (userRole === 'cleaner') {
+      // First close any active cleaning
+      const cleaningClosed = await closeActiveCleaning();
+      console.log("Cleaning closed on logout:", cleaningClosed);
+      
+      // Then close any active shift
+      await closeActiveShift();
+      console.log("Shift closed on logout");
+    }
+    
+    // Clear authentication data and state
     localStorage.removeItem('cleanerAuth');
     localStorage.removeItem('adminAuth');
     setUserRole(null);

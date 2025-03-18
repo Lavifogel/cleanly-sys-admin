@@ -1,15 +1,68 @@
 
-import { useState } from "react";
-import { Shift, ShiftHistoryItem } from "@/hooks/shift/types";
-import { getInitialShiftHistory } from "@/hooks/shift/useShiftHistory";
+import { useState, useEffect } from "react";
+import { Shift, ShiftHistoryItem } from "./types";
 
-/**
- * Hook for managing shift state
- */
 export function useShiftState() {
-  const [activeShift, setActiveShift] = useState<null | Shift>(null);
+  // State for tracking shift
+  const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [shiftsHistory, setShiftsHistory] = useState<ShiftHistoryItem[]>(getInitialShiftHistory());
+  const [shiftsHistory, setShiftsHistory] = useState<ShiftHistoryItem[]>([]);
+
+  // Load active shift from local storage on component mount
+  useEffect(() => {
+    const storedShiftData = localStorage.getItem('activeShift');
+    const storedShiftTimer = localStorage.getItem('shiftTimer');
+    const storedStartTime = localStorage.getItem('shiftStartTime');
+    
+    if (storedShiftData && storedStartTime) {
+      try {
+        const shiftData = JSON.parse(storedShiftData);
+        const startTime = new Date(storedStartTime);
+        const savedShift: Shift = {
+          ...shiftData,
+          startTime
+        };
+        
+        setActiveShift(savedShift);
+        
+        if (storedShiftTimer) {
+          setElapsedTime(parseInt(storedShiftTimer, 10));
+        }
+      } catch (error) {
+        console.error("Error parsing stored shift data:", error);
+        // Clear potentially corrupted data
+        localStorage.removeItem('activeShift');
+        localStorage.removeItem('shiftTimer');
+        localStorage.removeItem('shiftStartTime');
+      }
+    }
+  }, []);
+
+  // Save active shift to local storage whenever it changes
+  useEffect(() => {
+    if (activeShift) {
+      // Store shift data in localStorage for retrieval on logout/refresh
+      localStorage.setItem('activeShift', JSON.stringify({
+        id: activeShift.id,
+        location: activeShift.location,
+        qrId: activeShift.qrId
+      }));
+      localStorage.setItem('shiftStartTime', activeShift.startTime.toISOString());
+    } else {
+      // If there's no active shift, remove the stored data
+      localStorage.removeItem('activeShift');
+      localStorage.removeItem('shiftStartTime');
+    }
+  }, [activeShift]);
+
+  // Save elapsed time to localStorage when it changes
+  useEffect(() => {
+    if (activeShift && elapsedTime > 0) {
+      localStorage.setItem('shiftTimer', elapsedTime.toString());
+    } else if (!activeShift) {
+      localStorage.removeItem('shiftTimer');
+    }
+  }, [activeShift, elapsedTime]);
 
   return {
     activeShift,

@@ -30,7 +30,7 @@ export function useCleaningState(activeShiftId: string | undefined) {
     return `${day}/${month}/${year}`;
   };
   
-  // History state with mock initial data for now
+  // Initial cleaning history
   const [cleaningsHistory, setCleaningsHistory] = useState<CleaningHistoryItem[]>([
     {
       id: "1",
@@ -61,6 +61,71 @@ export function useCleaningState(activeShiftId: string | undefined) {
       shiftId: "previous-shift-1",
     },
   ]);
+
+  // Load active cleaning from localStorage on component mount
+  useEffect(() => {
+    const storedCleaningData = localStorage.getItem('activeCleaning');
+    const storedCleaningTimer = localStorage.getItem('cleaningTimer');
+    const storedCleaningStartTime = localStorage.getItem('cleaningStartTime');
+    
+    if (storedCleaningData && storedCleaningStartTime) {
+      try {
+        const cleaningData = JSON.parse(storedCleaningData);
+        const startTime = new Date(storedCleaningStartTime);
+        const isPaused = localStorage.getItem('cleaningPaused') === 'true';
+        
+        // Only restore if the shift matches
+        if (activeShiftId && cleaningData.shiftId === activeShiftId) {
+          const savedCleaning: Cleaning = {
+            id: cleaningData.id,
+            location: cleaningData.location,
+            startTime,
+            timer: 0,
+            paused: isPaused
+          };
+          
+          setActiveCleaning(savedCleaning);
+          
+          if (storedCleaningTimer) {
+            setCleaningElapsedTime(parseInt(storedCleaningTimer, 10));
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing stored cleaning data:", error);
+        // Clear potentially corrupted data
+        localStorage.removeItem('activeCleaning');
+        localStorage.removeItem('cleaningTimer');
+        localStorage.removeItem('cleaningStartTime');
+        localStorage.removeItem('cleaningPaused');
+      }
+    }
+  }, [activeShiftId]);
+
+  // Save active cleaning to localStorage whenever it changes
+  useEffect(() => {
+    if (activeCleaning && activeShiftId) {
+      localStorage.setItem('activeCleaning', JSON.stringify({
+        id: activeCleaning.id,
+        location: activeCleaning.location,
+        shiftId: activeShiftId
+      }));
+      localStorage.setItem('cleaningStartTime', activeCleaning.startTime.toISOString());
+      localStorage.setItem('cleaningPaused', activeCleaning.paused ? 'true' : 'false');
+    } else {
+      localStorage.removeItem('activeCleaning');
+      localStorage.removeItem('cleaningStartTime');
+      localStorage.removeItem('cleaningPaused');
+    }
+  }, [activeCleaning, activeShiftId]);
+
+  // Save cleaning elapsed time when it changes
+  useEffect(() => {
+    if (activeCleaning && cleaningElapsedTime > 0) {
+      localStorage.setItem('cleaningTimer', cleaningElapsedTime.toString());
+    } else if (!activeCleaning) {
+      localStorage.removeItem('cleaningTimer');
+    }
+  }, [activeCleaning, cleaningElapsedTime]);
 
   // Fetch cleaning history when shift changes
   useEffect(() => {
@@ -98,10 +163,10 @@ export function useCleaningState(activeShiftId: string | undefined) {
               .eq('cleaning_id', cleaning.id);
             
             const startTime = new Date(cleaning.start_time || '');
-            const endTime = new Date(cleaning.end_time || '');
+            const endTime = cleaning.end_time ? new Date(cleaning.end_time) : new Date();
             
             const startTimeStr = startTime.toTimeString().slice(0, 5);
-            const endTimeStr = endTime.toTimeString().slice(0, 5);
+            const endTimeStr = cleaning.end_time ? endTime.toTimeString().slice(0, 5) : "--:--";
             
             // Calculate duration
             const durationMs = endTime.getTime() - startTime.getTime();
