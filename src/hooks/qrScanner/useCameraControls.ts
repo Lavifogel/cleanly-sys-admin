@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
-import { useCameraInitialization } from "./useCameraInitialization";
-import { useCameraOperations } from "./useCameraOperations";
+import { useCameraSetup } from "./useCameraSetup";
+import { useScannerState } from "./useScannerState";
 import { useCameraStart } from "./useCameraStart";
 
 interface UseCameraControlsProps {
@@ -15,9 +15,9 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     scannerContainerId, 
     incrementAttempt,
     initAttemptCount
-  } = useCameraInitialization();
+  } = useCameraSetup({ onScanSuccess });
 
-  // Setup camera operations
+  // Setup camera state
   const {
     cameraActive,
     isScanning,
@@ -27,7 +27,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     setIsScanning,
     setError,
     mountedRef
-  } = useCameraOperations({
+  } = useScannerState({
     scannerRef,
     scannerContainerId,
     onScanSuccess
