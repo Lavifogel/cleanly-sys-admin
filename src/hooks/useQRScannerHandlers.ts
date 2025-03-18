@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
 import { ScannerPurpose } from "@/hooks/useQRScanner";
@@ -21,17 +21,29 @@ export function useQRScannerHandlers({
 }: ScanHandlerProps) {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
+  const processingRef = useRef(false);
   
   const closeScanner = () => {
     setShowQRScanner(false);
+    setTimeout(() => {
+      processingRef.current = false;
+    }, 500);
   };
   
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
+    processingRef.current = false;
     setScannerPurpose(purpose);
     setShowQRScanner(true);
   };
   
   const handleQRScan = (decodedText: string) => {
+    // Prevent duplicate processing
+    if (processingRef.current) {
+      console.log("Already processing a scan result, ignoring duplicate");
+      return;
+    }
+    
+    processingRef.current = true;
     setShowQRScanner(false);
     
     try {
@@ -57,6 +69,7 @@ export function useQRScannerHandlers({
       }
     } catch (error) {
       console.error("Error processing QR scan:", error);
+      processingRef.current = false;
     }
   };
   

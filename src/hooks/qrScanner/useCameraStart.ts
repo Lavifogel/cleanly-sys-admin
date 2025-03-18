@@ -103,6 +103,10 @@ export const useCameraStart = ({
       // Set timeout to prevent infinite loading when camera permissions are denied
       const timeoutId = setupCameraTimeout(cameraActive);
 
+      // Track the scan attempt
+      const currentAttempt = incrementAttempt();
+      console.log(`Attempting to start camera (attempt ${currentAttempt})...`);
+
       // Start scanning - using facingMode object format for better compatibility
       try {
         await scannerRef.current.start(
@@ -134,7 +138,23 @@ export const useCameraStart = ({
         setCameraActive(true);
         clearTimeout(timeoutId);
       } catch (err: any) {
-        handleCameraError(err, incrementAttempt());
+        console.error("Error starting camera:", err);
+        
+        // Try fallback camera if initial attempt fails
+        if (currentAttempt <= 2) {
+          console.log("Trying fallback camera options...");
+          const fallbackSuccess = await tryFallbackCamera(config, qrCodeSuccessCallback);
+          
+          if (fallbackSuccess) {
+            console.log("Fallback camera started successfully");
+            setCameraActive(true);
+            clearTimeout(timeoutId);
+            resetStartingState();
+            return;
+          }
+        }
+        
+        handleCameraError(err, currentAttempt);
       }
     } catch (err: any) {
       handleCameraError(err, incrementAttempt());
@@ -156,7 +176,8 @@ export const useCameraStart = ({
     handleCameraError,
     incrementAttempt,
     initializeScanner,
-    resetStartingState
+    resetStartingState,
+    tryFallbackCamera
   ]);
 
   // Set up camera retry logic

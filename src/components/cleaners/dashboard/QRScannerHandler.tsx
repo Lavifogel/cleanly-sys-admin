@@ -24,6 +24,7 @@ const QRScannerHandler = ({
   const scannerMounted = useRef(false);
   const prevShowQRScannerRef = useRef(showQRScanner);
   const closeTimeoutRef = useRef<number | null>(null);
+  const processingQRScanRef = useRef(false);
   
   // Effect to manage scanner visibility changes
   useEffect(() => {
@@ -46,6 +47,7 @@ const QRScannerHandler = ({
         
         closeTimeoutRef.current = window.setTimeout(() => {
           scannerMounted.current = false;
+          processingQRScanRef.current = false;
           closeTimeoutRef.current = null;
         }, 300);
       }
@@ -74,6 +76,26 @@ const QRScannerHandler = ({
   // If 'startShift' and no active shift, show a close button
   const canClose = scannerPurpose === 'startShift' && !activeShift;
 
+  const handleScanSuccess = (decodedText: string) => {
+    // Prevent duplicate scan handling
+    if (processingQRScanRef.current) {
+      console.log("Already processing a QR scan, ignoring duplicate");
+      return;
+    }
+    
+    processingQRScanRef.current = true;
+    console.log("QR scan successful, data:", decodedText);
+    
+    // First stop all camera streams
+    stopAllVideoStreams();
+    
+    // Allow a moment for cleanup before processing result
+    setTimeout(() => {
+      onQRScan(decodedText);
+      // Processing flag will be reset when the scanner is closed
+    }, 150);
+  };
+
   return (
     <div className="fixed inset-0 z-50">
       {canClose && (
@@ -84,15 +106,7 @@ const QRScannerHandler = ({
         </div>
       )}
       <QRCodeScanner 
-        onScanSuccess={(decodedText) => {
-          console.log("QR scan successful, data:", decodedText);
-          // First stop all camera streams
-          stopAllVideoStreams();
-          // Allow a moment for cleanup before processing result
-          setTimeout(() => {
-            onQRScan(decodedText);
-          }, 150);
-        }}
+        onScanSuccess={handleScanSuccess}
         onClose={() => {
           // Only allow closing if it's the initial scanner
           if (canClose) {
