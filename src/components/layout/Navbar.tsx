@@ -3,6 +3,9 @@ import NavbarRoutes from "./NavbarRoutes";
 import MobileMenu from "./MobileMenu";
 import ProfileButton from "./ProfileButton";
 import Logo from "@/components/ui/logo";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
+import { useUserData } from "@/hooks/useUserData";
 
 const Navbar = () => {
   const {
@@ -19,6 +22,8 @@ const Navbar = () => {
     isAdminPage,
     shouldHideProfileIcon
   } = useNavbar();
+
+  const { isAuthenticated, logout } = useUserData();
 
   const handleProfileClick = () => {
     if (location.pathname.includes("/cleaners/dashboard")) {
@@ -37,11 +42,15 @@ const Navbar = () => {
     }
   };
 
+  // Hide navbar on login page
+  if (isLoginPage) {
+    return null;
+  }
+
   return (
     <header 
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 
         ${isScrolled ? 'bg-white/95 shadow-sm backdrop-blur-sm' : 'bg-white/80'}
-        ${isLoginPage ? 'hidden' : ''}
       `}
     >
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between h-20">
@@ -54,8 +63,19 @@ const Navbar = () => {
         <div className="hidden md:flex items-center space-x-2">
           <NavbarRoutes userRole={userRole} />
           
-          {!shouldHideProfileIcon && (
-            <ProfileButton onClick={handleProfileClick} />
+          {!shouldHideProfileIcon && isAuthenticated && (
+            <>
+              <ProfileButton onClick={handleProfileClick} />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={logout}
+                className="flex items-center gap-1"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            </>
           )}
         </div>
 
@@ -91,7 +111,9 @@ const Navbar = () => {
         userRole={userRole} 
         onClose={() => setIsMobileMenuOpen(false)}
         onProfileClick={handleProfileClick}
-        shouldHideProfileIcon={shouldHideProfileIcon}
+        shouldHideProfileIcon={shouldHideProfileIcon && !isAuthenticated}
+        isAuthenticated={isAuthenticated}
+        onLogout={logout}
       />
     </header>
   );

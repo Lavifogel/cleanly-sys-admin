@@ -1,8 +1,8 @@
 
-import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { getNavRoutes } from '@/utils/navbarUtils';
-import { useLocation } from 'react-router-dom';
+import { NavLink } from "react-router-dom";
+import { getNavRoutes } from "@/utils/navbarUtils";
+import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -10,46 +10,43 @@ interface MobileMenuProps {
   onClose: () => void;
   onProfileClick: () => void;
   shouldHideProfileIcon: boolean;
+  isAuthenticated?: boolean;
+  onLogout?: () => void;
 }
 
 const MobileMenu = ({ 
   isOpen, 
   userRole, 
-  onClose,
+  onClose, 
   onProfileClick, 
-  shouldHideProfileIcon 
+  shouldHideProfileIcon,
+  isAuthenticated,
+  onLogout
 }: MobileMenuProps) => {
-  const location = useLocation();
-  const routes = getNavRoutes(true, userRole); // Assuming we're always authenticated
-
-  const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
-  };
-
   if (!isOpen) return null;
 
+  const routes = getNavRoutes({ user: 'authenticated' }, userRole);
+
   return (
-    <div className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-sm border-b animate-slide-in">
-      <nav className="flex flex-col p-4 space-y-2 max-w-7xl mx-auto">
+    <div className="md:hidden fixed inset-0 z-50 bg-white/95 backdrop-blur-sm pt-20">
+      <div className="container mx-auto px-4 py-4 flex flex-col">
         {routes.map((route) => (
-          <Link
+          <NavLink
             key={route.path}
             to={route.path}
-            className={cn(
-              'px-4 py-3 rounded-md text-sm font-medium transition-colors',
-              isActive(route.path)
-                ? 'text-primary bg-primary/10'
-                : 'text-foreground/70 hover:text-foreground hover:bg-foreground/5'
-            )}
+            className={({ isActive }) => `
+              py-3 px-2 text-lg font-medium rounded-md transition-colors
+              ${isActive ? 'bg-primary/10 text-primary' : 'hover:bg-gray-100'}
+            `}
             onClick={onClose}
           >
             {route.label}
-          </Link>
+          </NavLink>
         ))}
         
         {!shouldHideProfileIcon && (
           <button
-            className="flex items-center px-4 py-3 rounded-md text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-foreground/5"
+            className="flex items-center gap-2 py-3 px-2 text-lg font-medium rounded-md hover:bg-gray-100 transition-colors"
             onClick={() => {
               onProfileClick();
               onClose();
@@ -58,7 +55,21 @@ const MobileMenu = ({
             Profile
           </button>
         )}
-      </nav>
+
+        {isAuthenticated && onLogout && (
+          <Button 
+            variant="ghost" 
+            className="justify-start py-3 px-2 text-lg font-medium rounded-md hover:bg-gray-100 transition-colors mt-2" 
+            onClick={() => {
+              onLogout();
+              onClose();
+            }}
+          >
+            <LogOut className="mr-2 h-5 w-5" />
+            Logout
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

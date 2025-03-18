@@ -8,13 +8,13 @@ export const useNavbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { userRole, userName, session } = useUserData();
+  const { userRole, userName, session, isAuthenticated } = useUserData();
 
   // Check if current page is login or index page
   const isLoginPage = location.pathname === '/login';
   const isIndexPage = location.pathname === '/';
   const isAdminPage = location.pathname.includes('/admin');
-  const shouldHideProfileIcon = isLoginPage || isIndexPage || isAdminPage || userRole === 'admin';
+  const shouldHideProfileIcon = isLoginPage || isIndexPage || isAdminPage || userRole === 'admin' || !isAuthenticated;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,6 +55,7 @@ export const useNavbar = () => {
     isLoginPage,
     isIndexPage,
     isAdminPage,
-    shouldHideProfileIcon
+    shouldHideProfileIcon,
+    isAuthenticated
   };
 };
