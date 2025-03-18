@@ -56,7 +56,6 @@ export const useScannerInitialization = ({
     return {
       fps: 10, // Lower FPS for more stability
       qrbox: { width: 250, height: 250 },
-      aspectRatio: 1.0,
       formatsToSupport: ["QR_CODE"],
       experimentalFeatures: {
         useBarCodeDetectorIfSupported: true

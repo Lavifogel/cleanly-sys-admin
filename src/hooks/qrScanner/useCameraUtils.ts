@@ -48,6 +48,9 @@ export const useCameraUtils = ({
       }
     } catch (fallbackErr) {
       console.error("Fallback camera also failed:", fallbackErr);
+      if (mountedRef.current) {
+        setError("Camera access failed. Please check camera permissions and try again.");
+      }
     }
   }, [scannerRef, mountedRef, onScanSuccess, stopCamera, setCameraActive, setError]);
 
@@ -70,13 +73,20 @@ export const useCameraUtils = ({
     
     if (err.toString().includes("permission")) {
       setError("Camera access denied. Please enable camera permissions in your browser settings.");
+    } else if (err.toString().includes("object should have exactly 1 key")) {
+      // Special handling for camera configuration error
+      setError("Camera initialization failed. Trying alternative approach...");
+      // Try with simple configuration
+      if (scannerRef.current && mountedRef.current) {
+        tryFallbackCamera();
+      }
     } else {
       setError("Could not access the camera. Please ensure your device has a working camera.");
+      
+      // Try with user-facing camera as fallback
+      tryFallbackCamera();
     }
-    
-    // Try with user-facing camera as fallback
-    tryFallbackCamera();
-  }, [mountedRef, setError, tryFallbackCamera]);
+  }, [mountedRef, setError, tryFallbackCamera, scannerRef]);
 
   return {
     tryFallbackCamera,

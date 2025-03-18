@@ -54,6 +54,7 @@ export const useCameraStart = ({
   
   // Import camera utilities
   const {
+    tryFallbackCamera,
     setupCameraTimeout,
     handleCameraError
   } = useCameraUtils({
@@ -115,22 +116,13 @@ export const useCameraStart = ({
       
       // Get scanner configuration
       const config = createScannerConfig();
-      
-      // Make sure HTML5QrCode will use the 'environment' facing camera (rear camera on mobile)
-      // and use a higher resolution for better scanning
-      const cameraOptions = {
-        facingMode: "environment",
-        fps: 10,  // Lower FPS can help with performance
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
-      };
 
       // Set timeout to prevent infinite loading when camera permissions are denied
       const timeoutId = setupCameraTimeout(cameraActive);
 
-      // Start scanning
+      // Start scanning - using string camera id format for better compatibility
       await scannerRef.current.start(
-        cameraOptions,
+        { facingMode: { exact: "environment" } },
         config,
         qrCodeSuccessCallback,
         (errorMessage) => {
