@@ -26,7 +26,7 @@ export const useCameraUtils = ({
     
     // Try simple auto mode first
     try {
-      console.log("Trying with auto facing mode...");
+      console.log("Trying with user facing mode...");
       await scannerRef.current.start(
         { facingMode: "user" }, // Try user-facing camera
         config,
@@ -48,8 +48,9 @@ export const useCameraUtils = ({
       if (mountedRef.current && scannerRef.current) {
         try {
           console.log("Trying with default camera...");
+          // Fix: Use a proper MediaTrackConstraints object instead of boolean
           await scannerRef.current.start(
-            true, // Use any available camera
+            { facingMode: "environment" }, // Use environment camera as final fallback
             config,
             qrCodeSuccessCallback,
             () => {}
