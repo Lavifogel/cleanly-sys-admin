@@ -37,7 +37,6 @@ export const useScannerState = ({
     
     try {
       stopInProgressRef.current = true;
-      console.log("Stopping camera...");
       
       if (scannerRef.current && isScanning) {
         try {

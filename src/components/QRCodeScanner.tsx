@@ -29,7 +29,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       scanProcessedRef.current = true;
       console.log("QR scan successful, data:", decodedText);
       
-      // Stop camera streams first and ensure complete shutdown
+      // Stop camera streams first
       stopAllVideoStreams();
       
       // Call the original success callback with a slight delay to ensure UI updates
@@ -69,7 +69,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       }
       
       // Add a small delay before final cleanup to avoid race conditions
-      cleanupTimeoutRef.current = window.setTimeout(() => {
+      setTimeout(() => {
         // Stop all video streams on unmount
         stopAllVideoStreams();
       }, 200);
@@ -88,7 +88,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     stopAllVideoStreams();
     
     // Slight delay to ensure cleanup completes before closing
-    cleanupTimeoutRef.current = window.setTimeout(() => {
+    setTimeout(() => {
       handleClose();
     }, 250);
   };

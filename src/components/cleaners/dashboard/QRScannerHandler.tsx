@@ -30,7 +30,6 @@ const QRScannerHandler = ({
   useEffect(() => {
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
-      processingQRScanRef.current = false;
       scannerMounted.current = true;
       console.log("QR scanner opened");
     } 
@@ -92,13 +91,8 @@ const QRScannerHandler = ({
     
     // Allow a moment for cleanup before processing result
     setTimeout(() => {
-      // Close the scanner UI first
-      closeScanner();
-      
-      // Then process the scan after a slight delay
-      setTimeout(() => {
-        onQRScan(decodedText);
-      }, 300);
+      onQRScan(decodedText);
+      // Processing flag will be reset when the scanner is closed
     }, 150);
   };
 
