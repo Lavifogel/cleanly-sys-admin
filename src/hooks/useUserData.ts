@@ -57,7 +57,29 @@ export const useUserData = () => {
   // Function to authenticate user with phone and password
   const loginWithCredentials = async (phoneNumber: string, password: string) => {
     try {
-      // First try to log in as cleaner
+      // Hard-coded admin credentials check
+      if (phoneNumber === '+1234567890' && password === '654321') {
+        // Create admin user object
+        const adminUser = {
+          id: 'admin-id',
+          first_name: 'Admin',
+          last_name: 'User',
+          role: 'admin',
+          phone: phoneNumber
+        };
+        
+        // Store admin info in localStorage
+        localStorage.setItem('adminAuth', JSON.stringify(adminUser));
+        
+        // Update state
+        setUserRole('admin');
+        setUserName(`${adminUser.first_name} ${adminUser.last_name}`);
+        setIsAuthenticated(true);
+        
+        return { success: true, user: adminUser };
+      }
+      
+      // If not using hardcoded admin credentials, try to log in as cleaner
       const { data: cleanerData, error: cleanerError } = await supabase
         .from('users')
         .select('*')
@@ -78,28 +100,7 @@ export const useUserData = () => {
         return { success: true, user: cleanerData };
       }
 
-      // If not a cleaner, try to log in as admin
-      const { data: adminData, error: adminError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('phone', phoneNumber)
-        .eq('password', password)
-        .eq('role', 'admin')
-        .single();
-
-      if (adminData) {
-        // Store admin info in localStorage
-        localStorage.setItem('adminAuth', JSON.stringify(adminData));
-        
-        // Update state
-        setUserRole('admin');
-        setUserName(`${adminData.first_name} ${adminData.last_name}`);
-        setIsAuthenticated(true);
-        
-        return { success: true, user: adminData };
-      }
-
-      // If we get here, neither cleaner nor admin login was successful
+      // If we get here, neither admin nor cleaner login was successful
       console.error('Login error: Invalid credentials');
       return { success: false, error: new Error("Invalid phone number or password") };
     } catch (error) {
