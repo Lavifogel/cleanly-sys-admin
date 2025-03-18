@@ -2,11 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 export const useUserData = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   // Fetch user session
   const { data: session } = useQuery({
@@ -122,7 +124,7 @@ export const useUserData = () => {
     setUserRole(null);
     setUserName(null);
     setIsAuthenticated(false);
-    window.location.href = '/login';
+    navigate('/login', { replace: true });
   };
 
   return {
@@ -131,6 +133,7 @@ export const useUserData = () => {
     session,
     isAuthenticated,
     loginWithCredentials,
-    logout
+    logout,
+    navigate
   };
 };

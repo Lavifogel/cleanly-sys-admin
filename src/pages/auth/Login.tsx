@@ -46,7 +46,8 @@ const Login = () => {
         
         // Redirect based on user role
         if (user.role === 'admin') {
-          navigate("/admin/dashboard");
+          console.log("Redirecting admin to dashboard...");
+          navigate("/admin/dashboard", { replace: true });
         } else if (user.role === 'cleaner') {
           // Force navigation to cleaner dashboard
           console.log("Redirecting cleaner to dashboard...");
