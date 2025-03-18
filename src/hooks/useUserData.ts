@@ -57,8 +57,8 @@ export const useUserData = () => {
   // Function to authenticate user with phone and password
   const loginWithCredentials = async (phoneNumber: string, password: string) => {
     try {
-      // Hard-coded admin credentials check
-      if (phoneNumber === '+1234567890' && password === '654321') {
+      // Hard-coded admin credentials check - accept both versions of the phone number
+      if ((phoneNumber === '+1234567890' || phoneNumber === '+123456789') && password === '654321') {
         // Create admin user object
         const adminUser = {
           id: 'admin-id',
