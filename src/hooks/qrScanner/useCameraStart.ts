@@ -1,6 +1,8 @@
 
 import { useCallback, useEffect } from "react";
 import { Html5Qrcode } from "html5-qrcode";
+import { useScannerInitialization } from "./useScannerInitialization";
+import { useCameraUtils } from "./useCameraUtils";
 
 interface UseCameraStartProps {
   scannerRef: React.MutableRefObject<Html5Qrcode | null>;
@@ -31,6 +33,35 @@ export const useCameraStart = ({
   incrementAttempt
 }: UseCameraStartProps) => {
   
+  // Import scanner initialization utilities
+  const {
+    validateScannerContainer,
+    createScannerConfig,
+    setupQRCodeCallback
+  } = useScannerInitialization({
+    scannerRef,
+    scannerContainerId,
+    stopCamera,
+    setIsScanning,
+    setError,
+    setCameraActive,
+    mountedRef,
+    onScanSuccess
+  });
+  
+  // Import camera utilities
+  const {
+    setupCameraTimeout,
+    handleCameraError
+  } = useCameraUtils({
+    scannerRef,
+    onScanSuccess,
+    stopCamera,
+    mountedRef,
+    setCameraActive,
+    setError
+  });
+
   // Memoize the startScanner function
   const startScanner = useCallback(async () => {
     if (!scannerRef.current) {
@@ -60,55 +91,18 @@ export const useCameraStart = ({
     try {
       console.log(`Starting QR scanner (attempt ${currentAttempt})...`);
       
-      // Make sure container element exists and has dimensions
-      const containerElement = document.getElementById(scannerContainerId);
-      if (!containerElement) {
-        throw new Error("Scanner container element not found");
-      }
+      // Validate scanner container
+      const isContainerValid = await validateScannerContainer();
+      if (!isContainerValid || !mountedRef.current) return;
       
-      // Log container dimensions to help debug
-      const rect = containerElement.getBoundingClientRect();
-      console.log("Scanner container dimensions:", rect.width, rect.height);
+      // Create QR code callback
+      const qrCodeSuccessCallback = setupQRCodeCallback(onScanSuccess, stopCamera);
       
-      if (rect.width < 10 || rect.height < 10) {
-        console.log("Container has insufficient dimensions, adding delay");
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Check again after delay
-        if (!mountedRef.current) return;
-        
-        const updatedRect = containerElement.getBoundingClientRect();
-        if (updatedRect.width < 10 || updatedRect.height < 10) {
-          throw new Error("Scanner container has insufficient dimensions");
-        }
-      }
-      
-      const qrCodeSuccessCallback = (decodedText: string) => {
-        console.log("Successfully scanned QR code:", decodedText);
-        // Handle the scanned code here
-        onScanSuccess(decodedText);
-        
-        // Stop scanning after successful scan
-        stopCamera();
-      };
-
-      const config = {
-        fps: 10, // Lower FPS for more stability
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0,
-        formatsToSupport: ["QR_CODE"],
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true
-        }
-      };
+      // Get scanner configuration
+      const config = createScannerConfig();
 
       // Set timeout to prevent infinite loading when camera permissions are denied
-      const timeoutId = setTimeout(() => {
-        if (mountedRef.current && !cameraActive) {
-          setError("Camera access timed out. Please ensure camera permissions are enabled and try again.");
-          setIsScanning(false);
-        }
-      }, 15000); // Longer timeout
+      const timeoutId = setupCameraTimeout(cameraActive);
 
       // Start scanning with back camera (environment)
       await scannerRef.current.start(
@@ -133,21 +127,7 @@ export const useCameraStart = ({
       setCameraActive(true);
       clearTimeout(timeoutId);
     } catch (err: any) {
-      console.error("Error starting QR scanner:", err);
-      
-      if (!mountedRef.current) return;
-      
-      setIsScanning(false);
-      setCameraActive(false);
-      
-      if (err.toString().includes("permission")) {
-        setError("Camera access denied. Please enable camera permissions in your browser settings.");
-      } else {
-        setError("Could not access the camera. Please ensure your device has a working camera.");
-      }
-      
-      // Try with user-facing camera as fallback
-      tryFallbackCamera(currentAttempt);
+      handleCameraError(err, currentAttempt);
     }
   }, [
     scannerRef, 
@@ -159,39 +139,13 @@ export const useCameraStart = ({
     mountedRef, 
     onScanSuccess, 
     incrementAttempt, 
-    cameraActive
+    cameraActive,
+    validateScannerContainer,
+    createScannerConfig,
+    setupQRCodeCallback,
+    setupCameraTimeout,
+    handleCameraError
   ]);
-
-  // Helper function for fallback camera
-  const tryFallbackCamera = useCallback(async (currentAttempt: number) => {
-    try {
-      if (mountedRef.current && scannerRef.current) {
-        console.log("Trying with user-facing camera...");
-        const config = {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          formatsToSupport: ["QR_CODE"]
-        };
-        
-        await scannerRef.current.start(
-          { facingMode: "user" },
-          config,
-          (decodedText) => {
-            onScanSuccess(decodedText);
-            stopCamera();
-          },
-          () => {}
-        );
-        
-        if (mountedRef.current) {
-          setCameraActive(true);
-          setError(null);
-        }
-      }
-    } catch (fallbackErr) {
-      console.error("Fallback camera also failed:", fallbackErr);
-    }
-  }, [scannerRef, mountedRef, onScanSuccess, stopCamera, setCameraActive, setError]);
 
   // Improved retry mechanism for scanner initialization
   useEffect(() => {
