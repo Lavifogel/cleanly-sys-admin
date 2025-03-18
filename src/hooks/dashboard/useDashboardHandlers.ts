@@ -71,7 +71,7 @@ export function useDashboardHandlers() {
     handleConfirmEndCleaningWithoutQR
   } = confirmationHandlers;
   
-  // Event handlers
+  // Event handlers for starting shift/cleaning - expose these directly
   const handleStartShiftWithScan = () => {
     handleQRScannerStart('startShift');
   };
@@ -160,11 +160,11 @@ export function useDashboardHandlers() {
     
     // Actions
     handleQRScan,
-    handleStartShiftWithScan: handleStartShiftWithScan,
+    handleStartShift: handleStartShiftWithScan, // Expose as handleStartShift
+    handleStartCleaning: handleStartCleaningWithScan, // Expose as handleStartCleaning
     handleEndShiftWithScan,
     handleEndShiftWithoutScan: () => handleConfirmEndShiftWithoutQR(() => handleEndShiftWithoutScan()),
     handleAutoEndShift,
-    handleStartCleaningWithScan,
     handleEndCleaningWithScan,
     handleEndCleaningWithoutScan: () => handleConfirmEndCleaningWithoutQR(() => handleEndCleaningWithoutScan()),
     handleAutoEndCleaning,
