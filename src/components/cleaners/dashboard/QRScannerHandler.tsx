@@ -31,12 +31,14 @@ const QRScannerHandler = ({
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
       scannerMounted.current = true;
+      processingQRScanRef.current = false;
       console.log("QR scanner opened");
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
       // Ensure camera is released when QR scanner is closed
       if (scannerMounted.current) {
+        // Immediately force stop all video streams
         stopAllVideoStreams();
         console.log("QR scanner closed, camera resources released");
         
@@ -49,6 +51,9 @@ const QRScannerHandler = ({
           scannerMounted.current = false;
           processingQRScanRef.current = false;
           closeTimeoutRef.current = null;
+          
+          // Force stop streams again to ensure complete cleanup
+          stopAllVideoStreams();
         }, 300);
       }
     }
@@ -70,6 +75,14 @@ const QRScannerHandler = ({
       }
     };
   }, [showQRScanner]);
+
+  // Additional cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      stopAllVideoStreams();
+      console.log("QRScannerHandler unmounting, final cleanup");
+    };
+  }, []);
 
   if (!showQRScanner) return null;
 
@@ -93,14 +106,22 @@ const QRScannerHandler = ({
     setTimeout(() => {
       onQRScan(decodedText);
       // Processing flag will be reset when the scanner is closed
-    }, 150);
+    }, 200);
   };
 
   return (
     <div className="fixed inset-0 z-50">
       {canClose && (
         <div className="absolute top-4 right-4 z-50">
-          <Button variant="ghost" size="icon" onClick={closeScanner} className="bg-background/50 backdrop-blur-sm hover:bg-background/80">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              stopAllVideoStreams();
+              setTimeout(closeScanner, 100);
+            }} 
+            className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -115,7 +136,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 150);
+            }, 200);
           }
         }}
       />

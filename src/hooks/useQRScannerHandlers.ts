@@ -1,5 +1,6 @@
 
 import { useState, useRef } from "react";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
 import { ScannerPurpose } from "@/hooks/useQRScanner";
@@ -24,7 +25,11 @@ export function useQRScannerHandlers({
   const processingRef = useRef(false);
   
   const closeScanner = () => {
+    // Force stop all camera streams before hiding the scanner UI
+    stopAllVideoStreams();
     setShowQRScanner(false);
+    
+    // Reset processing state after a delay
     setTimeout(() => {
       processingRef.current = false;
     }, 500);
@@ -44,33 +49,41 @@ export function useQRScannerHandlers({
     }
     
     processingRef.current = true;
+    
+    // Immediately stop all camera streams
+    stopAllVideoStreams();
+    
+    // Hide scanner UI
     setShowQRScanner(false);
     
-    try {
-      console.log(`QR scanned for purpose: ${scannerPurpose}, data: ${decodedText}`);
-      
-      switch (scannerPurpose) {
-        case 'startShift':
-          onStartShiftScan(decodedText);
-          break;
-        case 'endShift':
-          onEndShiftScan(decodedText);
-          break;
-        case 'startCleaning':
-          onStartCleaningScan(decodedText);
-          // Switch to cleaning tab after starting a cleaning
-          if (setActiveTab) {
-            setActiveTab('cleaning');
-          }
-          break;
-        case 'endCleaning':
-          onEndCleaningScan(decodedText);
-          break;
+    // Add a small delay before processing the scan result
+    // This ensures camera resources are fully released
+    setTimeout(() => {
+      try {
+        console.log(`QR scanned for purpose: ${scannerPurpose}, data: ${decodedText}`);
+        
+        switch (scannerPurpose) {
+          case 'startShift':
+            onStartShiftScan(decodedText);
+            break;
+          case 'endShift':
+            onEndShiftScan(decodedText);
+            break;
+          case 'startCleaning':
+            onStartCleaningScan(decodedText);
+            // Switch to cleaning tab after starting a cleaning
+            if (setActiveTab) {
+              setActiveTab('cleaning');
+            }
+            break;
+          case 'endCleaning':
+            onEndCleaningScan(decodedText);
+            break;
+        }
+      } catch (error) {
+        console.error("Error processing QR scan:", error);
       }
-    } catch (error) {
-      console.error("Error processing QR scan:", error);
-      processingRef.current = false;
-    }
+    }, 300);
   };
   
   return {

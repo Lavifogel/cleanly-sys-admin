@@ -37,6 +37,7 @@ export const useScannerState = ({
     
     try {
       stopInProgressRef.current = true;
+      console.log("Stopping camera...");
       
       if (scannerRef.current && isScanning) {
         try {
@@ -63,7 +64,7 @@ export const useScannerState = ({
           setCameraActive(false);
         }
         stopInProgressRef.current = false;
-      }, 150);
+      }, 200);
     } catch (error) {
       console.error("Error in stopCamera:", error);
       // Even if there's an error, still try to stop all video streams as a fallback
