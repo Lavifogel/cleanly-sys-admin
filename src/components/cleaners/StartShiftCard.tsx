@@ -16,12 +16,16 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
   const handleStartShift = async () => {
     setIsLoading(true);
     try {
-      await onStartShift();
-      toast({
-        title: "QR Scanner opened",
-        description: "Please scan a QR code to start your shift.",
-        duration: 3000,
-      });
+      // Slight delay to ensure UI updates before opening scanner
+      setTimeout(() => {
+        onStartShift();
+        toast({
+          title: "QR Scanner opening",
+          description: "Please scan a QR code to start your shift.",
+          duration: 3000,
+        });
+        setIsLoading(false);
+      }, 100);
     } catch (error: any) {
       console.error("Error starting shift:", error);
       toast({
@@ -29,7 +33,6 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
         description: error.message || "Failed to start shift. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };

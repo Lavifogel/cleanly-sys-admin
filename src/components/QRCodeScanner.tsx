@@ -19,7 +19,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   
   // Auto-focus on scanning when component mounts
   useEffect(() => {
-    console.log("QR scanner mounted, camera active:", cameraActive);
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      console.log("QR scanner mounted, camera active:", cameraActive);
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [cameraActive]);
 
   return (

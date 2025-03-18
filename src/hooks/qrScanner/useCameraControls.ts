@@ -15,6 +15,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = "qr-scanner-container";
   const initAttemptRef = useRef(0);
+  const isInitializedRef = useRef(false);
 
   // Memoize the stopCamera function to prevent unnecessary re-creations
   const stopCamera = useCallback(async () => {
@@ -50,11 +51,29 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     // First, make sure any existing camera is stopped
     await stopCamera();
 
+    // Wait for DOM to be ready
+    await new Promise(resolve => setTimeout(resolve, 300));
+
     setIsScanning(true);
     setError(null);
 
     try {
       console.log(`Starting QR scanner (attempt ${currentAttempt})...`);
+      
+      // Make sure container element exists and has dimensions
+      const containerElement = document.getElementById(scannerContainerId);
+      if (!containerElement) {
+        throw new Error("Scanner container element not found");
+      }
+      
+      // Log container dimensions to help debug
+      const rect = containerElement.getBoundingClientRect();
+      console.log("Scanner container dimensions:", rect.width, rect.height);
+      
+      if (rect.width === 0 || rect.height === 0) {
+        console.log("Container has zero dimensions, adding delay");
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       
       const qrCodeSuccessCallback = (decodedText: string) => {
         console.log("Successfully scanned QR code:", decodedText);
@@ -66,7 +85,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
       };
 
       const config = {
-        fps: 15,
+        fps: 10, // Lower FPS for more stability
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
         formatsToSupport: ["QR_CODE"],
@@ -81,7 +100,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
           setError("Camera access timed out. Please ensure camera permissions are enabled and try again.");
           setIsScanning(false);
         }
-      }, 10000);
+      }, 15000); // Longer timeout
 
       // Start scanning with back camera (environment)
       await scannerRef.current.start(
@@ -139,11 +158,11 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     }
   }, [onScanSuccess, stopCamera, cameraActive]);
 
-  // Auto-restart scanner if it fails to initialize within 2 seconds
+  // Improved retry mechanism for scanner initialization
   useEffect(() => {
-    if (isScanning && !cameraActive) {
+    if (isScanning && !cameraActive && initAttemptRef.current < 3) {
       const timeoutId = setTimeout(() => {
-        if (isScanning && !cameraActive && initAttemptRef.current < 3) {
+        if (isScanning && !cameraActive) {
           console.log("Camera not active after timeout, attempting restart...");
           startScanner();
         }
@@ -152,6 +171,26 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
       return () => clearTimeout(timeoutId);
     }
   }, [isScanning, cameraActive, startScanner]);
+
+  // Initialize HTML5QrCode instance only once
+  useEffect(() => {
+    if (!isInitializedRef.current) {
+      // Slight delay to ensure container is ready
+      const timeoutId = setTimeout(() => {
+        try {
+          if (!scannerRef.current) {
+            console.log("Initializing HTML5QrCode instance");
+            scannerRef.current = new Html5Qrcode(scannerContainerId);
+            isInitializedRef.current = true;
+          }
+        } catch (error) {
+          console.error("Error initializing scanner:", error);
+        }
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, []);
 
   return {
     cameraActive,

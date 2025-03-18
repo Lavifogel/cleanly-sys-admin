@@ -53,21 +53,34 @@ export const useQRScannerLogic = (
     simulationProgress
   };
 
-  // Initialize the scanner when component mounts
+  // Initialize the scanner when component mounts with a slight delay to ensure DOM is ready
   useEffect(() => {
-    scannerRef.current = new Html5Qrcode(scannerContainerId);
-
+    const initTimer = setTimeout(() => {
+      if (scannerRef.current) {
+        console.log("Scanner reference already exists, starting scanner");
+        if (!isScanning) {
+          startScanner();
+        }
+      }
+    }, 500);
+    
     // Clean up when component unmounts
     return () => {
+      clearTimeout(initTimer);
       stopCamera();
     };
   }, []);
 
   // Start scanning when the scanner is initialized
   useEffect(() => {
-    if (scannerRef.current && !isScanning) {
-      startScanner();
-    }
+    const startTimer = setTimeout(() => {
+      if (scannerRef.current && !isScanning) {
+        console.log("Starting scanner after initialization");
+        startScanner();
+      }
+    }, 800);
+    
+    return () => clearTimeout(startTimer);
   }, [scannerRef.current]);
 
   const handleClose = () => {

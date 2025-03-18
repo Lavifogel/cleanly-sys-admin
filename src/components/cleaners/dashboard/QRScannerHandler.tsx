@@ -22,9 +22,22 @@ const QRScannerHandler = ({
   activeShift = false
 }: QRScannerHandlerProps) => {
   
-  // Monitor when the QR scanner is closed and ensure camera is properly released
+  // Monitor when the QR scanner is shown and ensure it initializes properly
   useEffect(() => {
-    if (!showQRScanner) {
+    let timeoutId: number;
+    
+    if (showQRScanner) {
+      // Force a reflow to ensure the scanner container is ready
+      timeoutId = window.setTimeout(() => {
+        const container = document.getElementById("qr-scanner-container");
+        if (container) {
+          console.log("QR scanner container found, dimensions:", 
+            container.offsetWidth, container.offsetHeight);
+        } else {
+          console.log("QR scanner container not found yet");
+        }
+      }, 300);
+    } else {
       // Ensure any lingering video tracks are stopped
       stopAllVideoStreams();
       console.log("Camera resources released when QR scanner hidden");
@@ -32,6 +45,7 @@ const QRScannerHandler = ({
     
     // Also clean up when unmounting
     return () => {
+      window.clearTimeout(timeoutId);
       if (showQRScanner) {
         stopAllVideoStreams();
         console.log("Camera resources released when QR scanner component unmounted");

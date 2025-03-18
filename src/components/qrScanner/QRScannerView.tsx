@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Scan } from "lucide-react";
 import { QRScannerStates } from "@/types/qrScanner";
 
@@ -13,14 +13,29 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   scannerState 
 }) => {
   const { cameraActive, simulationActive, simulationProgress } = scannerState;
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Ensure the container is visible and has proper dimensions before initializing camera
+  useEffect(() => {
+    if (containerRef.current) {
+      // Force a reflow to ensure the element is rendered
+      containerRef.current.getBoundingClientRect();
+      console.log("QR scanner container dimensions:", 
+        containerRef.current.offsetWidth, 
+        containerRef.current.offsetHeight
+      );
+    }
+  }, []);
   
   return (
     <div 
       id={scannerContainerId} 
+      ref={containerRef}
       className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-900'}`}
+      style={{ minHeight: "320px" }} // Ensure minimum height
     >
       {!cameraActive && !simulationActive && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
           <p className="text-white text-sm">Initializing camera...</p>
           <div className="mt-2 animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
         </div>
