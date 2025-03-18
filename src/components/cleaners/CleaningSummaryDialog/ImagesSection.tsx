@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { stopAllVideoStreams, isCameraInUse } from "@/utils/qrScannerUtils";
+import CameraCapture from "./CameraCapture";
 
 interface ImagesSectionProps {
   images: string[];
@@ -23,6 +24,7 @@ const ImagesSection = ({
 }: ImagesSectionProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCamera, setShowCamera] = useState(false);
   
   const handleCameraClick = () => {
     if (images.length >= maxImages) {
@@ -44,12 +46,8 @@ const ImagesSection = ({
       return;
     }
     
-    // Reset the file input to ensure it triggers properly
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-      // Directly trigger a click on the file input
-      fileInputRef.current.click();
-    }
+    // Open the camera component
+    setShowCamera(true);
   };
 
   const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,15 +79,23 @@ const ImagesSection = ({
       stopAllVideoStreams();
     }
   };
+  
+  const handleCameraCapture = async (imageBlob: Blob) => {
+    try {
+      // Convert blob to file
+      const file = new File([imageBlob], `camera-capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      await onAddImage(file);
+    } catch (error) {
+      console.error("Error processing camera capture:", error);
+      toast({
+        title: "Camera capture failed",
+        description: "There was a problem processing the photo.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Clean up any video streams when component unmounts
-  useEffect(() => {
-    return () => {
-      stopAllVideoStreams();
-    };
-  }, []);
-
-  // Clean up any camera resources when this component unmounts
   useEffect(() => {
     return () => {
       stopAllVideoStreams();
@@ -154,6 +160,12 @@ const ImagesSection = ({
         capture="environment"
         className="hidden"
         onChange={handleCapture}
+      />
+      
+      <CameraCapture 
+        open={showCamera}
+        onOpenChange={setShowCamera}
+        onCapture={handleCameraCapture}
       />
     </div>
   );
