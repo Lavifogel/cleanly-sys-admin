@@ -75,7 +75,7 @@ const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <Logo className="h-12 w-auto mb-4" />
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
           <CardDescription>
             Sign in to your account
           </CardDescription>
