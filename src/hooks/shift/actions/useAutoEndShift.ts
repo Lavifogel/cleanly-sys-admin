@@ -1,7 +1,6 @@
 
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import { 
   updateShiftEnd 
 } from "@/hooks/shift/useShiftDatabase";
@@ -9,7 +8,7 @@ import { createShiftHistoryItem } from "@/hooks/shift/useShiftHistory";
 import { Shift, ShiftHistoryItem } from "@/hooks/shift/types";
 
 /**
- * Hook for automatically ending shifts that exceed max duration
+ * Hook for automatically ending shifts
  */
 export function useAutoEndShift(
   activeShift: Shift | null,
@@ -20,27 +19,23 @@ export function useAutoEndShift(
   setShiftsHistory: (history: ShiftHistoryItem[]) => void
 ) {
   const { toast } = useToast();
-  const navigate = useNavigate();
 
-  // Handle auto end shift (for shifts that exceed 16 hours)
+  // Auto end shift without confirmation or extra steps
   const autoEndShift = useCallback(async () => {
-    if (!activeShift) return;
+    if (!activeShift) return false;
     
     try {
       const endTime = new Date();
       const status = "finished automatically";
       
+      console.log("Auto-ending shift:", activeShift.id);
+      
       // Update the shift in the database
       try {
         await updateShiftEnd(activeShift.id, endTime.toISOString(), status);
       } catch (error: any) {
-        console.error("Error auto-updating shift:", error);
-        toast({
-          title: "Error",
-          description: "Failed to auto-end shift. Please try again.",
-          variant: "destructive",
-        });
-        return;
+        console.error("Error auto-ending shift:", error);
+        return false;
       }
       
       // Create a new shift history item
@@ -57,26 +52,13 @@ export function useAutoEndShift(
       setActiveShift(null);
       setElapsedTime(0);
       
-      // Show toast
-      toast({
-        title: "Shift Ended Automatically",
-        description: "Your shift has been automatically ended after 16 hours.",
-        duration: 3000,
-      });
-      
-      // Redirect to the login page
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);
+      console.log("Shift automatically ended");
+      return true;
     } catch (error) {
       console.error("Error in autoEndShift:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while auto-ending the shift.",
-        variant: "destructive",
-      });
+      return false;
     }
-  }, [activeShift, elapsedTime, navigate, setActiveShift, setElapsedTime, setShiftsHistory, shiftsHistory, toast]);
+  }, [activeShift, elapsedTime, shiftsHistory, setActiveShift, setElapsedTime, setShiftsHistory]);
 
   return { autoEndShift };
 }

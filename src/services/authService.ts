@@ -69,6 +69,8 @@ export const closeActiveShift = async () => {
       return false;
     }
     
+    console.log("Successfully closed shift on logout:", activeShift.id);
+    
     // Remove the active shift from localStorage
     localStorage.removeItem('activeShift');
     localStorage.removeItem('shiftStartTime');
