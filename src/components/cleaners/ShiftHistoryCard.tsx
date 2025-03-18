@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import CleaningHistoryCard from "./CleaningHistoryCard";
+import { toast } from "sonner";
 
 interface ShiftHistoryCardProps {
   shiftsHistory: ShiftHistoryItem[];
@@ -43,11 +44,20 @@ const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCard
         
       if (error) {
         console.error('Error fetching cleanings:', error);
+        toast.error('Error loading cleaning history');
         setShiftCleanings([]);
+        setIsLoadingCleanings(false);
         return;
       }
       
       console.log("Fetched cleanings:", cleanings);
+      
+      if (!cleanings || cleanings.length === 0) {
+        console.log("No cleanings found for this shift");
+        setShiftCleanings([]);
+        setIsLoadingCleanings(false);
+        return;
+      }
       
       const formattedCleanings: CleaningHistoryItem[] = cleanings.map(cleaning => {
         const startTime = cleaning.start_time ? parseISO(cleaning.start_time) : new Date();
@@ -80,6 +90,7 @@ const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCard
       setShiftCleanings(formattedCleanings);
     } catch (error) {
       console.error('Error processing cleanings data:', error);
+      toast.error('Error processing cleaning data');
       setShiftCleanings([]);
     } finally {
       setIsLoadingCleanings(false);
@@ -164,10 +175,16 @@ const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCard
             </div>
           ) : (
             <div className="mt-4">
-              <CleaningHistoryCard 
-                cleaningsHistory={shiftCleanings} 
-                currentShiftId={selectedShift?.id}
-              />
+              {shiftCleanings.length > 0 ? (
+                <CleaningHistoryCard 
+                  cleaningsHistory={shiftCleanings} 
+                  currentShiftId={selectedShift?.id}
+                />
+              ) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  No cleanings found for this shift
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
