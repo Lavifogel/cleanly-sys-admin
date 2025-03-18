@@ -20,8 +20,6 @@ export const useUserData = () => {
   // Check if a user is authenticated (either via session or manual login)
   useEffect(() => {
     const checkAuthState = async () => {
-      console.log("Checking auth state in useUserData...");
-      
       // Check localStorage for auth token
       const authToken = localStorage.getItem('cleanerAuth');
       const adminToken = localStorage.getItem('adminAuth');
@@ -51,7 +49,6 @@ export const useUserData = () => {
           setIsAuthenticated(false);
         }
       } else {
-        console.log("No auth tokens found in localStorage");
         setIsAuthenticated(false);
       }
     };
@@ -127,7 +124,6 @@ export const useUserData = () => {
 
   // Function to log out
   const logout = () => {
-    console.log("Logging out user...");
     localStorage.removeItem('cleanerAuth');
     localStorage.removeItem('adminAuth');
     setUserRole(null);
