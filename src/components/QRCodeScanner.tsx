@@ -17,7 +17,18 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     scannerContainerId,
     handleClose,
     handleManualSimulation
-  } = useQRScannerLogic(onScanSuccess, onClose);
+  } = useQRScannerLogic(
+    // Wrap the success callback to ensure proper cleanup before callback
+    (decodedText: string) => {
+      console.log("QR scan successful, data:", decodedText);
+      
+      // Call the original success callback with a slight delay to ensure UI updates
+      setTimeout(() => {
+        onScanSuccess(decodedText);
+      }, 300);
+    },
+    onClose
+  );
 
   const { error, cameraActive } = scannerState;
   
@@ -46,22 +57,29 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         cleanupTimeoutRef.current = null;
       }
       
-      // Stop all video streams on unmount
-      stopAllVideoStreams();
+      // Add a small delay before final cleanup to avoid race conditions
+      setTimeout(() => {
+        // Stop all video streams on unmount
+        stopAllVideoStreams();
+      }, 200);
     };
   }, []);
 
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {
+    // Prevent duplicate close attempts
+    if (!scannerMountedRef.current) return;
+    
+    // Mark as unmounting to prevent further state updates
+    scannerMountedRef.current = false;
+    
     // First stop all camera streams
     stopAllVideoStreams();
     
     // Slight delay to ensure cleanup completes before closing
     setTimeout(() => {
-      if (scannerMountedRef.current) {
-        handleClose();
-      }
-    }, 150);
+      handleClose();
+    }, 250);
   };
 
   return (

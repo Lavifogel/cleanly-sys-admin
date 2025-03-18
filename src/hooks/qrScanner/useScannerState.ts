@@ -18,6 +18,7 @@ export const useScannerState = ({
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const stopInProgressRef = useRef(false);
 
   // Set mounted ref to false when unmounting
   useEffect(() => {
@@ -28,23 +29,46 @@ export const useScannerState = ({
 
   // Stop camera and release resources
   const stopCamera = async () => {
+    // Prevent duplicate stop calls
+    if (stopInProgressRef.current) {
+      console.log("Stop already in progress, skipping duplicate call");
+      return;
+    }
+    
     try {
+      stopInProgressRef.current = true;
+      
       if (scannerRef.current && isScanning) {
-        await scannerRef.current.stop();
-        console.log("Camera stopped successfully from scanner");
+        try {
+          await scannerRef.current.stop();
+          console.log("Camera stopped successfully from scanner");
+        } catch (err) {
+          console.error("Error stopping camera:", err);
+        }
       }
       
       // Additional cleanup to ensure all camera resources are released
-      stopAllVideoStreams();
-      
-      if (mountedRef.current) {
-        setIsScanning(false);
-        setCameraActive(false);
-      }
+      // But add a small delay to prevent race conditions
+      setTimeout(() => {
+        try {
+          stopAllVideoStreams();
+          console.log("All video streams stopped");
+        } catch (err) {
+          console.error("Error in stopAllVideoStreams:", err);
+        }
+        
+        // Update state only if component is still mounted
+        if (mountedRef.current) {
+          setIsScanning(false);
+          setCameraActive(false);
+        }
+        stopInProgressRef.current = false;
+      }, 150);
     } catch (error) {
-      console.error("Error stopping camera:", error);
+      console.error("Error in stopCamera:", error);
       // Even if there's an error, still try to stop all video streams as a fallback
       stopAllVideoStreams();
+      stopInProgressRef.current = false;
     }
   };
 

@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useScannerInitialization } from "./useScannerInitialization";
 import { useCameraUtils } from "./useCameraUtils";
@@ -33,6 +33,9 @@ export const useCameraStart = ({
   incrementAttempt
 }: UseCameraStartProps) => {
   
+  // Track whether scanner is in the process of starting
+  const isStartingRef = useRef(false);
+  
   // Import scanner initialization utilities
   const {
     validateScannerContainer,
@@ -64,36 +67,48 @@ export const useCameraStart = ({
 
   // Memoize the startScanner function
   const startScanner = useCallback(async () => {
-    if (!scannerRef.current) {
-      console.error("Scanner reference not initialized");
+    // Prevent duplicate start attempts
+    if (isStartingRef.current || !scannerRef.current || !mountedRef.current) {
+      console.log("Skipping camera start: already starting or not mounted");
       return;
     }
 
-    if (!mountedRef.current) {
-      console.log("Component unmounted, aborting camera start");
-      return;
-    }
-
+    // Mark as starting
+    isStartingRef.current = true;
+    
     // Increase attempt counter
     const currentAttempt = incrementAttempt();
 
-    // First, make sure any existing camera is stopped
-    await stopCamera();
-
-    // Wait for DOM to be ready
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    if (!mountedRef.current) return;
-    
-    setIsScanning(true);
-    setError(null);
-
     try {
+      // First, make sure any existing camera is stopped (but don't reset camera active state)
+      if (scannerRef.current && isScanning) {
+        try {
+          await scannerRef.current.stop();
+          console.log("Stopped existing scanner instance before restart");
+        } catch (err) {
+          console.log("Error stopping existing scanner:", err);
+        }
+      }
+
+      // Wait for DOM to be ready
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      if (!mountedRef.current) {
+        isStartingRef.current = false;
+        return;
+      }
+      
+      setIsScanning(true);
+      setError(null);
+
       console.log(`Starting QR scanner (attempt ${currentAttempt})...`);
       
       // Validate scanner container
       const isContainerValid = await validateScannerContainer();
-      if (!isContainerValid || !mountedRef.current) return;
+      if (!isContainerValid || !mountedRef.current) {
+        isStartingRef.current = false;
+        return;
+      }
       
       // Create QR code callback
       const qrCodeSuccessCallback = setupQRCodeCallback(onScanSuccess, stopCamera);
@@ -119,7 +134,14 @@ export const useCameraStart = ({
       
       if (!mountedRef.current) {
         // If unmounted during initialization, stop camera
-        scannerRef.current.stop().catch(console.error);
+        if (scannerRef.current) {
+          try {
+            await scannerRef.current.stop();
+          } catch (err) {
+            console.error("Error stopping camera after unmount:", err);
+          }
+        }
+        isStartingRef.current = false;
         return;
       }
       
@@ -128,6 +150,9 @@ export const useCameraStart = ({
       clearTimeout(timeoutId);
     } catch (err: any) {
       handleCameraError(err, currentAttempt);
+    } finally {
+      // Reset starting flag
+      isStartingRef.current = false;
     }
   }, [
     scannerRef, 
@@ -140,6 +165,7 @@ export const useCameraStart = ({
     onScanSuccess, 
     incrementAttempt, 
     cameraActive,
+    isScanning,
     validateScannerContainer,
     createScannerConfig,
     setupQRCodeCallback,
@@ -149,16 +175,22 @@ export const useCameraStart = ({
 
   // Improved retry mechanism for scanner initialization
   useEffect(() => {
-    if (isScanning && !cameraActive && mountedRef.current) {
-      const timeoutId = setTimeout(() => {
-        if (isScanning && !cameraActive && mountedRef.current) {
+    let retryTimeoutId: number | null = null;
+    
+    if (isScanning && !cameraActive && mountedRef.current && !isStartingRef.current) {
+      retryTimeoutId = window.setTimeout(() => {
+        if (isScanning && !cameraActive && mountedRef.current && !isStartingRef.current) {
           console.log("Camera not active after timeout, attempting restart...");
           startScanner();
         }
       }, 2000);
-      
-      return () => clearTimeout(timeoutId);
     }
+    
+    return () => {
+      if (retryTimeoutId !== null) {
+        clearTimeout(retryTimeoutId);
+      }
+    };
   }, [isScanning, cameraActive, startScanner, mountedRef]);
 
   return { startScanner };
