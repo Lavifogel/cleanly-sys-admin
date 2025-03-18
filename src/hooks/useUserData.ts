@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { closeActiveCleaning, closeActiveShift, loginWithCredentials } from '@/services/authService';
+import { checkAuthFromStorage, clearAuthData } from '@/utils/authUtils';
 
 export const useUserData = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -23,47 +25,19 @@ export const useUserData = () => {
   // Check if a user is authenticated (either via session or manual login)
   useEffect(() => {
     const checkAuthState = async () => {
-      // Check localStorage for auth token
-      const authToken = localStorage.getItem('cleanerAuth');
-      const adminToken = localStorage.getItem('adminAuth');
+      const { isAuthenticated, userRole, userName } = checkAuthFromStorage();
       
-      if (authToken) {
-        try {
-          const userData = JSON.parse(authToken);
-          console.log("Found cleaner auth token for:", userData.full_name || `${userData.first_name} ${userData.last_name}`);
-          setUserRole('cleaner');
-          setUserName(userData.full_name || `${userData.first_name} ${userData.last_name}`);
-          setIsAuthenticated(true);
-          
-          // If on login page, redirect to cleaner dashboard
-          if (location.pathname === '/login' || location.pathname === '/auth/login') {
-            navigate('/cleaners/dashboard', { replace: true });
-          }
-        } catch (error) {
-          console.error('Error parsing auth token:', error);
-          localStorage.removeItem('cleanerAuth');
-          setIsAuthenticated(false);
-        }
-      } else if (adminToken) {
-        try {
-          const userData = JSON.parse(adminToken);
-          console.log("Found admin auth token for:", userData.full_name || `${userData.first_name} ${userData.last_name}`);
-          setUserRole('admin');
-          setUserName(userData.full_name || `${userData.first_name} ${userData.last_name}`);
-          setIsAuthenticated(true);
-          
-          // If on login page, redirect to admin dashboard
-          if (location.pathname === '/login' || location.pathname === '/auth/login') {
-            navigate('/admin/dashboard', { replace: true });
-          }
-        } catch (error) {
-          console.error('Error parsing admin token:', error);
-          localStorage.removeItem('adminAuth');
-          setIsAuthenticated(false);
+      setIsAuthenticated(isAuthenticated);
+      setUserRole(userRole);
+      setUserName(userName);
+      
+      if (isAuthenticated) {
+        // If on login page, redirect to appropriate dashboard
+        if (location.pathname === '/login' || location.pathname === '/auth/login') {
+          const dashboardPath = userRole === 'admin' ? '/admin/dashboard' : '/cleaners/dashboard';
+          navigate(dashboardPath, { replace: true });
         }
       } else {
-        setIsAuthenticated(false);
-        
         // If not authenticated and not on login page or index page, redirect to login
         if (!location.pathname.includes('/login') && location.pathname !== '/') {
           navigate('/login', { replace: true });
@@ -74,149 +48,25 @@ export const useUserData = () => {
     checkAuthState();
   }, [location.pathname, navigate]);
 
-  // Helper function to close active cleaning
-  const closeActiveCleaning = async () => {
-    // First, check if there's an active cleaning in localStorage
-    const activeCleaningStr = localStorage.getItem('activeCleaning');
-    if (!activeCleaningStr) return false;
-    
+  // Function to handle login with credentials
+  const handleLoginWithCredentials = async (phoneNumber: string, password: string) => {
     try {
-      const activeCleaning = JSON.parse(activeCleaningStr);
-      if (!activeCleaning || !activeCleaning.id) return false;
+      const { success, user, role, error } = await loginWithCredentials(phoneNumber, password);
       
-      console.log("Found active cleaning to close on logout:", activeCleaning.id);
-      
-      // Update the cleaning status in the database
-      const endTime = new Date().toISOString();
-      const { error } = await supabase
-        .from('cleanings')
-        .update({
-          end_time: endTime,
-          status: 'finished without scan',
-          notes: 'Automatically closed on logout'
-        })
-        .eq('id', activeCleaning.id);
-      
-      if (error) {
-        console.error("Error closing active cleaning:", error);
-        return false;
-      }
-      
-      // Remove the active cleaning from localStorage
-      localStorage.removeItem('activeCleaning');
-      return true;
-    } catch (error) {
-      console.error("Error parsing active cleaning:", error);
-      localStorage.removeItem('activeCleaning');
-      return false;
-    }
-  };
-  
-  // Helper function to close active shift
-  const closeActiveShift = async () => {
-    // Check if there's an active shift in localStorage
-    const activeShiftStr = localStorage.getItem('activeShift');
-    if (!activeShiftStr) return;
-    
-    try {
-      const activeShift = JSON.parse(activeShiftStr);
-      if (!activeShift || !activeShift.id) return;
-      
-      console.log("Found active shift to close on logout:", activeShift.id);
-      
-      // Update the shift status in the database
-      const endTime = new Date().toISOString();
-      const { error } = await supabase
-        .from('shifts')
-        .update({
-          end_time: endTime,
-          status: 'finished without scan'
-        })
-        .eq('id', activeShift.id);
-      
-      if (error) {
-        console.error("Error closing active shift:", error);
-        return;
-      }
-      
-      // Remove the active shift from localStorage
-      localStorage.removeItem('activeShift');
-      localStorage.removeItem('shiftStartTime');
-      localStorage.removeItem('shiftTimer');
-    } catch (error) {
-      console.error("Error parsing active shift:", error);
-      localStorage.removeItem('activeShift');
-      localStorage.removeItem('shiftStartTime');
-      localStorage.removeItem('shiftTimer');
-    }
-  };
-
-  // Function to login with credentials
-  const loginWithCredentials = async (phoneNumber: string, password: string) => {
-    try {
-      console.log("Attempting login with phone:", phoneNumber);
-      
-      // Check for admin login (country code +123 and phone number 4567890)
-      if (phoneNumber === '+1234567890' && password === '654321') {
-        // Create admin user object
-        const adminUser = {
-          id: 'admin-id',
-          first_name: 'Admin',
-          last_name: 'User',
-          role: 'admin',
-          phone: phoneNumber
-        };
-        
-        // Store admin info in localStorage
-        localStorage.setItem('adminAuth', JSON.stringify(adminUser));
-        
+      if (success) {
         // Update state
-        setUserRole('admin');
-        setUserName(`${adminUser.first_name} ${adminUser.last_name}`);
+        setUserRole(role);
+        setUserName(user.full_name || `${user.first_name} ${user.last_name}`);
         setIsAuthenticated(true);
         
-        console.log("Admin login successful");
+        // Redirect to dashboard
+        const dashboardPath = role === 'admin' ? '/admin/dashboard' : '/cleaners/dashboard';
+        navigate(dashboardPath, { replace: true });
         
-        // Redirect admin to dashboard
-        navigate('/admin/dashboard', { replace: true });
-        return { success: true, user: adminUser };
+        return { success: true, user };
+      } else {
+        return { success: false, error };
       }
-      
-      // If not using hardcoded admin credentials, try to log in as cleaner
-      const { data: cleanerData, error: cleanerError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('phone', phoneNumber)
-        .eq('password', password)
-        .eq('role', 'cleaner')
-        .single();
-
-      if (cleanerError) {
-        console.error('Login error from database:', cleanerError);
-        return { success: false, error: new Error("Invalid phone number or password") };
-      }
-
-      if (cleanerData) {
-        console.log("Cleaner data retrieved:", cleanerData);
-        
-        // Store user info in localStorage
-        localStorage.setItem('cleanerAuth', JSON.stringify(cleanerData));
-        
-        // Update state
-        setUserRole('cleaner');
-        setUserName(cleanerData.full_name || `${cleanerData.first_name} ${cleanerData.last_name}`);
-        setIsAuthenticated(true);
-        
-        console.log('Cleaner authenticated successfully:', cleanerData);
-        
-        // Redirect cleaner to dashboard
-        navigate('/cleaners/dashboard', { replace: true });
-        return { success: true, user: cleanerData };
-      }
-
-      // If we get here, neither admin nor cleaner login was successful
-      console.error('Login error: Invalid credentials');
-      return { success: false, error: new Error("Invalid phone number or password") };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error };
@@ -237,8 +87,7 @@ export const useUserData = () => {
     }
     
     // Clear authentication data and state
-    localStorage.removeItem('cleanerAuth');
-    localStorage.removeItem('adminAuth');
+    clearAuthData();
     setUserRole(null);
     setUserName(null);
     setIsAuthenticated(false);
@@ -250,7 +99,7 @@ export const useUserData = () => {
     userName,
     session,
     isAuthenticated,
-    loginWithCredentials,
+    loginWithCredentials: handleLoginWithCredentials,
     logout
   };
 };
