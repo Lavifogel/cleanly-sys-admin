@@ -1,6 +1,5 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect } from "react";
 import HomeTab from "@/components/cleaners/dashboard/HomeTab";
 import CleaningTab from "@/components/cleaners/dashboard/CleaningTab";
 import ProfileTab from "@/components/cleaners/dashboard/ProfileTab";
@@ -46,31 +45,6 @@ const DashboardTabs = ({
   const switchToCleaningTab = () => {
     setActiveTab("cleaning");
   };
-
-  // Listen for the custom event to set active tab
-  useEffect(() => {
-    const handleSetActiveTab = (event: CustomEvent) => {
-      if (event.detail) {
-        setActiveTab(event.detail);
-      }
-    };
-
-    // Check localStorage for saved tab
-    const savedTab = window.localStorage.getItem('dashboard_active_tab');
-    if (savedTab) {
-      setActiveTab(savedTab);
-      // Clear it after use
-      window.localStorage.removeItem('dashboard_active_tab');
-    }
-
-    // Add event listener
-    window.addEventListener('set-active-tab', handleSetActiveTab as EventListener);
-
-    // Clean up
-    return () => {
-      window.removeEventListener('set-active-tab', handleSetActiveTab as EventListener);
-    };
-  }, [setActiveTab]);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
