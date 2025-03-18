@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,8 +17,27 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const { loginWithCredentials } = useUserData();
+  const { loginWithCredentials, isAuthenticated, userRole } = useUserData();
+
+  // Debug current authentication state
+  console.log('Login component rendered with auth state:', { isAuthenticated, userRole, pathname: location.pathname });
+
+  // Effect to handle redirects when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && userRole) {
+      console.log("Login page detected authenticated state:", { isAuthenticated, userRole });
+      
+      if (userRole === 'admin') {
+        console.log("Redirecting admin to dashboard");
+        window.location.href = "/admin/dashboard";
+      } else if (userRole === 'cleaner') {
+        console.log("Redirecting cleaner to dashboard from effect");
+        window.location.href = "/cleaners/dashboard";
+      }
+    }
+  }, [isAuthenticated, userRole]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,16 +55,24 @@ const Login = () => {
 
     try {
       const fullPhoneNumber = `${countryCode}${phoneNumber}`;
-      const { success, error } = await loginWithCredentials(fullPhoneNumber, password);
+      console.log("Attempting login with:", fullPhoneNumber);
       
-      if (success) {
+      const { success, error, user } = await loginWithCredentials(fullPhoneNumber, password);
+      
+      if (success && user) {
         toast({
           title: "Success",
           description: "Logged in successfully",
         });
         
-        // Navigation is now handled directly in the loginWithCredentials function
-        // No need to navigate here
+        // Force navigation based on user role
+        if (user.role === 'admin') {
+          console.log("Force redirecting admin to dashboard");
+          window.location.href = "/admin/dashboard";
+        } else if (user.role === 'cleaner') {
+          console.log("Force redirecting cleaner to dashboard");
+          window.location.href = "/cleaners/dashboard";
+        }
       } else {
         throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
       }

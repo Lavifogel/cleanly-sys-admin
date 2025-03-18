@@ -1,25 +1,37 @@
 
-import { useCallback } from "react";
-import { useShift } from "@/hooks/useShift";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Shift } from "@/hooks/useShift";
 
-export function useShiftHandlers() {
-  const { toast } = useToast();
-  const navigate = useNavigate();
+interface UseShiftHandlersProps {
+  activeShift: Shift | null;
+  startShift: (qrData: string) => Promise<void>;
+  endShift: (withScan: boolean, qrData?: string) => Promise<void>;
+  autoEndShift: () => void;
+  toast: ReturnType<typeof useToast>;
+}
+
+export function useShiftHandlers({
+  activeShift,
+  startShift,
+  endShift,
+  autoEndShift,
+  toast
+}: UseShiftHandlersProps) {
+  // Event handlers
+  const handleStartShift = () => {
+    // This function will be implemented by useQRScannerHandlers
+  };
   
-  const {
-    activeShift,
-    elapsedTime,
-    shiftsHistory,
-    startShift,
-    endShift,
-    autoEndShift
-  } = useShift();
-  
-  // Shift handlers
-  const handleStartShift = (qrData: string) => {
-    return startShift(qrData);
+  const handleEndShiftWithScan = () => {
+    if (!activeShift) {
+      toast({
+        title: "Error",
+        description: "No active shift to end.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // This function will be implemented by useQRScannerHandlers
   };
   
   const handleEndShiftWithoutScan = () => {
@@ -31,20 +43,18 @@ export function useShiftHandlers() {
       });
       return;
     }
-    
-    return endShift(false);
+    // This function will be implemented by useDashboardConfirmations
+  };
+
+  const handleAutoEndShift = () => {
+    if (!activeShift) return;
+    autoEndShift();
   };
   
   return {
-    // State
-    activeShift,
-    elapsedTime,
-    shiftsHistory,
-    
-    // Actions
     handleStartShift,
+    handleEndShiftWithScan,
     handleEndShiftWithoutScan,
-    endShift,
-    autoEndShift
+    handleAutoEndShift
   };
 }

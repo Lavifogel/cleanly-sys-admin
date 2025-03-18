@@ -1,9 +1,10 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { lazy, Suspense, createContext, useContext, useEffect } from "react";
+import { lazy, Suspense, createContext, useContext } from "react";
 import { AnimatePresence } from "framer-motion";
 import Navbar from "./components/layout/Navbar";
 import { useUserData } from "./hooks/useUserData";
@@ -36,38 +37,12 @@ export const useAuth = () => {
   return context;
 };
 
-// Protected route component with role check
-const ProtectedRoute = ({ 
-  children, 
-  allowedRoles 
-}: { 
-  children: React.ReactNode, 
-  allowedRoles?: string[]
-}) => {
-  const { isAuthenticated, userRole, navigate } = useAuth();
-  
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login", { replace: true });
-    } else if (allowedRoles && !allowedRoles.includes(userRole || '')) {
-      // Redirect to appropriate dashboard based on role
-      if (userRole === 'admin') {
-        navigate("/admin/dashboard", { replace: true });
-      } else if (userRole === 'cleaner') {
-        navigate("/cleaners/dashboard", { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
-    }
-  }, [isAuthenticated, userRole, allowedRoles, navigate]);
+// Protected route component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated } = useAuth();
   
   if (!isAuthenticated) {
-    return null;
-  }
-  
-  // If allowedRoles is specified and user's role is not in it, don't render
-  if (allowedRoles && !allowedRoles.includes(userRole || '')) {
-    return null;
+    return <Navigate to="/login" replace />;
   }
   
   return <>{children}</>;
@@ -102,18 +77,11 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
-                  <Route 
-                    path="/admin/dashboard" 
-                    element={
-                      <ProtectedRoute allowedRoles={['admin']}>
-                        <AdminDashboard />
-                      </ProtectedRoute>
-                    } 
-                  />
+                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
                   <Route 
                     path="/cleaners/dashboard" 
                     element={
-                      <ProtectedRoute allowedRoles={['cleaner']}>
+                      <ProtectedRoute>
                         <CleanersDashboard />
                       </ProtectedRoute>
                     } 

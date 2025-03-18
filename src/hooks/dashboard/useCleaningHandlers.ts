@@ -1,43 +1,41 @@
 
-import { useState } from "react";
-import { useCleaning } from "@/hooks/cleaning";
+import { Cleaning } from "@/types/cleaning";
 import { useToast } from "@/hooks/use-toast";
 
-export function useCleaningHandlers(activeShiftId: string | undefined) {
-  const { toast } = useToast();
+interface UseCleaningHandlersProps {
+  activeCleaning: Cleaning | null;
+  startCleaning: (qrData: string) => Promise<void>;
+  prepareSummary: (withScan: boolean, qrData?: string) => void;
+  completeSummary: () => Promise<boolean>;
+  autoEndCleaning: () => void;
+  setActiveTab: (tab: string) => void;
+  toast: ReturnType<typeof useToast>;
+}
+
+export function useCleaningHandlers({
+  activeCleaning,
+  startCleaning,
+  prepareSummary,
+  completeSummary,
+  autoEndCleaning,
+  setActiveTab,
+  toast
+}: UseCleaningHandlersProps) {
+  // Event handlers
+  const handleStartCleaning = () => {
+    // This function will be implemented by useQRScannerHandlers
+  };
   
-  const {
-    activeCleaning,
-    cleaningElapsedTime,
-    cleaningsHistory,
-    cleaningSummary,
-    summaryNotes,
-    showSummary,
-    isUploading,
-    images,
-    startCleaning,
-    togglePauseCleaning,
-    autoEndCleaning,
-    prepareSummary,
-    completeSummary,
-    addImage,
-    removeImage,
-    setSummaryNotes,
-    setShowSummary
-  } = useCleaning(activeShiftId);
-  
-  // Cleaning handlers
-  const handleStartCleaning = (qrData: string) => {
-    if (!activeShiftId) {
+  const handleEndCleaningWithScan = () => {
+    if (!activeCleaning) {
       toast({
         title: "Error",
-        description: "You need to start a shift first.",
+        description: "No active cleaning to end.",
         variant: "destructive",
       });
       return;
     }
-    
-    return startCleaning(qrData);
+    // This function will be implemented by useQRScannerHandlers
   };
   
   const handleEndCleaningWithoutScan = () => {
@@ -49,13 +47,19 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       });
       return;
     }
-    
-    return prepareSummary(false);
+    // This function will be implemented by useDashboardConfirmations
+  };
+  
+  const handleAutoEndCleaning = () => {
+    if (!activeCleaning) return;
+    autoEndCleaning();
   };
   
   const handleCompleteSummary = async () => {
     try {
-      return await completeSummary();
+      if (await completeSummary()) {
+        setActiveTab('home');
+      }
     } catch (error) {
       console.error("Error completing summary:", error);
       toast({
@@ -63,31 +67,14 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
         description: "Failed to complete the cleaning summary. Please try again.",
         variant: "destructive",
       });
-      return false;
     }
   };
   
   return {
-    // State
-    activeCleaning,
-    cleaningElapsedTime,
-    cleaningsHistory,
-    cleaningSummary,
-    summaryNotes,
-    showSummary,
-    isUploading,
-    images,
-    
-    // Actions
     handleStartCleaning,
+    handleEndCleaningWithScan,
     handleEndCleaningWithoutScan,
-    handleCompleteSummary,
-    togglePauseCleaning,
-    prepareSummary,
-    autoEndCleaning,
-    setSummaryNotes,
-    setShowSummary,
-    addImage,
-    removeImage
+    handleAutoEndCleaning,
+    handleCompleteSummary
   };
 }
