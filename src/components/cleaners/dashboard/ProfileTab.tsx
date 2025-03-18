@@ -21,11 +21,17 @@ const ProfileTab = ({ shiftsHistory: initialShifts = [], cleaningsHistory = [] }
 
   useEffect(() => {
     const fetchShiftsHistory = async () => {
-      const { userData } = checkAuthFromStorage();
-      if (!userData?.id) return;
-      
       try {
         setIsLoading(true);
+        const { userData } = checkAuthFromStorage();
+        if (!userData?.id) {
+          console.error('User ID not found in storage');
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('Fetching shifts for user ID:', userData.id);
+        
         const { data: shifts, error } = await supabase
           .from('shifts')
           .select(`
@@ -41,8 +47,11 @@ const ProfileTab = ({ shiftsHistory: initialShifts = [], cleaningsHistory = [] }
 
         if (error) {
           console.error('Error fetching shifts:', error);
+          setIsLoading(false);
           return;
         }
+
+        console.log('Fetched shifts:', shifts);
 
         // Count cleanings for each shift
         const shiftsWithDetails = await Promise.all(shifts.map(async (shift) => {
@@ -80,7 +89,9 @@ const ProfileTab = ({ shiftsHistory: initialShifts = [], cleaningsHistory = [] }
           };
         }));
 
-        setShiftsHistory(shiftsWithDetails.filter(Boolean) as ShiftHistoryItem[]);
+        const filteredShifts = shiftsWithDetails.filter(Boolean) as ShiftHistoryItem[];
+        console.log('Processed shifts:', filteredShifts);
+        setShiftsHistory(filteredShifts);
       } catch (error) {
         console.error('Error processing shifts data:', error);
       } finally {

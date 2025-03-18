@@ -21,6 +21,7 @@ const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCard
   const [isLoadingCleanings, setIsLoadingCleanings] = useState(false);
   
   const handleShiftClick = async (shift: ShiftHistoryItem) => {
+    console.log("Shift clicked:", shift);
     setSelectedShift(shift);
     setIsLoadingCleanings(true);
     
@@ -45,6 +46,8 @@ const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCard
         setShiftCleanings([]);
         return;
       }
+      
+      console.log("Fetched cleanings:", cleanings);
       
       const formattedCleanings: CleaningHistoryItem[] = cleanings.map(cleaning => {
         const startTime = cleaning.start_time ? parseISO(cleaning.start_time) : new Date();
@@ -73,6 +76,7 @@ const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCard
         };
       });
       
+      console.log("Formatted cleanings:", formattedCleanings);
       setShiftCleanings(formattedCleanings);
     } catch (error) {
       console.error('Error processing cleanings data:', error);
