@@ -6,13 +6,18 @@ import DashboardTabs from "@/components/admin/dashboard/DashboardTabs";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/App";
 
 const AdminDashboard = () => {
   const { stats, loading, refreshData } = useAdminDashboardData();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleBackClick = () => {
-    navigate('/login'); // Navigate to the login page when back button is clicked
+    // Logout first to clear authentication state
+    logout();
+    // Then navigate to login page
+    navigate('/login', { replace: true });
   };
 
   return (
