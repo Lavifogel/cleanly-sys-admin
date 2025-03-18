@@ -5,6 +5,7 @@ import CleaningTab from "@/components/cleaners/dashboard/CleaningTab";
 import ProfileTab from "@/components/cleaners/dashboard/ProfileTab";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
 import { Shift } from "@/hooks/useShift";
+import { useEffect } from "react";
 
 interface DashboardTabsProps {
   activeTab: string;
@@ -46,8 +47,16 @@ const DashboardTabs = ({
     setActiveTab("cleaning");
   };
 
+  // Ensure the home tab is selected on initial render if no tab is active
+  useEffect(() => {
+    if (!activeTab) {
+      console.log("Setting default tab to home in cleaner dashboard");
+      setActiveTab("home");
+    }
+  }, [activeTab, setActiveTab]);
+
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab || "home"} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="home">Home</TabsTrigger>
         <TabsTrigger value="cleaning">Cleaning</TabsTrigger>

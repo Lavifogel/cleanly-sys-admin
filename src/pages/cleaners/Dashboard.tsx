@@ -3,6 +3,7 @@ import { useDashboardHandlers } from "@/hooks/useDashboardHandlers";
 import QRScannerHandler from "@/components/cleaners/dashboard/QRScannerHandler";
 import DashboardContent from "@/components/cleaners/dashboard/DashboardContent";
 import DashboardDialogs from "@/components/cleaners/dashboard/DashboardDialogs";
+import { useEffect } from "react";
 
 const CleanerDashboard = () => {
   const {
@@ -42,12 +43,20 @@ const CleanerDashboard = () => {
     removeImage
   } = useDashboardHandlers();
 
+  // Ensure the home tab is selected on initial render
+  useEffect(() => {
+    if (!activeTab || activeTab === "") {
+      console.log("Setting default tab to home in CleanerDashboard");
+      setActiveTab("home");
+    }
+  }, [activeTab, setActiveTab]);
+
   return (
     <div className="container mx-auto p-4 md:p-6">
       <DashboardContent 
         activeShift={activeShift}
         elapsedTime={elapsedTime}
-        activeTab={activeTab}
+        activeTab={activeTab || "home"}
         setActiveTab={setActiveTab}
         activeCleaning={activeCleaning}
         cleaningElapsedTime={cleaningElapsedTime}
