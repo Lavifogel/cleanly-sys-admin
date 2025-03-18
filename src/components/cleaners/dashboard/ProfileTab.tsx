@@ -1,6 +1,5 @@
 
 import ShiftHistoryCard from "@/components/cleaners/ShiftHistoryCard";
-import CleaningHistoryCard from "@/components/cleaners/CleaningHistoryCard";
 import ProfileCard from "@/components/cleaners/ProfileCard";
 import { CleaningHistoryItem } from "@/types/cleaning";
 import { useState, useEffect } from "react";
