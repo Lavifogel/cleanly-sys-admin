@@ -1,10 +1,11 @@
+
 import { useNavbar } from "@/hooks/useNavbar";
 import NavbarRoutes from "./NavbarRoutes";
 import MobileMenu from "./MobileMenu";
 import ProfileButton from "./ProfileButton";
 import Logo from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { useUserData } from "@/hooks/useUserData";
 
 const Navbar = () => {
@@ -23,7 +24,7 @@ const Navbar = () => {
     shouldHideProfileIcon
   } = useNavbar();
 
-  const { isAuthenticated, logout } = useUserData();
+  const { isAuthenticated, logout, isLoggingOut } = useUserData();
 
   const handleProfileClick = () => {
     if (location.pathname.includes("/cleaners/dashboard")) {
@@ -70,10 +71,15 @@ const Navbar = () => {
                 variant="ghost" 
                 size="sm" 
                 onClick={logout}
+                disabled={isLoggingOut}
                 className="flex items-center gap-1"
               >
-                <LogOut className="h-4 w-4" />
-                Logout
+                {isLoggingOut ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <LogOut className="h-4 w-4" />
+                )}
+                {isLoggingOut ? "Logging out..." : "Logout"}
               </Button>
             </>
           )}
@@ -114,6 +120,7 @@ const Navbar = () => {
         shouldHideProfileIcon={shouldHideProfileIcon && !isAuthenticated}
         isAuthenticated={isAuthenticated}
         onLogout={logout}
+        isLoggingOut={isLoggingOut}
       />
     </header>
   );

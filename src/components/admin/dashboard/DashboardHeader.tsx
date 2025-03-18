@@ -1,12 +1,12 @@
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/App";
 import { useNavigate } from "react-router-dom";
 
 const DashboardHeader = () => {
-  const { logout } = useAuth();
+  const { logout, isLoggingOut } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -29,10 +29,15 @@ const DashboardHeader = () => {
           variant="outline"
           size="sm"
           onClick={handleLogout}
+          disabled={isLoggingOut}
           className="flex items-center gap-1"
         >
-          <LogOut className="h-4 w-4" />
-          Logout
+          {isLoggingOut ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LogOut className="h-4 w-4" />
+          )}
+          {isLoggingOut ? "Logging out..." : "Logout"}
         </Button>
       </div>
     </div>

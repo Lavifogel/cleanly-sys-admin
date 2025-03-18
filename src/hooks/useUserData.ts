@@ -10,6 +10,7 @@ export const useUserData = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -80,27 +81,37 @@ export const useUserData = () => {
 
   // Function to log out
   const logout = async () => {
-    // If user is a cleaner, check for active cleaning and shift
-    if (userRole === 'cleaner') {
-      try {
-        // First close any active cleaning
-        const cleaningClosed = await closeActiveCleaning();
-        console.log("Cleaning closed on logout:", cleaningClosed);
-        
-        // Then close any active shift
-        const shiftClosed = await closeActiveShift();
-        console.log("Shift closed on logout:", shiftClosed);
-      } catch (error) {
-        console.error("Error closing active tasks on logout:", error);
-      }
-    }
+    if (isLoggingOut) return; // Prevent multiple logout attempts
     
-    // Clear authentication data and state
-    clearAuthData();
-    setUserRole(null);
-    setUserName(null);
-    setIsAuthenticated(false);
-    navigate('/login', { replace: true });
+    setIsLoggingOut(true);
+    
+    try {
+      // If user is a cleaner, check for active cleaning and shift
+      if (userRole === 'cleaner') {
+        try {
+          // First close any active cleaning - ensure we await this
+          const cleaningClosed = await closeActiveCleaning();
+          console.log("Cleaning closed on logout:", cleaningClosed);
+          
+          // Then close any active shift - ensure we await this
+          const shiftClosed = await closeActiveShift();
+          console.log("Shift closed on logout:", shiftClosed);
+        } catch (error) {
+          console.error("Error closing active tasks on logout:", error);
+        }
+      }
+      
+      // Clear authentication data and state
+      clearAuthData();
+      setUserRole(null);
+      setUserName(null);
+      setIsAuthenticated(false);
+      
+      // Navigate after all operations are complete
+      navigate('/login', { replace: true });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return {
@@ -108,6 +119,7 @@ export const useUserData = () => {
     userName,
     session,
     isAuthenticated,
+    isLoggingOut,
     loginWithCredentials: handleLoginWithCredentials,
     logout
   };
