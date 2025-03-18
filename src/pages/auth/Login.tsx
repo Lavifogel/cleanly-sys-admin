@@ -10,6 +10,7 @@ import Logo from "@/components/ui/logo";
 import { useUserData } from "@/hooks/useUserData";
 
 const Login = () => {
+  const [countryCode, setCountryCode] = useState("+123");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,10 +21,10 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!phoneNumber || !password) {
+    if (!countryCode || !phoneNumber || !password) {
       toast({
         title: "Error",
-        description: "Please enter both phone number and password",
+        description: "Please enter country code, phone number and password",
         variant: "destructive",
       });
       return;
@@ -32,7 +33,8 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const { success, error, user } = await loginWithCredentials(phoneNumber, password);
+      const fullPhoneNumber = `${countryCode}${phoneNumber}`;
+      const { success, error, user } = await loginWithCredentials(fullPhoneNumber, password);
       
       if (success && user) {
         toast({
@@ -74,13 +76,24 @@ const Login = () => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="phoneNumber">Phone Number</Label>
-              <Input
-                id="phoneNumber"
-                placeholder=""
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                autoComplete="tel"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="countryCode"
+                  placeholder="+972"
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="w-24"
+                  autoComplete="tel-country-code"
+                />
+                <Input
+                  id="phoneNumber"
+                  placeholder="Phone number without country code"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="flex-1"
+                  autoComplete="tel-national"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
