@@ -115,13 +115,22 @@ export const useCameraStart = ({
       
       // Get scanner configuration
       const config = createScannerConfig();
+      
+      // Make sure HTML5QrCode will use the 'environment' facing camera (rear camera on mobile)
+      // and use a higher resolution for better scanning
+      const cameraOptions = {
+        facingMode: "environment",
+        fps: 10,  // Lower FPS can help with performance
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+      };
 
       // Set timeout to prevent infinite loading when camera permissions are denied
       const timeoutId = setupCameraTimeout(cameraActive);
 
-      // Start scanning with back camera (environment)
+      // Start scanning
       await scannerRef.current.start(
-        { facingMode: "environment" },
+        cameraOptions,
         config,
         qrCodeSuccessCallback,
         (errorMessage) => {
