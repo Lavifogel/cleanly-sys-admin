@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
@@ -15,8 +15,8 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerId = "qr-scanner-container";
 
-  // Stop camera function - improved to ensure complete cleanup
-  const stopCamera = async () => {
+  // Memoize the stopCamera function to prevent unnecessary re-creations
+  const stopCamera = useCallback(async () => {
     try {
       if (scannerRef.current && isScanning) {
         await scannerRef.current.stop();
@@ -33,10 +33,10 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
       // Even if there's an error, still try to stop all video streams as a fallback
       stopAllVideoStreams();
     }
-  };
+  }, [isScanning]);
 
-  // Start scanner function
-  const startScanner = async () => {
+  // Memoize the startScanner function
+  const startScanner = useCallback(async () => {
     if (!scannerRef.current) return;
 
     // First, make sure any existing camera is stopped
@@ -56,9 +56,10 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
       };
 
       const config = {
-        fps: 10,
+        fps: 15, // Increased from 10 to 15 for better responsiveness
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
+        formatsToSupport: ["QR_CODE"], // Only scan for QR codes to improve performance
       };
 
       await scannerRef.current.start(
@@ -66,8 +67,10 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
         config,
         qrCodeSuccessCallback,
         (errorMessage) => {
-          // QR Code scanning failed or was canceled
-          console.log(errorMessage);
+          // Only log essential errors to reduce console noise
+          if (!errorMessage.includes("No MultiFormat Readers")) {
+            console.log(errorMessage);
+          }
         }
       );
     } catch (err) {
@@ -76,7 +79,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
       setError("Could not access the camera. Please ensure camera permissions are enabled.");
       console.error("Error starting QR scanner:", err);
     }
-  };
+  }, [onScanSuccess, stopCamera]);
 
   return {
     cameraActive,

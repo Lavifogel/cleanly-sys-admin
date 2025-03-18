@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,68 +23,82 @@ export function useAdminDashboardData() {
     totalCleanings: 0,
   });
   const { toast } = useToast();
+  const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
 
-  const fetchDashboardData = async () => {
+  // Memoize the fetch function to prevent unnecessary re-creations
+  const fetchDashboardData = useCallback(async () => {
+    // If it's been less than 30 seconds since the last refresh, don't fetch again
+    if (Date.now() - lastRefreshTime < 30000) {
+      return;
+    }
+    
     setLoading(true);
     try {
-      // Get active cleaners (users with role 'cleaner' who are currently in an active shift)
-      const { data: activeShifts, error: shiftsError } = await supabase
-        .from('shifts')
-        .select('id, user_id')
-        .eq('status', 'active')
-        .is('end_time', null);
+      // Use a single Promise.all to make parallel requests for better performance
+      const [
+        activeShiftsResult,
+        cleaningsTodayResult,
+        pendingCleaningsResult,
+        totalShiftsResult,
+        totalCleaningsResult,
+        completedCleaningsResult
+      ] = await Promise.all([
+        // Get active cleaners (users with role 'cleaner' who are currently in an active shift)
+        supabase
+          .from('shifts')
+          .select('id, user_id', { count: 'exact' })
+          .eq('status', 'active')
+          .is('end_time', null),
+        
+        // Get areas cleaned today
+        supabase
+          .from('cleanings')
+          .select('id', { count: 'exact' })
+          .gte('start_time', new Date().toISOString().split('T')[0])
+          .eq('status', 'finished with scan'),
+        
+        // Get areas pending (active cleanings that haven't been completed)
+        supabase
+          .from('cleanings')
+          .select('id', { count: 'exact' })
+          .eq('status', 'active'),
+        
+        // Get total shifts count
+        supabase
+          .from('shifts')
+          .select('id', { count: 'exact', head: true }),
+        
+        // Get total cleanings count
+        supabase
+          .from('cleanings')
+          .select('id', { count: 'exact', head: true }),
+        
+        // Calculate average cleaning time from completed cleanings
+        supabase
+          .from('cleanings')
+          .select('start_time, end_time')
+          .not('end_time', 'is', null)
+          .limit(50) // Reduced from 100 to 50 for better performance
+      ]);
 
-      if (shiftsError) throw shiftsError;
-
-      // Get areas cleaned today
-      const today = new Date().toISOString().split('T')[0];
-      const { data: cleaningsToday, error: cleaningsError } = await supabase
-        .from('cleanings')
-        .select('id')
-        .gte('start_time', today)
-        .eq('status', 'finished with scan');
-
-      if (cleaningsError) throw cleaningsError;
-
-      // Get areas pending (active cleanings that haven't been completed)
-      const { data: pendingCleanings, error: pendingError } = await supabase
-        .from('cleanings')
-        .select('id')
-        .eq('status', 'active');
-
-      if (pendingError) throw pendingError;
-
-      // Get total shifts 
-      const { count: totalShifts, error: totalShiftsError } = await supabase
-        .from('shifts')
-        .select('id', { count: 'exact', head: true });
-
-      if (totalShiftsError) throw totalShiftsError;
-
-      // Get total cleanings
-      const { count: totalCleanings, error: totalCleaningsError } = await supabase
-        .from('cleanings')
-        .select('id', { count: 'exact', head: true });
-
-      if (totalCleaningsError) throw totalCleaningsError;
-
-      // Calculate average cleaning time from completed cleanings
-      const { data: completedCleanings, error: completedCleaningsError } = await supabase
-        .from('cleanings')
-        .select('start_time, end_time')
-        .not('end_time', 'is', null)
-        .limit(100);
-
-      if (completedCleaningsError) throw completedCleaningsError;
+      // Check for errors
+      if (activeShiftsResult.error) throw activeShiftsResult.error;
+      if (cleaningsTodayResult.error) throw cleaningsTodayResult.error;
+      if (pendingCleaningsResult.error) throw pendingCleaningsResult.error;
+      if (totalShiftsResult.error) throw totalShiftsResult.error;
+      if (totalCleaningsResult.error) throw totalCleaningsResult.error;
+      if (completedCleaningsResult.error) throw completedCleaningsResult.error;
 
       // Calculate average cleaning time
       let avgCleaningTime = 32; // Default fallback value
-      if (completedCleanings && completedCleanings.length > 0) {
-        const cleaningTimes = completedCleanings.map(cleaning => {
-          const start = new Date(cleaning.start_time as string);
-          const end = new Date(cleaning.end_time as string);
-          return (end.getTime() - start.getTime()) / (1000 * 60); // Time in minutes
-        }).filter(time => time > 0 && time < 240); // Filter out outliers
+      if (completedCleaningsResult.data && completedCleaningsResult.data.length > 0) {
+        const cleaningTimes = completedCleaningsResult.data
+          .map(cleaning => {
+            const start = new Date(cleaning.start_time as string);
+            const end = new Date(cleaning.end_time as string);
+            return (end.getTime() - start.getTime()) / (1000 * 60); // Time in minutes
+          })
+          .filter(time => time > 0 && time < 240); // Filter out outliers
 
         if (cleaningTimes.length > 0) {
           avgCleaningTime = Math.round(
@@ -94,13 +108,15 @@ export function useAdminDashboardData() {
       }
 
       setStats({
-        activeCleaners: activeShifts?.length || 0,
-        areasCleaned: cleaningsToday?.length || 0,
-        areasPending: pendingCleanings?.length || 0,
+        activeCleaners: activeShiftsResult.data?.length || 0,
+        areasCleaned: cleaningsTodayResult.data?.length || 0,
+        areasPending: pendingCleaningsResult.data?.length || 0,
         avgCleaningTime,
-        totalShifts: totalShifts || 0,
-        totalCleanings: totalCleanings || 0,
+        totalShifts: totalShiftsResult.count || 0,
+        totalCleanings: totalCleaningsResult.count || 0,
       });
+      
+      setLastRefreshTime(Date.now());
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast({
@@ -111,16 +127,35 @@ export function useAdminDashboardData() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, lastRefreshTime]);
 
   useEffect(() => {
     fetchDashboardData();
 
-    // Set up a refresh interval (every 5 minutes)
-    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
+    // Set up a refresh interval (every 2 minutes instead of 5)
+    const interval = setInterval(fetchDashboardData, 2 * 60 * 1000);
     
-    return () => clearInterval(interval);
-  }, []);
+    // Add event listener for visibility changes to refresh when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Only refresh if it's been more than 1 minute
+        if (Date.now() - lastRefreshTime > 60000) {
+          fetchDashboardData();
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchDashboardData, lastRefreshTime]);
 
-  return { stats, loading, refreshData: fetchDashboardData };
+  return { 
+    stats, 
+    loading, 
+    refreshData: fetchDashboardData 
+  };
 }
