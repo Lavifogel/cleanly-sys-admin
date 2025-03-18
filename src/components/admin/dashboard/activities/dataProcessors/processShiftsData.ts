@@ -32,6 +32,14 @@ export const processShiftsData = (shiftsData: ShiftData[]): Activity[] => {
       ? formatDuration(startTime, endTime) 
       : "In progress";
 
+    // Standardize the status display
+    let displayStatus = shift.status;
+    
+    // Map database statuses to display statuses if needed
+    if (displayStatus === "finished automatically") {
+      displayStatus = "finished automatically";
+    }
+
     return {
       id: shift.id,
       type: "shift",
@@ -41,7 +49,7 @@ export const processShiftsData = (shiftsData: ShiftData[]): Activity[] => {
       startTime: format(startTime, "HH:mm"),
       endTime: endTime ? format(endTime, "HH:mm") : null,
       duration,
-      status: shift.status
+      status: displayStatus
     };
   });
 };

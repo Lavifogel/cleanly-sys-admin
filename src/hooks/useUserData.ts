@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,13 +82,17 @@ export const useUserData = () => {
   const logout = async () => {
     // If user is a cleaner, check for active cleaning and shift
     if (userRole === 'cleaner') {
-      // First close any active cleaning
-      const cleaningClosed = await closeActiveCleaning();
-      console.log("Cleaning closed on logout:", cleaningClosed);
-      
-      // Then close any active shift
-      await closeActiveShift();
-      console.log("Shift closed on logout");
+      try {
+        // First close any active cleaning
+        const cleaningClosed = await closeActiveCleaning();
+        console.log("Cleaning closed on logout:", cleaningClosed);
+        
+        // Then close any active shift
+        const shiftClosed = await closeActiveShift();
+        console.log("Shift closed on logout:", shiftClosed);
+      } catch (error) {
+        console.error("Error closing active tasks on logout:", error);
+      }
     }
     
     // Clear authentication data and state

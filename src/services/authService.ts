@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Function to close active cleaning in database
@@ -31,6 +30,9 @@ export const closeActiveCleaning = async () => {
     
     // Remove the active cleaning from localStorage
     localStorage.removeItem('activeCleaning');
+    localStorage.removeItem('cleaningTimer');
+    localStorage.removeItem('cleaningStartTime');
+    localStorage.removeItem('cleaningPaused');
     return true;
   } catch (error) {
     console.error("Error parsing active cleaning:", error);
@@ -43,11 +45,11 @@ export const closeActiveCleaning = async () => {
 export const closeActiveShift = async () => {
   // Check if there's an active shift in localStorage
   const activeShiftStr = localStorage.getItem('activeShift');
-  if (!activeShiftStr) return;
+  if (!activeShiftStr) return false;
   
   try {
     const activeShift = JSON.parse(activeShiftStr);
-    if (!activeShift || !activeShift.id) return;
+    if (!activeShift || !activeShift.id) return false;
     
     console.log("Found active shift to close on logout:", activeShift.id);
     
@@ -63,18 +65,20 @@ export const closeActiveShift = async () => {
     
     if (error) {
       console.error("Error closing active shift:", error);
-      return;
+      return false;
     }
     
     // Remove the active shift from localStorage
     localStorage.removeItem('activeShift');
     localStorage.removeItem('shiftStartTime');
     localStorage.removeItem('shiftTimer');
+    return true;
   } catch (error) {
     console.error("Error parsing active shift:", error);
     localStorage.removeItem('activeShift');
     localStorage.removeItem('shiftStartTime');
     localStorage.removeItem('shiftTimer');
+    return false;
   }
 };
 

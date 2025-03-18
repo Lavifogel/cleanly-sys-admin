@@ -1,3 +1,11 @@
+export type ActivityStatus = 
+  | "active" 
+  | "completed" 
+  | "paused" 
+  | "cancelled" 
+  | "finished" 
+  | "finished automatically"
+  | string;
 
 export type ActivityType = "shift" | "cleaning";
 
@@ -10,7 +18,7 @@ export interface Activity {
   startTime: string;
   endTime: string | null;
   duration: string;
-  status: string;
+  status: ActivityStatus;
 }
 
 // Utility functions
