@@ -143,10 +143,10 @@ export const useCameraStart = ({
         // Try fallback camera if initial attempt fails
         if (currentAttempt <= 2) {
           console.log("Trying fallback camera options...");
-          const fallbackSuccess = await tryFallbackCamera(config, qrCodeSuccessCallback);
+          await tryFallbackCamera(config, qrCodeSuccessCallback);
           
-          if (fallbackSuccess) {
-            console.log("Fallback camera started successfully");
+          // Separately check if fallback was successful
+          if (mountedRef.current) {
             setCameraActive(true);
             clearTimeout(timeoutId);
             resetStartingState();

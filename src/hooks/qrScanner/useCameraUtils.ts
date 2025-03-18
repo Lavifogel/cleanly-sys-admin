@@ -21,20 +21,15 @@ export const useCameraUtils = ({
 }: UseCameraUtilsProps) => {
   
   // Try fallback camera (user-facing) when main camera fails
-  const tryFallbackCamera = useCallback(async () => {
+  const tryFallbackCamera = useCallback(async (config: any, qrCodeSuccessCallback: (decodedText: string) => void) => {
     try {
       if (mountedRef.current && scannerRef.current) {
         console.log("Trying with user-facing camera...");
-        const config = {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          formatsToSupport: ["QR_CODE"]
-        };
         
         await scannerRef.current.start(
           { facingMode: "user" },
           config,
-          (decodedText) => {
+          (decodedText: string) => {
             onScanSuccess(decodedText);
             stopCamera();
           },
@@ -44,13 +39,16 @@ export const useCameraUtils = ({
         if (mountedRef.current) {
           setCameraActive(true);
           setError(null);
+          return true;
         }
       }
+      return false;
     } catch (fallbackErr) {
       console.error("Fallback camera also failed:", fallbackErr);
       if (mountedRef.current) {
         setError("Camera access failed. Please check camera permissions and try again.");
       }
+      return false;
     }
   }, [scannerRef, mountedRef, onScanSuccess, stopCamera, setCameraActive, setError]);
 
@@ -78,15 +76,31 @@ export const useCameraUtils = ({
       setError("Camera initialization failed. Trying alternative approach...");
       // Try with simple configuration
       if (scannerRef.current && mountedRef.current) {
-        tryFallbackCamera();
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          formatsToSupport: ["QR_CODE"]
+        };
+        tryFallbackCamera(config, (decodedText: string) => {
+          onScanSuccess(decodedText);
+          stopCamera();
+        });
       }
     } else {
       setError("Could not access the camera. Please ensure your device has a working camera.");
       
       // Try with user-facing camera as fallback
-      tryFallbackCamera();
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        formatsToSupport: ["QR_CODE"]
+      };
+      tryFallbackCamera(config, (decodedText: string) => {
+        onScanSuccess(decodedText);
+        stopCamera();
+      });
     }
-  }, [mountedRef, setError, tryFallbackCamera, scannerRef]);
+  }, [mountedRef, setError, tryFallbackCamera, scannerRef, onScanSuccess, stopCamera]);
 
   return {
     tryFallbackCamera,
