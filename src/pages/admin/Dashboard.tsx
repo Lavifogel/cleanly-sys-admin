@@ -14,8 +14,8 @@ const AdminDashboard = memo(() => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }} // Reduced from 0.5 to 0.3 for faster animation
-        layout // Add layout animation for smoother transitions
+        transition={{ duration: 0.3 }}
+        layout
       >
         <DashboardHeader />
         <DashboardTabs stats={stats} loading={loading} refreshData={refreshData} />

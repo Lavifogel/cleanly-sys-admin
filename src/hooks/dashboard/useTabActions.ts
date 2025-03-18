@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useTabManagement } from "@/hooks/useTabManagement";
 
 export function useTabActions() {

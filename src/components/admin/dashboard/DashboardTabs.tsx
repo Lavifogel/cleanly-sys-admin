@@ -10,6 +10,7 @@ import RecentActivitiesCard from "./RecentActivitiesCard";
 import CleanerWorkHoursCard from "./CleanerWorkHoursCard";
 import ActivitiesTable from "./ActivitiesTable";
 import { DashboardStats } from "@/hooks/useAdminDashboardData";
+import { useTabActions } from "@/hooks/dashboard";
 
 interface DashboardTabsProps {
   stats: DashboardStats;
@@ -18,7 +19,7 @@ interface DashboardTabsProps {
 }
 
 const DashboardTabs = ({ stats, loading, refreshData }: DashboardTabsProps) => {
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const { activeTab, setActiveTab } = useTabActions();
 
   return (
     <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -44,7 +45,7 @@ const DashboardTabs = ({ stats, loading, refreshData }: DashboardTabsProps) => {
       <TabsContent value="dashboard" className="space-y-4">
         <StatCards stats={stats} loading={loading} />
 
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           <RecentActivitiesCard />
           <CleanerWorkHoursCard />
         </div>
