@@ -48,7 +48,9 @@ const Login = () => {
         if (user.role === 'admin') {
           navigate("/admin/dashboard");
         } else if (user.role === 'cleaner') {
-          navigate("/cleaners/dashboard");
+          // Force navigation to cleaner dashboard
+          console.log("Redirecting cleaner to dashboard...");
+          navigate("/cleaners/dashboard", { replace: true });
         }
       } else {
         throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
