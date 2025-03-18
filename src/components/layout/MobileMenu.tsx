@@ -1,6 +1,7 @@
+
 import { NavLink } from "react-router-dom";
 import { getNavRoutes } from "@/utils/navbarUtils";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MobileMenuProps {
