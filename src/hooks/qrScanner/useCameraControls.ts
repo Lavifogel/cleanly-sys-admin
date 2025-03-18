@@ -48,6 +48,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
 
     try {
       const qrCodeSuccessCallback = (decodedText: string) => {
+        console.log("Successfully scanned QR code:", decodedText);
         // Handle the scanned code here
         onScanSuccess(decodedText);
         
@@ -60,6 +61,9 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
         formatsToSupport: ["QR_CODE"], // Only scan for QR codes to improve performance
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true // Use the native BarcodeDetector API if available
+        }
       };
 
       await scannerRef.current.start(

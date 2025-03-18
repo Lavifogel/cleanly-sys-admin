@@ -55,6 +55,7 @@ const QRScannerHandler = ({
       )}
       <QRCodeScanner 
         onScanSuccess={(decodedText) => {
+          console.log("QR scan successful, data:", decodedText);
           onQRScan(decodedText);
           // Ensure camera is stopped after successful scan
           stopAllVideoStreams();

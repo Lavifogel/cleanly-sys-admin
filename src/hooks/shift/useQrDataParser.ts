@@ -13,24 +13,53 @@ export function parseQrData(qrData: string) {
       console.log("Parsed JSON data:", qrDataObj);
     } catch (parseError) {
       console.log("Not valid JSON, trying URL parameters");
-      // If not JSON, try parsing as URL parameters
-      const params = new URLSearchParams(qrData);
-      if (params.has('areaId') || params.has('location')) {
+      
+      // Check if it's a URL
+      if (qrData.includes('http') && qrData.includes('?')) {
+        try {
+          // Extract query parameters from URL
+          const url = new URL(qrData);
+          const params = url.searchParams;
+          
+          if (params.has('areaId') || params.has('location')) {
+            qrDataObj = {
+              areaId: params.get('areaId') || params.get('location'),
+              areaName: params.get('areaName') || params.get('locationName') || params.get('location')
+            };
+            console.log("Parsed URL query params:", qrDataObj);
+          }
+        } catch (urlError) {
+          console.log("Not a valid URL, continuing with other methods");
+        }
+      }
+      
+      // If not a URL or couldn't parse URL params, try as plain URL params
+      if (!qrDataObj) {
+        const params = new URLSearchParams(qrData);
+        if (params.has('areaId') || params.has('location')) {
+          qrDataObj = {
+            areaId: params.get('areaId') || params.get('location'),
+            areaName: params.get('areaName') || params.get('locationName') || params.get('location')
+          };
+          console.log("Parsed URL params:", qrDataObj);
+        }
+      }
+      
+      // If still no object, handle as plain text
+      if (!qrDataObj) {
+        // Try to extract meaningful data from plain text
+        // Trim any whitespace and remove common QR code prefixes
+        const cleanedQrData = qrData.trim().replace(/^(http[s]?:\/\/|www\.|data:|SMSTO:|mailto:|tel:)/i, '');
+        
+        console.log("Using as plain text:", cleanedQrData);
         qrDataObj = {
-          areaId: params.get('areaId') || params.get('location'),
-          areaName: params.get('areaName') || params.get('locationName') || params.get('location')
-        };
-        console.log("Parsed URL params:", qrDataObj);
-      } else {
-        // If not URL params, use as plain text
-        console.log("Using as plain text");
-        qrDataObj = {
-          areaId: qrData,
-          areaName: `Area from ${qrData}`
+          areaId: cleanedQrData,
+          areaName: `Area from ${cleanedQrData.substring(0, 20)}${cleanedQrData.length > 20 ? '...' : ''}`
         };
       }
     }
     
+    // Validate and return the parsed data
     if (qrDataObj && (qrDataObj.areaId || qrDataObj.locationId)) {
       return {
         areaId: qrDataObj.areaId || qrDataObj.locationId,
