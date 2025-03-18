@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/ui/logo";
+import { useUserData } from "@/hooks/useUserData";
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -15,6 +15,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { loginWithCredentials } = useUserData();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,26 +32,19 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Check if the phone number and password match a record in the users table
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('phone', phoneNumber)
-        .eq('password', password)
-        .eq('role', 'cleaner')
-        .single();
-
-      if (error || !data) {
-        throw new Error("Invalid phone number or password");
-      }
-
-      // If the credentials are valid, navigate to cleaner dashboard
-      toast({
-        title: "Success",
-        description: "Logged in successfully",
-      });
+      const { success, error, user } = await loginWithCredentials(phoneNumber, password);
       
-      navigate("/cleaners/dashboard");
+      if (success && user) {
+        toast({
+          title: "Success",
+          description: "Logged in successfully",
+        });
+        
+        // Use navigate here to redirect to the dashboard
+        navigate("/cleaners/dashboard");
+      } else {
+        throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
+      }
     } catch (error) {
       toast({
         title: "Error",

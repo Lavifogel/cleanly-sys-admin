@@ -54,7 +54,8 @@ export const useUserData = () => {
         .single();
 
       if (error || !data) {
-        throw new Error("Invalid phone number or password");
+        console.error('Login error:', error);
+        return { success: false, error: new Error("Invalid phone number or password") };
       }
 
       // Store user info in localStorage
