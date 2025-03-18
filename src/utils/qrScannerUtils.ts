@@ -9,12 +9,22 @@ export const stopCameraStream = (videoElement: HTMLVideoElement | null) => {
       });
     }
     videoElement.srcObject = null;
+    
+    // Remove from DOM if possible
+    try {
+      if (videoElement.parentNode) {
+        videoElement.parentNode.removeChild(videoElement);
+      }
+    } catch (e) {
+      console.log("Could not remove video element from DOM:", e);
+    }
   }
 };
 
 export const stopAllVideoStreams = () => {
   const videoElements = document.querySelectorAll('video');
   videoElements.forEach(video => {
+    // First stop all tracks
     if (video.srcObject) {
       const stream = video.srcObject as MediaStream;
       if (stream) {
@@ -24,6 +34,13 @@ export const stopAllVideoStreams = () => {
         });
       }
       video.srcObject = null;
+    }
+    
+    // Then pause the video element
+    try {
+      video.pause();
+    } catch (e) {
+      console.log("Error pausing video:", e);
     }
   });
   
@@ -42,6 +59,18 @@ export const stopAllVideoStreams = () => {
       });
   } catch (error) {
     // Ignore any errors in this cleanup
+  }
+  
+  // Remove any HTML5QrCode scanner UI elements that might be orphaned
+  try {
+    const scannerElements = document.querySelectorAll('.html5-qrcode-element');
+    scannerElements.forEach(element => {
+      if (element.parentNode) {
+        element.parentNode.removeChild(element);
+      }
+    });
+  } catch (e) {
+    console.log("Error removing scanner UI elements:", e);
   }
 };
 

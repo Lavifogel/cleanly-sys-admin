@@ -6,9 +6,11 @@ import { QRCodeScannerProps } from "@/types/qrScanner";
 import { useQRScannerLogic } from "@/hooks/useQRScannerLogic";
 import QRScannerView from "@/components/qrScanner/QRScannerView";
 import { Button } from "./ui/button";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const scannerMountedRef = useRef(false);
+  const cleanupTimeoutRef = useRef<number | null>(null);
   
   const {
     scannerState,
@@ -33,9 +35,67 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     
     return () => {
       clearTimeout(timer);
+      
+      // Set mounted ref to false for cleanup helpers
       scannerMountedRef.current = false;
+      
+      // Ensure video elements are removed
+      stopAllVideoStreams();
+      
+      // Clear any pending cleanup timeouts
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+        cleanupTimeoutRef.current = null;
+      }
+      
+      // Add a delayed final cleanup to ensure all DOM operations have completed
+      cleanupTimeoutRef.current = window.setTimeout(() => {
+        // Remove any orphaned video elements that might be causing the removeChild error
+        const videoElements = document.querySelectorAll('video');
+        videoElements.forEach(video => {
+          if (video.parentNode) {
+            try {
+              video.parentNode.removeChild(video);
+            } catch (e) {
+              console.log("Cleanup - Could not remove video element:", e);
+            }
+          }
+        });
+      }, 100);
     };
   }, [cameraActive]);
+
+  // Add an additional cleanup effect specifically for unmounting
+  useEffect(() => {
+    return () => {
+      console.log("QRCodeScanner component unmounting, cleaning up resources");
+      stopAllVideoStreams();
+      
+      // Remove any orphaned video elements
+      const videoElements = document.querySelectorAll('video');
+      videoElements.forEach(video => {
+        if (video.parentNode) {
+          try {
+            video.parentNode.removeChild(video);
+          } catch (e) {
+            console.log("Unmount - Could not remove video element:", e);
+          }
+        }
+      });
+    };
+  }, []);
+
+  const safeHandleClose = () => {
+    // Stop all video streams before calling the close handler
+    stopAllVideoStreams();
+    
+    // Delay the actual close slightly to ensure DOM operations complete
+    setTimeout(() => {
+      if (scannerMountedRef.current) {
+        handleClose();
+      }
+    }, 100);
+  };
 
   return (
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
@@ -45,7 +105,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={handleClose}
+            onClick={safeHandleClose}
             className="ml-auto"
           >
             <X className="h-5 w-5" />
