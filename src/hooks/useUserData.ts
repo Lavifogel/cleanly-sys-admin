@@ -56,7 +56,12 @@ export const useUserData = () => {
       if (success) {
         // Update state
         setUserRole(role);
-        setUserName(user.full_name || `${user.first_name} ${user.last_name}`);
+        // Create a full name from first_name and last_name if full_name doesn't exist
+        const fullName = user.first_name && user.last_name 
+          ? `${user.first_name} ${user.last_name}`
+          : user.phone || 'User';
+        
+        setUserName(fullName);
         setIsAuthenticated(true);
         
         // Redirect to dashboard
