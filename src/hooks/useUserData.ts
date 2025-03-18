@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +43,8 @@ export const useUserData = () => {
     session,
     isAuthenticated,
     loginError: null,
-    loginWithCredentials: async () => true,
+    // Define loginWithCredentials to accept two parameters but ignore them
+    loginWithCredentials: async (_phoneNumber?: string, _password?: string) => true,
     logout,
     refetchSession
   };
