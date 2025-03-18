@@ -22,6 +22,7 @@ export const useUserData = () => {
     const checkAuthState = async () => {
       // Check localStorage for auth token
       const authToken = localStorage.getItem('cleanerAuth');
+      const adminToken = localStorage.getItem('adminAuth');
       
       if (authToken) {
         try {
@@ -32,6 +33,17 @@ export const useUserData = () => {
         } catch (error) {
           console.error('Error parsing auth token:', error);
           localStorage.removeItem('cleanerAuth');
+          setIsAuthenticated(false);
+        }
+      } else if (adminToken) {
+        try {
+          const userData = JSON.parse(adminToken);
+          setUserRole('admin');
+          setUserName(`${userData.first_name} ${userData.last_name}`);
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.error('Error parsing admin token:', error);
+          localStorage.removeItem('adminAuth');
           setIsAuthenticated(false);
         }
       } else {
@@ -45,7 +57,8 @@ export const useUserData = () => {
   // Function to authenticate user with phone and password
   const loginWithCredentials = async (phoneNumber: string, password: string) => {
     try {
-      const { data, error } = await supabase
+      // First try to log in as cleaner
+      const { data: cleanerData, error: cleanerError } = await supabase
         .from('users')
         .select('*')
         .eq('phone', phoneNumber)
@@ -53,20 +66,42 @@ export const useUserData = () => {
         .eq('role', 'cleaner')
         .single();
 
-      if (error || !data) {
-        console.error('Login error:', error);
-        return { success: false, error: new Error("Invalid phone number or password") };
+      if (cleanerData) {
+        // Store user info in localStorage
+        localStorage.setItem('cleanerAuth', JSON.stringify(cleanerData));
+        
+        // Update state
+        setUserRole('cleaner');
+        setUserName(`${cleanerData.first_name} ${cleanerData.last_name}`);
+        setIsAuthenticated(true);
+        
+        return { success: true, user: cleanerData };
       }
 
-      // Store user info in localStorage
-      localStorage.setItem('cleanerAuth', JSON.stringify(data));
-      
-      // Update state
-      setUserRole('cleaner');
-      setUserName(`${data.first_name} ${data.last_name}`);
-      setIsAuthenticated(true);
-      
-      return { success: true, user: data };
+      // If not a cleaner, try to log in as admin
+      const { data: adminData, error: adminError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phoneNumber)
+        .eq('password', password)
+        .eq('role', 'admin')
+        .single();
+
+      if (adminData) {
+        // Store admin info in localStorage
+        localStorage.setItem('adminAuth', JSON.stringify(adminData));
+        
+        // Update state
+        setUserRole('admin');
+        setUserName(`${adminData.first_name} ${adminData.last_name}`);
+        setIsAuthenticated(true);
+        
+        return { success: true, user: adminData };
+      }
+
+      // If we get here, neither cleaner nor admin login was successful
+      console.error('Login error: Invalid credentials');
+      return { success: false, error: new Error("Invalid phone number or password") };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error };
@@ -76,6 +111,7 @@ export const useUserData = () => {
   // Function to log out
   const logout = () => {
     localStorage.removeItem('cleanerAuth');
+    localStorage.removeItem('adminAuth');
     setUserRole(null);
     setUserName(null);
     setIsAuthenticated(false);

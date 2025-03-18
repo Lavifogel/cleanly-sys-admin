@@ -40,8 +40,12 @@ const Login = () => {
           description: "Logged in successfully",
         });
         
-        // Use navigate here to redirect to the dashboard
-        navigate("/cleaners/dashboard");
+        // Redirect based on user role
+        if (user.role === 'admin') {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/cleaners/dashboard");
+        }
       } else {
         throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
       }
@@ -63,7 +67,7 @@ const Login = () => {
           <Logo className="h-12 w-auto mb-4" />
           <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
           <CardDescription>
-            Sign in to your cleaner account
+            Sign in to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -72,7 +76,7 @@ const Login = () => {
               <Label htmlFor="phoneNumber">Phone Number</Label>
               <Input
                 id="phoneNumber"
-                placeholder="+972526768666"
+                placeholder="+123456789"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 autoComplete="tel"
