@@ -21,7 +21,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
   const { error, cameraActive } = scannerState;
   
-  // Auto-focus on scanning when component mounts
+  // Component mount effect
   useEffect(() => {
     // Mark component as mounted
     scannerMountedRef.current = true;
@@ -36,65 +36,32 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     return () => {
       clearTimeout(timer);
       
-      // Set mounted ref to false for cleanup helpers
+      console.log("QRCodeScanner component unmounting, cleaning up resources");
+      // Set mounted ref to false to prevent any subsequent state updates
       scannerMountedRef.current = false;
       
-      // Ensure video elements are removed
-      stopAllVideoStreams();
-      
-      // Clear any pending cleanup timeouts
+      // Ensure any pending cleanup timeouts are cleared
       if (cleanupTimeoutRef.current) {
         clearTimeout(cleanupTimeoutRef.current);
         cleanupTimeoutRef.current = null;
       }
       
-      // Add a delayed final cleanup to ensure all DOM operations have completed
-      cleanupTimeoutRef.current = window.setTimeout(() => {
-        // Remove any orphaned video elements that might be causing the removeChild error
-        const videoElements = document.querySelectorAll('video');
-        videoElements.forEach(video => {
-          if (video.parentNode) {
-            try {
-              video.parentNode.removeChild(video);
-            } catch (e) {
-              console.log("Cleanup - Could not remove video element:", e);
-            }
-          }
-        });
-      }, 100);
-    };
-  }, [cameraActive]);
-
-  // Add an additional cleanup effect specifically for unmounting
-  useEffect(() => {
-    return () => {
-      console.log("QRCodeScanner component unmounting, cleaning up resources");
+      // Stop all video streams on unmount
       stopAllVideoStreams();
-      
-      // Remove any orphaned video elements
-      const videoElements = document.querySelectorAll('video');
-      videoElements.forEach(video => {
-        if (video.parentNode) {
-          try {
-            video.parentNode.removeChild(video);
-          } catch (e) {
-            console.log("Unmount - Could not remove video element:", e);
-          }
-        }
-      });
     };
   }, []);
 
+  // Safely handle close with proper cleanup
   const safeHandleClose = () => {
-    // Stop all video streams before calling the close handler
+    // First stop all camera streams
     stopAllVideoStreams();
     
-    // Delay the actual close slightly to ensure DOM operations complete
+    // Slight delay to ensure cleanup completes before closing
     setTimeout(() => {
       if (scannerMountedRef.current) {
         handleClose();
       }
-    }, 100);
+    }, 150);
   };
 
   return (

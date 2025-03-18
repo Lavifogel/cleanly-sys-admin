@@ -23,74 +23,48 @@ const QRScannerHandler = ({
 }: QRScannerHandlerProps) => {
   const scannerMounted = useRef(false);
   const prevShowQRScannerRef = useRef(showQRScanner);
+  const closeTimeoutRef = useRef<number | null>(null);
   
-  // Monitor when the QR scanner is shown and ensure it initializes properly
+  // Effect to manage scanner visibility changes
   useEffect(() => {
-    let timeoutId: number;
-    
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
       scannerMounted.current = true;
-      // Force a reflow to ensure the scanner container is ready
-      timeoutId = window.setTimeout(() => {
-        const container = document.getElementById("qr-scanner-container");
-        if (container) {
-          console.log("QR scanner container found, dimensions:", 
-            container.offsetWidth, container.offsetHeight);
-        } else {
-          console.log("QR scanner container not found yet");
-        }
-      }, 300);
+      console.log("QR scanner opened");
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
+      // Ensure camera is released when QR scanner is closed
       if (scannerMounted.current) {
-        // Ensure any lingering video tracks are stopped
         stopAllVideoStreams();
+        console.log("QR scanner closed, camera resources released");
         
-        // Wait a moment then perform additional cleanup
-        timeoutId = window.setTimeout(() => {
-          // Clean up any orphaned video elements
-          const videoElements = document.querySelectorAll('video');
-          videoElements.forEach(video => {
-            if (video.parentNode) {
-              try {
-                video.parentNode.removeChild(video);
-              } catch (e) {
-                console.log("Cleanup - Could not remove video element:", e);
-              }
-            }
-          });
-          
-          console.log("Camera resources released when QR scanner hidden");
+        // Add a delay before setting scannerMounted to false to avoid conflicts
+        if (closeTimeoutRef.current) {
+          clearTimeout(closeTimeoutRef.current);
+        }
+        
+        closeTimeoutRef.current = window.setTimeout(() => {
           scannerMounted.current = false;
-        }, 200);
+          closeTimeoutRef.current = null;
+        }, 300);
       }
     }
     
     // Update previous state reference
     prevShowQRScannerRef.current = showQRScanner;
     
-    // Also clean up when unmounting
+    // Clean up on component unmount
     return () => {
-      window.clearTimeout(timeoutId);
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+      
       if (scannerMounted.current) {
         stopAllVideoStreams();
-        
-        // Clean up orphaned video elements
-        const videoElements = document.querySelectorAll('video');
-        videoElements.forEach(video => {
-          if (video.parentNode) {
-            try {
-              video.parentNode.removeChild(video);
-            } catch (e) {
-              console.log("Unmount - Could not remove video element:", e);
-            }
-          }
-        });
-        
-        console.log("Camera resources released when QR scanner component unmounted");
         scannerMounted.current = false;
+        console.log("QR scanner handler unmounted, resources cleaned up");
       }
     };
   }, [showQRScanner]);
@@ -112,12 +86,12 @@ const QRScannerHandler = ({
       <QRCodeScanner 
         onScanSuccess={(decodedText) => {
           console.log("QR scan successful, data:", decodedText);
-          // Ensure camera is stopped before handling scan result
+          // First stop all camera streams
           stopAllVideoStreams();
           // Allow a moment for cleanup before processing result
           setTimeout(() => {
             onQRScan(decodedText);
-          }, 100);
+          }, 150);
         }}
         onClose={() => {
           // Only allow closing if it's the initial scanner
@@ -127,7 +101,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 100);
+            }, 150);
           }
         }}
       />
