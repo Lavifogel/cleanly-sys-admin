@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { 
@@ -13,14 +13,18 @@ import { processCleaningsData } from "./dataProcessors/processCleaningsData";
 export const useActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefreshTime, setLastRefreshTime] = useState(0);
 
-  useEffect(() => {
-    fetchActivities();
-  }, []);
-
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
+    // Only refetch if it's been more than 15 seconds since last refresh
+    if (Date.now() - lastRefreshTime < 15000 && lastRefreshTime !== 0) {
+      return;
+    }
+    
     setLoading(true);
     try {
+      console.log("Fetching activities data...");
+      
       // Fetch shifts with user information
       const { data: shiftsData, error: shiftsError } = await supabase
         .from('shifts')
@@ -70,6 +74,9 @@ export const useActivities = () => {
 
       if (cleaningsError) throw cleaningsError;
 
+      console.log("Fetched shifts data:", shiftsData?.length || 0, "records");
+      console.log("Fetched cleanings data:", cleaningsData?.length || 0, "records");
+
       // Process data
       const shiftActivities = processShiftsData(shiftsData || []);
       const cleaningActivities = processCleaningsData(cleaningsData || []);
@@ -85,12 +92,36 @@ export const useActivities = () => {
       });
 
       setActivities(allActivities);
+      setLastRefreshTime(Date.now());
     } catch (error) {
       console.error("Error fetching activities:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [lastRefreshTime]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchActivities();
+    
+    // Set up a refresh interval every 30 seconds
+    const interval = setInterval(fetchActivities, 30000);
+    
+    // Add event listener for visibility changes to refresh when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("Tab became visible, refreshing activities data...");
+        fetchActivities();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchActivities]);
 
   return {
     activities,

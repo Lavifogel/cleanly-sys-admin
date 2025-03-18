@@ -31,20 +31,24 @@ export const processCleaningsData = (cleaningsData: CleaningData[]): Activity[] 
     const startTime = cleaning.start_time ? new Date(cleaning.start_time) : new Date();
     const endTime = cleaning.end_time ? new Date(cleaning.end_time) : null;
     
+    // Calculate duration only if we have both start and end times
     const duration = endTime 
       ? formatDuration(startTime, endTime) 
       : "In progress";
+
+    // Get location from QR code or notes
+    const location = cleaning.qr_codes?.area_name || extractLocationFromNotes(cleaning.notes) || "Unknown Location";
 
     return {
       id: cleaning.id,
       type: "cleaning",
       date: format(startTime, "MMM dd, yyyy"),
       userName,
-      location: cleaning.qr_codes?.area_name || extractLocationFromNotes(cleaning.notes),
+      location,
       startTime: format(startTime, "HH:mm"),
       endTime: endTime ? format(endTime, "HH:mm") : null,
       duration,
-      status: cleaning.status
+      status: cleaning.status || "active"
     };
   });
 };
