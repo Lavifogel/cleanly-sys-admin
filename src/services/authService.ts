@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 // Function to close active cleaning in database
@@ -19,7 +20,7 @@ export const closeActiveCleaning = async () => {
       .update({
         end_time: endTime,
         status: 'finished automatically',
-        notes: 'Automatically closed on logout'
+        notes: (activeCleaning.notes || '') + ' Automatically closed on logout'
       })
       .eq('id', activeCleaning.id);
     
