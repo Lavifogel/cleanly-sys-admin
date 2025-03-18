@@ -14,22 +14,18 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     scannerContainerId,
     fileInputRef,
     handleClose,
-    handleTakePicture,
     handleFileSelect,
     handleManualSimulation
   } = useQRScannerLogic(onScanSuccess, onClose);
 
   const { error } = scannerState;
-
-  // The parent QRScannerHandler will control whether the close button is visible
-  // This component will always handle the close function since it needs to clean up resources
   
   return (
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
       <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
         <div className="mb-4 text-center">
           <h3 className="text-lg font-semibold">Scan QR Code</h3>
-          <p className="text-sm text-muted-foreground">Position the QR code within the frame or take a picture</p>
+          <p className="text-sm text-muted-foreground">Position the QR code within the frame</p>
         </div>
         
         <QRScannerView 
@@ -44,8 +40,8 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         )}
 
         <QRScannerControls 
-          scannerState={scannerState} 
-          onTakePicture={handleTakePicture} 
+          scannerState={scannerState}
+          onTakePicture={() => {}} 
           onSimulateScan={handleManualSimulation} 
         />
         
@@ -57,8 +53,6 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
           onChange={handleFileSelect}
           className="hidden"
           onClick={(e) => {
-            // This prevents the file selection dialog from showing files
-            // and forces it to go directly to the camera
             e.stopPropagation();
           }}
         />
