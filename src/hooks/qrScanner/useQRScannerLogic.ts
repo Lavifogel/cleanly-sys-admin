@@ -1,11 +1,9 @@
 
 import { useEffect } from "react";
-import { Html5Qrcode } from "html5-qrcode";
 import { QRScannerStates } from "@/types/qrScanner";
 import { useCameraControls } from "./useCameraControls";
 import { useSimulation } from "./useSimulation";
 import { useFileInput } from "./useFileInput";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export const useQRScannerLogic = (
   onScanSuccess: (decodedText: string) => void,
@@ -70,18 +68,6 @@ export const useQRScannerLogic = (
       stopCamera();
     };
   }, []);
-
-  // Start scanning when the scanner is initialized
-  useEffect(() => {
-    const startTimer = setTimeout(() => {
-      if (scannerRef.current && !isScanning) {
-        console.log("Starting scanner after initialization");
-        startScanner();
-      }
-    }, 800);
-    
-    return () => clearTimeout(startTimer);
-  }, [scannerRef.current]);
 
   const handleClose = () => {
     stopCamera(); // Ensure camera is stopped before closing
