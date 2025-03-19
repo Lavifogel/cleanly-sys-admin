@@ -21,16 +21,22 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
       stopAllVideoStreams();
       
       // A short delay to ensure resources are released
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Check if camera permission can be obtained
       if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
         try {
           // Request camera permission before opening scanner
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          console.log("Requesting camera permission...");
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: { ideal: "environment" } } 
+          });
           
           // If successful, stop the test stream to free the camera for the scanner
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach(track => {
+            track.stop();
+            console.log(`Test camera track stopped: ${track.kind}`);
+          });
           
           console.log("Camera access granted before starting shift");
           
@@ -40,11 +46,11 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
             duration: 3000,
           });
           
-          // Slight delay before opening the scanner UI
+          // Longer delay before opening the scanner UI to ensure camera is fully released
           setTimeout(() => {
             onStartShift();
             setIsLoading(false);
-          }, 400);
+          }, 800);
         } catch (err) {
           console.error("Camera permission denied:", err);
           toast({

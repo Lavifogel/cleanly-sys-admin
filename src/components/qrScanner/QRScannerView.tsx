@@ -19,7 +19,8 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   useEffect(() => {
     if (containerRef.current) {
       // Force a reflow to ensure the element is rendered with proper dimensions
-      containerRef.current.getBoundingClientRect();
+      const rect = containerRef.current.getBoundingClientRect();
+      console.log(`Scanner container dimensions: ${rect.width}x${rect.height}`);
       
       // Apply specific height to ensure the container has dimensions
       containerRef.current.style.height = "320px";
@@ -37,7 +38,7 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
       <div 
         id={scannerContainerId} 
         className="absolute inset-0 z-10"
-        style={{ minHeight: "320px" }} // Ensure minimum dimensions for the scanner
+        style={{ minHeight: "320px", width: "100%" }} // Ensure minimum dimensions for the scanner
       />
       
       {!cameraActive && !simulationActive && (

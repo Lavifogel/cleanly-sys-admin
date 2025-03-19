@@ -40,8 +40,27 @@ export const stopAllVideoStreams = () => {
   console.log("Stopping all video streams");
   
   try {
-    // First collect all video elements
+    // First, attempt to stop any active getUserMedia streams
+    try {
+      if (navigator.mediaDevices) {
+        navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+          .then(stream => {
+            stream.getTracks().forEach(track => {
+              track.stop();
+              console.log(`Stopping active track: ${track.kind}`);
+            });
+          })
+          .catch(() => {
+            // Ignore errors, as they might just mean no camera is available
+          });
+      }
+    } catch (error) {
+      // Ignore any errors in this cleanup
+    }
+    
+    // Then collect all video elements
     const videoElements = document.querySelectorAll('video');
+    console.log(`Found ${videoElements.length} video elements to clean up`);
     
     // First detach media streams from all videos before removing them
     videoElements.forEach(video => {
@@ -51,6 +70,7 @@ export const stopAllVideoStreams = () => {
           stream.getTracks().forEach(track => {
             try {
               track.stop();
+              console.log(`Stopped video track: ${track.kind}`);
             } catch (e) {
               console.log("Error stopping track:", e);
             }
@@ -67,23 +87,6 @@ export const stopAllVideoStreams = () => {
       }
     });
     
-    // Safely stop any MediaStream that might be active
-    try {
-      if (navigator.mediaDevices) {
-        navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-          .then(stream => {
-            stream.getTracks().forEach(track => {
-              track.stop();
-            });
-          })
-          .catch(() => {
-            // Ignore errors, as they might just mean no camera is available
-          });
-      }
-    } catch (error) {
-      // Ignore any errors in this cleanup
-    }
-    
     // Then attempt to safely remove video elements in a separate pass after a short delay
     // This avoids issues with modifying the DOM while iterating
     setTimeout(() => {
@@ -92,6 +95,7 @@ export const stopAllVideoStreams = () => {
         if (video.parentNode && document.contains(video)) {
           try {
             video.parentNode.removeChild(video);
+            console.log("Removed video element from DOM");
           } catch (e) {
             console.log("Error removing video element:", e);
           }
@@ -105,6 +109,7 @@ export const stopAllVideoStreams = () => {
           if (element.parentNode && document.contains(element)) {
             try {
               element.parentNode.removeChild(element);
+              console.log("Removed scanner UI element");
             } catch (e) {
               console.log("Error removing scanner UI element:", e);
             }
@@ -113,7 +118,7 @@ export const stopAllVideoStreams = () => {
       } catch (e) {
         console.log("Error removing scanner UI elements:", e);
       }
-    }, 100);
+    }, 200);
   } catch (e) {
     console.log("Error in stopAllVideoStreams:", e);
   }
