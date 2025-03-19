@@ -59,7 +59,8 @@ export const useScannerInitialization = ({
       formatsToSupport: ["QR_CODE"],
       experimentalFeatures: {
         useBarCodeDetectorIfSupported: true
-      }
+      },
+      verbose: false // Add the required verbose property
     };
   }, []);
   

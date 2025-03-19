@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeCameraScanConfig } from "html5-qrcode";
 import { useScannerInitialization } from "./useScannerInitialization";
 import { useCameraUtils } from "./useCameraUtils";
 import { useCameraInitiator } from "./useCameraInitiator";
@@ -98,7 +98,17 @@ export const useCameraStart = ({
       const qrCodeSuccessCallback = setupQRCodeCallback(onScanSuccess, stopCamera);
       
       // Get scanner configuration
-      const config = createScannerConfig();
+      const fullConfig = createScannerConfig();
+      
+      // Create a camera-specific config from the full config
+      const cameraScanConfig: Html5QrcodeCameraScanConfig = {
+        fps: fullConfig.fps,
+        qrbox: fullConfig.qrbox,
+        aspectRatio: undefined,
+        disableFlip: false,
+        formatsToSupport: fullConfig.formatsToSupport,
+        experimentalFeatures: fullConfig.experimentalFeatures
+      };
 
       // Set timeout to prevent infinite loading when camera permissions are denied
       const timeoutId = setupCameraTimeout(cameraActive);
@@ -112,7 +122,7 @@ export const useCameraStart = ({
         // First try with any available camera (no specific constraints)
         await scannerRef.current.start(
           { facingMode: "environment" }, // More relaxed constraint as object
-          config,
+          cameraScanConfig,
           qrCodeSuccessCallback,
           (errorMessage) => {
             // Only log essential errors to reduce console noise
@@ -147,7 +157,7 @@ export const useCameraStart = ({
           try {
             await scannerRef.current.start(
               { facingMode: { ideal: "environment" } }, // Use a more generic constraint instead of boolean
-              config,
+              cameraScanConfig,
               qrCodeSuccessCallback,
               () => {}
             );
@@ -163,7 +173,7 @@ export const useCameraStart = ({
             console.error("Error starting with generic constraints:", fallbackErr);
             
             // Try one more fallback approach
-            await tryFallbackCamera(config, qrCodeSuccessCallback);
+            await tryFallbackCamera(fullConfig, qrCodeSuccessCallback);
           }
         }
         

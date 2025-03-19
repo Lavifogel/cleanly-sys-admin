@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeFullConfig } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig } from "html5-qrcode";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseCameraUtilsProps {
@@ -31,10 +31,20 @@ export const useCameraUtils = ({
     console.log("Trying final fallback camera approach...");
     
     try {
+      // Convert the config to the camera scan config format
+      const cameraScanConfig: Html5QrcodeCameraScanConfig = {
+        fps: config.fps || 10,
+        qrbox: config.qrbox,
+        aspectRatio: undefined,
+        disableFlip: false,
+        formatsToSupport: config.formatsToSupport,
+        experimentalFeatures: config.experimentalFeatures
+      };
+      
       // Try a very generic approach that should work on most devices
       await scannerRef.current.start(
         { facingMode: "user" }, // Try user-facing as a last resort
-        config,
+        cameraScanConfig,
         qrCodeSuccessCallback,
         () => {}
       );
