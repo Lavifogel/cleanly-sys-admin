@@ -1,4 +1,3 @@
-
 export const stopCameraStream = (videoElement: HTMLVideoElement | null) => {
   if (!videoElement) return;
   
