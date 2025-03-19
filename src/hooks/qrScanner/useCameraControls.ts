@@ -1,9 +1,8 @@
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useCameraSetup } from "./useCameraSetup";
 import { useScannerState } from "./useScannerState";
 import { useCameraStart } from "./useCameraStart";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseCameraControlsProps {
   onScanSuccess: (decodedText: string) => void;
@@ -12,7 +11,6 @@ interface UseCameraControlsProps {
 export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => {
   // Track whether we've attempted to start the camera
   const hasAttemptedStart = useRef(false);
-  const hasCleanedUp = useRef(false);
   
   // Initialize camera components
   const { 
@@ -54,44 +52,29 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     incrementAttempt
   });
 
-  // Force camera start explicitly to ensure consistency
-  const forceCameraStart = useCallback(async () => {
-    console.log("Force starting camera...");
-    
-    // Ensure any previous camera is fully stopped first
-    await stopCamera();
-    
-    // Small delay to ensure resources are released
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Reset flags and start camera
-    hasAttemptedStart.current = true;
-    return startScanner();
-  }, [startScanner, stopCamera]);
-  
-  // Reset the attempt flag when component is remounted
-  const resetStartAttempt = useCallback(() => {
-    console.log("Resetting camera start attempt flag");
-    hasAttemptedStart.current = false;
-    hasCleanedUp.current = false;
-    
-    // Also explicitly stop any existing camera when resetting
-    stopAllVideoStreams();
-  }, []);
+  // Start scanning when the scanner is initialized
+  useEffect(() => {
+    // Use a flag to ensure we only attempt to start the camera once per mount
+    if (scannerRef.current && !isScanning && !hasAttemptedStart.current) {
+      hasAttemptedStart.current = true;
+      const startTimer = setTimeout(() => {
+        console.log("Starting scanner after initialization");
+        startScanner();
+      }, 800);
+      
+      return () => clearTimeout(startTimer);
+    }
+  }, [scannerRef.current, isScanning, startScanner]);
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
       console.log("useCameraControls unmounting, cleaning up camera resources");
-      if (!hasCleanedUp.current) {
-        if (scannerRef.current && isScanning) {
-          stopCamera();
-        }
-        stopAllVideoStreams();
-        hasCleanedUp.current = true;
+      if (scannerRef.current && isScanning) {
+        stopCamera();
       }
     };
-  }, [stopCamera, isScanning]);
+  }, []);
 
   return {
     cameraActive,
@@ -100,8 +83,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     scannerRef,
     scannerContainerId,
     stopCamera,
-    startScanner: forceCameraStart, // Return the forced version for more reliability
-    resetStartAttempt,
+    startScanner,
     setError
   };
 };

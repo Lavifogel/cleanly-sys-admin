@@ -1,10 +1,9 @@
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { QRScannerStates } from "@/types/qrScanner";
 import { useCameraControls } from "./useCameraControls";
 import { useSimulation } from "./useSimulation";
 import { useFileInput } from "./useFileInput";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export const useQRScannerLogic = (
   onScanSuccess: (decodedText: string) => void,
@@ -18,7 +17,6 @@ export const useQRScannerLogic = (
     scannerContainerId, 
     stopCamera, 
     startScanner,
-    resetStartAttempt,
     setError 
   } = useCameraControls({ onScanSuccess });
 
@@ -53,39 +51,24 @@ export const useQRScannerLogic = (
     simulationProgress
   };
 
-  // Start the scanner when the component mounts
+  // Clean up when component unmounts
   useEffect(() => {
-    // Clean up any existing camera resources first
-    stopAllVideoStreams();
-    
-    // Force camera initialization on mount with a delay
-    const initTimer = setTimeout(() => {
-      console.log("Initializing scanner from useQRScannerLogic");
-      // Explicitly start the scanner
-      startScanner();
-    }, 500);
-    
     return () => {
-      clearTimeout(initTimer);
-      resetStartAttempt();
       stopCamera();
       resetSimulation();
     };
-  }, [startScanner, stopCamera, resetStartAttempt, resetSimulation]);
+  }, [stopCamera, resetSimulation]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     stopCamera(); // Ensure camera is stopped before closing
     resetSimulation(); // Reset any active simulation
-    // Add small delay before calling onClose to ensure cleanup is complete
-    setTimeout(() => {
-      onClose();
-    }, 100);
-  }, [onClose, stopCamera, resetSimulation]);
+    onClose();
+  };
 
-  const handleManualSimulation = useCallback(() => {
+  const handleManualSimulation = () => {
     // This is for demonstration only - simulates a successful scan
     startSimulation();
-  }, [startSimulation]);
+  };
 
   return {
     scannerState,
@@ -95,7 +78,6 @@ export const useQRScannerLogic = (
     handleTakePicture,
     handleFileSelect,
     handleManualSimulation,
-    startScanner, // Make sure to return startScanner
-    stopCamera // Also return stopCamera for explicit camera control
+    startScanner // Explicitly return startScanner
   };
 };
