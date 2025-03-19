@@ -87,7 +87,6 @@ export const useQRScannerLogic = (
     handleClose,
     handleTakePicture,
     handleFileSelect,
-    handleManualSimulation,
-    startScanner
+    handleManualSimulation
   };
 };

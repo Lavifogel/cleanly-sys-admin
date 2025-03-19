@@ -1,7 +1,6 @@
 
 import { useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseScannerInitializationProps {
   scannerRef: React.MutableRefObject<Html5Qrcode | null>;
@@ -25,95 +24,57 @@ export const useScannerInitialization = ({
   onScanSuccess
 }: UseScannerInitializationProps) => {
   
-  // Check if scanner container is valid with appropriate dimensions
+  // Validates the scanner container to ensure it exists and has sufficient dimensions
   const validateScannerContainer = useCallback(async (): Promise<boolean> => {
-    // Check if container exists
     const containerElement = document.getElementById(scannerContainerId);
     if (!containerElement) {
-      console.log(`Container element '${scannerContainerId}' not found`);
-      setError("Scanner initialization failed. Please try again.");
-      return false;
+      throw new Error("Scanner container element not found");
     }
     
-    // Ensure any existing camera stream is stopped
-    stopAllVideoStreams();
-    
-    // Wait a brief moment to ensure the container is properly sized in the DOM
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Get dimensions after a slight delay
+    // Log container dimensions to help debug
     const rect = containerElement.getBoundingClientRect();
     console.log("Scanner container dimensions:", rect.width, rect.height);
     
-    // Ensure container has some minimum dimensions
-    if (rect.width < 100 || rect.height < 100) {
+    if (rect.width < 10 || rect.height < 10) {
       console.log("Container has insufficient dimensions, adding delay");
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Add a longer delay and try again for late-rendering containers
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Check again after delay
+      if (!mountedRef.current) return false;
       
-      // Get dimensions again after the delay
-      const newRect = containerElement.getBoundingClientRect();
-      console.log("Scanner container dimensions after delay:", newRect.width, newRect.height);
-      
-      // Final check
-      if (newRect.width < 100 || newRect.height < 100) {
-        console.error("Scanner container has insufficient dimensions after delay");
-        setError("QR Scanner could not initialize. Please try again.");
-        return false;
+      const updatedRect = containerElement.getBoundingClientRect();
+      if (updatedRect.width < 10 || updatedRect.height < 10) {
+        throw new Error("Scanner container has insufficient dimensions");
       }
     }
     
     return true;
-  }, [scannerContainerId, setError, stopAllVideoStreams]);
-
-  // Create configuration for QR scanner
+  }, [scannerContainerId, mountedRef]);
+  
+  // Create scanner configuration
   const createScannerConfig = useCallback(() => {
     return {
-      fps: 10,
+      fps: 10, // Lower FPS for more stability
       qrbox: { width: 250, height: 250 },
-      aspectRatio: 1.0,
-      disableFlip: false,
-      formatsToSupport: ['QR_CODE'], // Changed from Html5Qrcode.FORMATS.QR_CODE to string literal
-      rememberLastUsedCamera: true,
-      showTorchButtonIfSupported: true,
+      formatsToSupport: ["QR_CODE"],
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true
+      }
     };
   }, []);
-
+  
   // Setup QR code success callback
-  const setupQRCodeCallback = useCallback((
-    onScanSuccess: (decodedText: string) => void,
-    stopCamera: () => Promise<void>
-  ) => {
-    // Return the success handler function
+  const setupQRCodeCallback = useCallback((onSuccess: (decodedText: string) => void, stopFn: () => Promise<void>) => {
     return (decodedText: string) => {
-      if (!mountedRef.current) return;
+      console.log("Successfully scanned QR code:", decodedText);
+      // Handle the scanned code here
+      onSuccess(decodedText);
       
-      console.log("QR code scanned successfully:", decodedText);
-      
-      // First stop the camera to prevent any conflicts
-      stopCamera().then(() => {
-        // Then set scanning to false
-        if (mountedRef.current) {
-          setIsScanning(false);
-          
-          // Call the original success callback
-          onScanSuccess(decodedText);
-        }
-      }).catch(err => {
-        console.error("Error stopping camera after successful scan:", err);
-        // Force stop all video streams
-        stopAllVideoStreams();
-        
-        if (mountedRef.current) {
-          setIsScanning(false);
-          // Still call success callback even if there was an error stopping
-          onScanSuccess(decodedText);
-        }
-      });
+      // Stop scanning after successful scan
+      stopFn();
     };
-  }, [mountedRef, setIsScanning]);
-
+  }, []);
+  
   return {
     validateScannerContainer,
     createScannerConfig,

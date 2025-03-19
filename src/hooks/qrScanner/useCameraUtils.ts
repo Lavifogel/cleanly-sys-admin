@@ -20,57 +20,37 @@ export const useCameraUtils = ({
   setError
 }: UseCameraUtilsProps) => {
   
-  // Try fallback camera options in sequence
-  const tryFallbackCamera = useCallback(async (config: any, qrCodeSuccessCallback: (decodedText: string) => void): Promise<boolean> => {
-    if (!mountedRef.current || !scannerRef.current) return false;
-    
-    // Try simple auto mode first
+  // Try fallback camera (user-facing) when main camera fails
+  const tryFallbackCamera = useCallback(async () => {
     try {
-      console.log("Trying with user facing mode...");
-      await scannerRef.current.start(
-        { facingMode: "user" }, // Try user-facing camera
-        config,
-        qrCodeSuccessCallback,
-        () => {}
-      );
-      
-      if (mountedRef.current) {
-        setCameraActive(true);
-        setError(null);
-        console.log("Camera started with user-facing mode");
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.log("User-facing camera failed:", err);
-      
-      // If that fails, try with no specific camera configuration
       if (mountedRef.current && scannerRef.current) {
-        try {
-          console.log("Trying with default camera...");
-          // Fix: Use a proper MediaTrackConstraints object instead of boolean
-          await scannerRef.current.start(
-            { facingMode: "environment" }, // Use environment camera as final fallback
-            config,
-            qrCodeSuccessCallback,
-            () => {}
-          );
-          
-          if (mountedRef.current) {
-            setCameraActive(true);
-            setError(null);
-            console.log("Camera started with default settings");
-            return true;
-          }
-        } catch (fallbackErr) {
-          console.error("Default camera also failed:", fallbackErr);
+        console.log("Trying with user-facing camera...");
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          formatsToSupport: ["QR_CODE"]
+        };
+        
+        await scannerRef.current.start(
+          { facingMode: "user" },
+          config,
+          (decodedText) => {
+            onScanSuccess(decodedText);
+            stopCamera();
+          },
+          () => {}
+        );
+        
+        if (mountedRef.current) {
+          setCameraActive(true);
+          setError(null);
         }
       }
-      
+    } catch (fallbackErr) {
+      console.error("Fallback camera also failed:", fallbackErr);
       if (mountedRef.current) {
         setError("Camera access failed. Please check camera permissions and try again.");
       }
-      return false;
     }
   }, [scannerRef, mountedRef, onScanSuccess, stopCamera, setCameraActive, setError]);
 
@@ -96,13 +76,17 @@ export const useCameraUtils = ({
     } else if (err.toString().includes("object should have exactly 1 key")) {
       // Special handling for camera configuration error
       setError("Camera initialization failed. Trying alternative approach...");
-      // A config error will already trigger the fallback in startScanner
-    } else if (err.toString().includes("NotFoundError") || err.toString().includes("no camera available")) {
-      setError("No camera found. Please ensure your device has a working camera.");
+      // Try with simple configuration
+      if (scannerRef.current && mountedRef.current) {
+        tryFallbackCamera();
+      }
     } else {
-      setError("Could not access the camera. Please check permissions and try again.");
+      setError("Could not access the camera. Please ensure your device has a working camera.");
+      
+      // Try with user-facing camera as fallback
+      tryFallbackCamera();
     }
-  }, [mountedRef, setError]);
+  }, [mountedRef, setError, tryFallbackCamera, scannerRef]);
 
   return {
     tryFallbackCamera,

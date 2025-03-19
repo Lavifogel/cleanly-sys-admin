@@ -22,7 +22,6 @@ export function useStartShift(
   // Handle startShift
   const startShift = useCallback(async (qrData: string) => {
     try {
-      // Generate a unique ID for the new shift
       const newShiftId = uuidv4();
       const startTime = new Date();
       
@@ -46,7 +45,6 @@ export function useStartShift(
           description: error.message || "There was an issue with the QR code.",
           variant: "destructive",
         });
-        return; // Exit early if QR code creation fails
       }
       
       // Generate a temporary user ID
@@ -63,28 +61,22 @@ export function useStartShift(
           description: error.message || "Failed to start shift. Database error.",
           variant: "destructive",
         });
-        return; // Exit early if shift creation fails
+        return;
       }
       
       // Update the local state
-      const newShift: Shift = {
+      setActiveShift({
         startTime: startTime,
         timer: 0,
         id: newShiftId,
-      };
+      });
+      setElapsedTime(0);
       
-      // Set active shift with a slight delay to ensure state updates properly
-      setTimeout(() => {
-        setActiveShift(newShift);
-        setElapsedTime(0);
-        
-        toast({
-          title: "Shift Started",
-          description: "Your shift has been started successfully.",
-          duration: 3000,
-        });
-      }, 50);
-      
+      toast({
+        title: "Shift Started",
+        description: "Your shift has been started successfully.",
+        duration: 3000,
+      });
     } catch (error: any) {
       console.error("Error in startShift:", error);
       toast({
