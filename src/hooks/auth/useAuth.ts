@@ -121,7 +121,7 @@ export function useAuth() {
       if (userData.role === 'admin') {
         navigate('/admin/profile');
       } else {
-        navigate('/cleaners/dashboard');
+        navigate('/cleaners/profile');
       }
       
       return userData;
