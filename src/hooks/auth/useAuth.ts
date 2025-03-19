@@ -132,6 +132,7 @@ export function useAuth() {
       };
       
       console.log("User data prepared:", userData);
+      console.log("User role:", userData.role); // Add this to debug role
       
       // Store in localStorage
       localStorage.setItem('auth', JSON.stringify({ userData }));
@@ -152,11 +153,17 @@ export function useAuth() {
       setUser(userData);
       setStatus("authenticated");
       
-      // Navigate based on role
+      // Navigation based on role - ensure this runs properly
+      console.log("Navigating based on role:", userData.role);
       if (userData.role === 'admin') {
+        console.log("Redirecting to admin dashboard");
         navigate('/admin/dashboard');
-      } else {
+      } else if (userData.role === 'cleaner') {
+        console.log("Redirecting to cleaners dashboard");
         navigate('/cleaners/dashboard');
+      } else {
+        console.log("Unknown role, redirecting to home");
+        navigate('/');
       }
       
       return userData;
