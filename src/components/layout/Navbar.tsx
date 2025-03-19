@@ -17,7 +17,6 @@ const Navbar = () => {
     userName,
     location,
     navigate,
-    session,
     isLoginPage,
     isIndexPage,
     isAdminPage,
