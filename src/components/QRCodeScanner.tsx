@@ -11,22 +11,24 @@ import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const scannerMountedRef = useRef(false);
   const scanProcessedRef = useRef(false);
+  const initAttemptRef = useRef(0);
   
   const {
     scannerState,
     scannerContainerId,
     handleClose,
-    handleManualSimulation
+    handleManualSimulation,
+    startScanner
   } = useQRScannerLogic(
     // Wrap the success callback to ensure proper cleanup before callback
     (decodedText: string) => {
       if (scanProcessedRef.current) {
-        console.log("Scan already processed, ignoring duplicate");
+        console.log("[QRCodeScanner] Scan already processed, ignoring duplicate");
         return;
       }
       
       scanProcessedRef.current = true;
-      console.log("QR scan successful, data:", decodedText);
+      console.log("[QRCodeScanner] QR scan successful, data:", decodedText);
       
       // Stop camera streams first and ensure complete cleanup
       stopAllVideoStreams();
@@ -34,14 +36,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       // Call the original success callback with a delay to ensure camera is fully stopped
       setTimeout(() => {
         onScanSuccess(decodedText);
-      }, 1000); // Increased delay for more thorough cleanup
+      }, 1200); // Increased delay for more thorough cleanup
     },
     // Wrap close callback to ensure camera shutdown
     () => {
       stopAllVideoStreams();
       setTimeout(() => {
         onClose();
-      }, 800); // Increased delay
+      }, 1000); // Increased delay
     }
   );
 
@@ -62,6 +64,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         newContainer.id = scannerContainerId;
         newContainer.className = 'absolute inset-0 z-10 flex items-center justify-center';
         document.body.appendChild(newContainer);
+        console.log("[QRCodeScanner] Created container for scanner:", scannerContainerId);
+      } else {
+        console.log("[QRCodeScanner] Scanner container already exists:", scannerContainerId);
       }
     };
     
@@ -71,18 +76,35 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Ensure container exists before camera initialization
     ensureContainer();
     
+    // Add a timer to retry scanner initialization if camera doesn't start
+    const retryTimer = setInterval(() => {
+      if (!cameraActive && scannerMountedRef.current && initAttemptRef.current < 3) {
+        initAttemptRef.current++;
+        console.log(`[QRCodeScanner] Camera not active, retry attempt ${initAttemptRef.current}`);
+        stopAllVideoStreams();
+        setTimeout(() => {
+          if (scannerMountedRef.current) {
+            startScanner();
+          }
+        }, 800);
+      } else if (initAttemptRef.current >= 3 || cameraActive) {
+        clearInterval(retryTimer);
+      }
+    }, 3000);
+    
     // Clean up on unmount
     return () => {
-      console.log("QRCodeScanner component unmounting, cleaning up resources");
+      console.log("[QRCodeScanner] Component unmounting, cleaning up resources");
       scannerMountedRef.current = false;
+      clearInterval(retryTimer);
       stopAllVideoStreams();
       
       // Delay before final cleanup
       setTimeout(() => {
         stopAllVideoStreams();
-      }, 600);
+      }, 800);
     };
-  }, [scannerContainerId]);
+  }, [scannerContainerId, cameraActive, startScanner]);
 
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {
@@ -98,7 +120,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Slight delay to ensure cleanup completes before closing
     setTimeout(() => {
       handleClose();
-    }, 800); // Increased delay for better cleanup
+    }, 1000); // Increased delay for better cleanup
   };
 
   return (

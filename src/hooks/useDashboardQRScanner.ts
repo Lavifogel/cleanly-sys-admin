@@ -25,94 +25,104 @@ export function useDashboardQRScanner(
   useEffect(() => {
     return () => {
       stopAllVideoStreams();
+      console.log("[useDashboardQRScanner] Cleanup on unmount");
     };
   }, []);
   
   // Handle scanning QR code
   const handleQRScan = (decodedText: string) => {
-    console.log("QR Code scanned with purpose:", scannerPurpose, "data:", decodedText);
+    console.log("[useDashboardQRScanner] QR Code scanned with purpose:", scannerPurpose, "data:", decodedText);
     
     // Close scanner before processing the result
     closeScanner();
     
     // Add delay before processing to ensure camera resources are released
     setTimeout(() => {
+      console.log(`[useDashboardQRScanner] Processing scan result for ${scannerPurpose}...`);
+      
       switch (scannerPurpose) {
         case "startShift":
-          console.log("Starting shift with QR data:", decodedText);
+          console.log("[useDashboardQRScanner] Starting shift with QR data:", decodedText);
           startShift(decodedText);
           break;
         case "endShift":
-          console.log("Ending shift with QR data:", decodedText);
+          console.log("[useDashboardQRScanner] Ending shift with QR data:", decodedText);
           endShift(true, decodedText);
           break;
         case "startCleaning":
-          console.log("Starting cleaning with QR data:", decodedText);
+          console.log("[useDashboardQRScanner] Starting cleaning with QR data:", decodedText);
           startCleaning(decodedText);
           setActiveTab("cleaning");
           break;
         case "endCleaning":
-          console.log("Ending cleaning with QR data:", decodedText);
+          console.log("[useDashboardQRScanner] Ending cleaning with QR data:", decodedText);
           prepareSummary(true, decodedText);
           break;
         default:
-          console.warn("Unknown scanner purpose:", scannerPurpose);
+          console.warn("[useDashboardQRScanner] Unknown scanner purpose:", scannerPurpose);
           break;
       }
-    }, 500); // Longer delay to ensure complete cleanup
+    }, 1000); // Longer delay to ensure complete cleanup
   };
   
   // Handler functions for different QR scanning purposes
   const handleStartShift = () => {
     if (activeShift) {
-      console.log("Shift already active, cannot start new shift");
+      console.log("[useDashboardQRScanner] Shift already active, cannot start new shift");
       return;
     }
-    console.log("Opening scanner for startShift");
+    console.log("[useDashboardQRScanner] Opening scanner for startShift");
     // Force cleanup before opening scanner
     stopAllVideoStreams();
     setTimeout(() => {
       openScanner("startShift");
-    }, 300);
+    }, 500);
   };
 
   const handleEndShiftWithScan = () => {
     if (!activeShift || activeCleaning) {
-      console.log("Cannot end shift: No active shift or cleaning in progress");
+      console.log("[useDashboardQRScanner] Cannot end shift: No active shift or cleaning in progress");
       return;
     }
-    console.log("Opening scanner for endShift");
+    console.log("[useDashboardQRScanner] Opening scanner for endShift");
     // Force cleanup before opening scanner
     stopAllVideoStreams();
     setTimeout(() => {
       openScanner("endShift");
-    }, 300);
+    }, 500);
   };
 
   const handleStartCleaning = () => {
     if (!activeShift || activeCleaning) {
-      console.log("Cannot start cleaning: No active shift or cleaning already in progress");
+      console.log("[useDashboardQRScanner] Cannot start cleaning: No active shift or cleaning already in progress");
       return;
     }
-    console.log("Opening scanner for startCleaning");
+    console.log("[useDashboardQRScanner] Opening scanner for startCleaning");
     // Force cleanup before opening scanner
     stopAllVideoStreams();
     setTimeout(() => {
       openScanner("startCleaning");
-    }, 300);
+    }, 500);
   };
 
   const handleEndCleaningWithScan = () => {
     if (!activeCleaning) {
-      console.log("Cannot end cleaning: No active cleaning");
+      console.log("[useDashboardQRScanner] Cannot end cleaning: No active cleaning");
       return;
     }
-    console.log("Opening scanner for endCleaning");
+    console.log("[useDashboardQRScanner] Opening scanner for endCleaning");
     // Force cleanup before opening scanner
     stopAllVideoStreams();
+    
+    // Use a longer delay for endCleaning and multiple cleanup steps
     setTimeout(() => {
-      openScanner("endCleaning");
-    }, 300);
+      stopAllVideoStreams(); // Additional cleanup
+      console.log("[useDashboardQRScanner] Additional cleanup before opening endCleaning scanner");
+      
+      setTimeout(() => {
+        openScanner("endCleaning");
+      }, 500);
+    }, 800);
   };
   
   return {
