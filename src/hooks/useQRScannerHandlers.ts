@@ -98,17 +98,17 @@ export function useQRScannerHandlers({
     try {
       console.log(`Processing QR scan for purpose: ${scannerPurpose}, data: ${decodedText}`);
       
-      // First close the scanner to release camera resources
-      closeScanner();
-      
+      // Don't close the scanner immediately - let the processing complete first
       // Use setTimeout to ensure UI updates before processing the scan
       setTimeout(() => {
         switch (scannerPurpose) {
           case 'startShift':
             onStartShiftScan(decodedText);
+            closeScanner(); // Close after processing
             break;
           case 'endShift':
             onEndShiftScan(decodedText);
+            closeScanner(); // Close after processing
             break;
           case 'startCleaning':
             onStartCleaningScan(decodedText);
@@ -116,16 +116,23 @@ export function useQRScannerHandlers({
             if (setActiveTab) {
               setActiveTab('cleaning');
             }
+            closeScanner(); // Close after processing
             break;
           case 'endCleaning':
             console.log("Calling onEndCleaningScan with data:", decodedText);
             onEndCleaningScan(decodedText);
+            closeScanner(); // Close after processing
             break;
           default:
             console.warn("Unknown scanner purpose:", scannerPurpose);
+            closeScanner(); // Close on unknown purpose
         }
         
-        // Don't reset processing state immediately - let the handler decide when to reset
+        // Reset processing state after a delay to prevent multiple scans
+        setTimeout(() => {
+          processingQRCodeRef.current = false;
+          console.log("Reset processing state after handling scan");
+        }, 2000);
       }, 500);
     } catch (error) {
       console.error("Error processing QR scan:", error);
@@ -133,6 +140,7 @@ export function useQRScannerHandlers({
       setTimeout(() => {
         processingQRCodeRef.current = false;
         lastProcessedCodeRef.current = null;
+        closeScanner(); // Close on error
       }, 2000);
     }
   };

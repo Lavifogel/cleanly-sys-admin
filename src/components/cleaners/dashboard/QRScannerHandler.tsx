@@ -96,35 +96,9 @@ const QRScannerHandler = ({
     lastProcessedCodeRef.current = decodedText;
     console.log("QR scan successful with purpose:", scannerPurpose, "data:", decodedText);
     
-    // First stop all camera streams
-    stopAllVideoStreams();
-    
-    // Special handling for endCleaning
-    if (scannerPurpose === 'endCleaning') {
-      console.log("Processing endCleaning scan");
-      
-      // Force a longer delay for endCleaning to ensure complete UI updates before processing
-      setTimeout(() => {
-        try {
-          onQRScan(decodedText);
-        } catch (error) {
-          console.error("Error processing endCleaning scan:", error);
-          processingQRRef.current = false;
-        }
-      }, 1000);
-      
-      return;
-    }
-    
-    // Force a delay before processing the scan result for other scan types
-    setTimeout(() => {
-      try {
-        onQRScan(decodedText);
-      } catch (error) {
-        console.error("Error processing scan:", error);
-        processingQRRef.current = false;
-      }
-    }, 800);
+    // Pass the scan data to the handler without stopping camera first
+    // The handler is responsible for closing the scanner after processing
+    onQRScan(decodedText);
   };
 
   const handleCloseScanner = () => {

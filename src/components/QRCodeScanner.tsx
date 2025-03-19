@@ -30,13 +30,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       scanProcessingRef.current = true;
       console.log("QR scan successful, data:", decodedText);
       
-      // Stop all video streams before processing result
-      stopAllVideoStreams();
+      // Pass the data to the original success callback without stopping camera
+      // The parent component is responsible for closing the scanner after processing
+      onScanSuccess(decodedText);
       
-      // Call the original success callback with a slight delay
+      // Reset the processing flag after a delay
       setTimeout(() => {
-        onScanSuccess(decodedText);
-      }, 500);
+        scanProcessingRef.current = false;
+      }, 2000);
     },
     onClose
   );
