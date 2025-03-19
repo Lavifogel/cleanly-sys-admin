@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
