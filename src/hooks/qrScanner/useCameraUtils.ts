@@ -31,10 +31,11 @@ export const useCameraUtils = ({
     console.log("Trying final fallback camera approach...");
     
     try {
-      // Convert the config to the camera scan config format
+      // Create a proper camera scan config from scratch instead of trying to convert
+      // the Html5QrcodeFullConfig which has a different structure
       const cameraScanConfig: Html5QrcodeCameraScanConfig = {
-        fps: config.fps || 10,
-        qrbox: config.qrbox,
+        fps: 10, // Use a fixed value instead of trying to access config.fps
+        qrbox: typeof config.qrbox === 'object' ? config.qrbox : { width: 250, height: 250 },
         aspectRatio: undefined,
         disableFlip: false
       };

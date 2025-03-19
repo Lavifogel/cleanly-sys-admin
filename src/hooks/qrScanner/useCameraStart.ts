@@ -100,10 +100,11 @@ export const useCameraStart = ({
       // Get scanner configuration
       const fullConfig = createScannerConfig();
       
-      // Create a camera-specific config from the full config
+      // Create a camera-specific config
+      // Don't try to directly convert fullConfig - create a fresh object
       const cameraScanConfig: Html5QrcodeCameraScanConfig = {
-        fps: fullConfig.fps,
-        qrbox: fullConfig.qrbox,
+        fps: fullConfig.fps || 10,
+        qrbox: typeof fullConfig.qrbox === 'object' ? fullConfig.qrbox : { width: 250, height: 250 },
         aspectRatio: undefined,
         disableFlip: false
       };
