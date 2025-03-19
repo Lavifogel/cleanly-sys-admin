@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { ScannerPurpose } from "@/hooks/useQRScanner";

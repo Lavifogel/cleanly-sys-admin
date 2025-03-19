@@ -2,146 +2,108 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 interface UseCleaningImagesProps {
   maxImages?: number;
 }
 
-export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}) {
+export function useCleaningImages({ maxImages = 3 }: UseCleaningImagesProps) {
   const [images, setImages] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  
-  // Function to reset images
-  const resetImages = () => {
-    setImages([]);
-  };
 
-  // Function to upload image to Supabase storage
-  const uploadImageToStorage = async (file: File): Promise<string | null> => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `cleanings/${fileName}`;
-      
-      const { data, error } = await supabase.storage
-        .from('cleaning-images')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        });
-      
-      if (error) {
-        console.error("Supabase storage upload error:", error);
-        throw error;
-      }
-      
-      // Get the public URL for the uploaded image
-      const { data: publicUrlData } = supabase.storage
-        .from('cleaning-images')
-        .getPublicUrl(data.path);
-      
-      return publicUrlData.publicUrl;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      return null;
-    }
-  };
-  
-  // Function to add an image (camera capture or file selection)
+  // Add an image to the collection
   const addImage = async (file: File) => {
     if (images.length >= maxImages) {
       toast({
         title: "Maximum images reached",
-        description: `You can only upload up to ${maxImages} images.`,
-        variant: "destructive"
+        description: `You can only add up to ${maxImages} images.`,
+        variant: "destructive",
       });
       return;
     }
-    
+
+    setIsUploading(true);
+
     try {
-      setIsUploading(true);
+      // Generate a random filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 12)}.${fileExt}`;
       
-      // Create a temporary local URL for immediate display
-      const tempUrl = URL.createObjectURL(file);
-      setImages(prev => [...prev, tempUrl]);
-      
-      // Upload to Supabase
-      const publicUrl = await uploadImageToStorage(file);
-      
-      if (!publicUrl) {
-        throw new Error("Failed to upload image");
+      // Upload to storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('cleaning-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error("Error uploading image:", uploadError);
+        throw uploadError;
       }
-      
-      // Replace the temp URL with the public URL
-      setImages(prev => {
-        const index = prev.indexOf(tempUrl);
-        if (index !== -1) {
-          const newImages = [...prev];
-          newImages[index] = publicUrl;
-          return newImages;
-        }
-        return prev;
-      });
-      
-      toast({
-        title: "Image uploaded",
-        description: "Your image has been uploaded successfully."
-      });
-    } catch (error) {
-      console.error("Error handling image:", error);
-      // Remove the temporary URL if upload failed
-      setImages(prev => prev.filter(url => !url.startsWith('blob:')));
+
+      // Get the public URL
+      const { data: urlData } = await supabase.storage
+        .from('cleaning-images')
+        .getPublicUrl(fileName);
+
+      if (!urlData || !urlData.publicUrl) {
+        throw new Error("Failed to get public URL for uploaded image");
+      }
+
+      // Add to images array
+      setImages([...images, urlData.publicUrl]);
       
       toast({
-        title: "Upload failed",
-        description: "There was a problem uploading your image.",
-        variant: "destructive"
+        title: "Image added",
+        description: "Your image has been added to the cleaning report.",
+      });
+    } catch (error: any) {
+      console.error("Error in addImage:", error);
+      toast({
+        title: "Error adding image",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
     }
   };
-  
-  // Function to remove an image
-  const removeImage = async (index: number) => {
-    if (isUploading) return;
-    
-    const imageUrl = images[index];
-    
-    // If it's a Supabase URL, extract the path and delete from storage
-    if (imageUrl && imageUrl.includes('cleaning-images')) {
-      try {
-        // Extract the file path from the URL
-        const pathMatch = imageUrl.match(/cleaning-images\/(.+)/);
-        
-        if (pathMatch && pathMatch[1]) {
-          await supabase.storage
-            .from('cleaning-images')
-            .remove([`cleanings/${pathMatch[1]}`]);
-        }
-      } catch (error) {
-        console.error("Error removing image from storage:", error);
-      }
+
+  // Remove an image from the collection
+  const removeImage = (index: number) => {
+    if (index < 0 || index >= images.length) {
+      return;
     }
     
-    // Remove from local state
-    setImages(prev => {
-      const newImages = [...prev];
-      newImages.splice(index, 1);
-      return newImages;
+    const newImages = [...images];
+    newImages.splice(index, 1);
+    setImages(newImages);
+    
+    toast({
+      title: "Image removed",
+      description: "The image has been removed from your cleaning report.",
     });
   };
-  
-  // Function to save image URLs to database
+
+  // Reset the images array
+  const resetImages = () => {
+    setImages([]);
+  };
+
+  // Save images to the database for a specific cleaning
   const saveImagesToDatabase = async (cleaningId: string) => {
+    if (images.length === 0) {
+      return true; // Nothing to save
+    }
+    
+    setIsUploading(true);
+    
     try {
-      // Filter out any temporary blob URLs
-      const permanentImages = images.filter(url => !url.startsWith('blob:'));
-      
-      // Save each image URL to the database
-      for (const imageUrl of permanentImages) {
+      // Save each image reference to the database
+      for (const imageUrl of images) {
         const { error } = await supabase
           .from('images')
           .insert({
@@ -152,22 +114,27 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
         
         if (error) {
           console.error("Error saving image to database:", error);
+          throw error;
         }
       }
       
-      return permanentImages;
+      return true;
     } catch (error) {
-      console.error("Error saving images:", error);
-      return [];
+      console.error("Error saving images to database:", error);
+      return false;
+    } finally {
+      setIsUploading(false);
     }
   };
-  
+
   return {
     images,
-    isUploading,
     addImage,
     removeImage,
-    saveImagesToDatabase,
-    resetImages
+    resetImages,
+    isUploading,
+    saveImagesToDatabase
   };
 }
+
+export default useCleaningImages;

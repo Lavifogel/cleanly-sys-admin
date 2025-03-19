@@ -1,38 +1,35 @@
 import { supabase } from "@/integrations/supabase/client";
 import { 
   ActivityLog, 
-  ActivityType, 
-  CreateActivityLogParams, 
-  UpdateActivityLogParams 
+  ActivityLogRequest,
+  ActivityType
 } from "@/types/activityLog";
 import { v4 as uuidv4 } from "uuid";
 
 /**
- * Creates a new activity log entry in the database
+ * Creates a new activity log record
  */
-export async function createActivityLog(params: CreateActivityLogParams): Promise<ActivityLog> {
-  const id = uuidv4();
+export async function createActivityLog(request: ActivityLogRequest): Promise<ActivityLog> {
+  console.log("Creating activity log:", request);
   
-  console.log(`Creating new activity log: ${params.activity_type}`, params);
+  // Prepare the data
+  const activityData = {
+    ...request,
+    id: request.id || uuidv4(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    end_time: request.end_time || null
+  };
   
+  // Create the activity log
   const { data, error } = await supabase
     .from('activity_logs')
-    .insert({
-      id,
-      user_id: params.user_id,
-      qr_id: params.qr_id,
-      activity_type: params.activity_type,
-      start_time: params.start_time,
-      end_time: params.end_time,
-      status: params.status,
-      notes: params.notes,
-      related_id: params.related_id
-    })
-    .select('*')
+    .insert(activityData)
+    .select()
     .single();
   
   if (error) {
-    console.error(`Error creating activity log: ${params.activity_type}`, error);
+    console.error("Error creating activity log:", error);
     throw new Error(`Failed to create activity log: ${error.message}`);
   }
   
@@ -40,29 +37,46 @@ export async function createActivityLog(params: CreateActivityLogParams): Promis
 }
 
 /**
- * Updates an existing activity log entry in the database
+ * Updates an existing activity log record
  */
-export async function updateActivityLog(
-  id: string, 
-  params: UpdateActivityLogParams
-): Promise<ActivityLog> {
-  console.log(`Updating activity log: ${id}`, params);
+export async function updateActivityLog(id: string, updates: Partial<ActivityLogRequest>): Promise<ActivityLog> {
+  console.log(`Updating activity log ${id}:`, updates);
   
+  // Prepare the update data
+  const updateData = {
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
+  
+  // Update the activity log
   const { data, error } = await supabase
     .from('activity_logs')
-    .update({
-      end_time: params.end_time,
-      status: params.status,
-      notes: params.notes,
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', id)
-    .select('*')
+    .select()
     .single();
   
   if (error) {
-    console.error(`Error updating activity log: ${id}`, error);
+    console.error("Error updating activity log:", error);
     throw new Error(`Failed to update activity log: ${error.message}`);
+  }
+  
+  return data as ActivityLog;
+}
+
+/**
+ * Fetches a single activity log by ID
+ */
+export async function getActivityLog(id: string): Promise<ActivityLog> {
+  const { data, error } = await supabase
+    .from('activity_logs')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error) {
+    console.error("Error fetching activity log:", error);
+    throw new Error(`Failed to fetch activity log: ${error.message}`);
   }
   
   return data as ActivityLog;
@@ -384,30 +398,39 @@ export async function getCleaningHistoryForShift(shiftId: string) {
 }
 
 /**
- * Save images for a cleaning
+ * Saves images for a cleaning activity
  */
-export async function saveImagesForCleaning(cleaningId: string, imageUrls: string[]) {
-  if (!imageUrls.length) return [];
+export async function saveImagesForCleaning(cleaningId: string, imageUrls: string[]): Promise<boolean> {
+  console.log(`Saving ${imageUrls.length} images for cleaning ${cleaningId}`);
   
-  console.log("Saving images for cleaning ID:", cleaningId, "Image count:", imageUrls.length);
-  
-  const imagesToInsert = imageUrls.map(url => ({
-    id: uuidv4(),
-    activity_log_id: cleaningId,
-    cleaning_id: cleaningId,
-    image_url: url
-  }));
-  
-  const { data, error } = await supabase
-    .from('images')
-    .insert(imagesToInsert)
-    .select();
-  
-  if (error) {
-    console.error("Error storing cleaning images:", error);
-    throw new Error(`Failed to store cleaning images: ${error.message}`);
+  if (!cleaningId || imageUrls.length === 0) {
+    console.log("No cleaning ID or images to save");
+    return false;
   }
   
-  console.log("Cleaning images saved successfully:", data);
-  return data;
+  try {
+    // Generate UUIDs for the images
+    const imagesToInsert = imageUrls.map(url => ({
+      id: uuidv4(),
+      activity_log_id: cleaningId,
+      cleaning_id: cleaningId,
+      image_url: url
+    }));
+    
+    // Insert the images
+    const { error } = await supabase
+      .from('images')
+      .insert(imagesToInsert);
+    
+    if (error) {
+      console.error("Error inserting images:", error);
+      throw error;
+    }
+    
+    console.log(`Successfully saved ${imageUrls.length} images for cleaning ${cleaningId}`);
+    return true;
+  } catch (error) {
+    console.error("Error saving images:", error);
+    return false;
+  }
 }
