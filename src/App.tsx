@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AdminProfile = lazy(() => import("./pages/admin/Profile"));
 const CleanersDashboard = lazy(() => import("./pages/cleaners/Dashboard"));
 
 const queryClient = new QueryClient({
@@ -89,6 +90,14 @@ const App = () => (
                     element={
                       <RoleProtectedRoute allowedRoles={['admin']}>
                         <AdminDashboard />
+                      </RoleProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/profile" 
+                    element={
+                      <RoleProtectedRoute allowedRoles={['admin']}>
+                        <AdminProfile />
                       </RoleProtectedRoute>
                     } 
                   />

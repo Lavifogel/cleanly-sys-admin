@@ -61,8 +61,8 @@ export function useAuth() {
         setUser(adminUser);
         setStatus("authenticated");
         
-        // Redirect to admin dashboard
-        navigate('/admin/dashboard');
+        // Redirect to admin profile instead of dashboard
+        navigate('/admin/profile');
         return adminUser;
       }
       
@@ -119,7 +119,7 @@ export function useAuth() {
       
       // Navigate based on role
       if (userData.role === 'admin') {
-        navigate('/admin/dashboard');
+        navigate('/admin/profile');
       } else {
         navigate('/cleaners/dashboard');
       }
