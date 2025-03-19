@@ -102,11 +102,30 @@ export const loginWithCredentials = async (phoneNumber: string, password: string
       };
       
       // Store admin info in localStorage
-      localStorage.setItem('adminAuth', JSON.stringify(adminUser));
-      localStorage.setItem('auth', JSON.stringify({ userData: adminUser }));
+      localStorage.setItem('auth', JSON.stringify({ 
+        userData: {
+          id: adminUser.id,
+          firstName: adminUser.first_name,
+          lastName: adminUser.last_name,
+          fullName: `${adminUser.first_name} ${adminUser.last_name}`,
+          role: adminUser.role,
+          phone: adminUser.phone
+        } 
+      }));
       
-      console.log("Admin login successful");
-      return { success: true, user: adminUser, role: 'admin' };
+      console.log("Admin login successful, stored in localStorage");
+      return { 
+        success: true, 
+        user: {
+          id: adminUser.id,
+          firstName: adminUser.first_name,
+          lastName: adminUser.last_name,
+          fullName: `${adminUser.first_name} ${adminUser.last_name}`,
+          role: adminUser.role,
+          phone: adminUser.phone
+        }, 
+        role: 'admin' 
+      };
     }
     
     // If not using hardcoded admin credentials, try to log in as cleaner
@@ -160,7 +179,6 @@ export const loginWithCredentials = async (phoneNumber: string, password: string
       
       // Store user info in localStorage
       localStorage.setItem('auth', JSON.stringify({ userData }));
-      localStorage.setItem('tempUserId', user.id);
       
       console.log('User authenticated successfully:', userData);
       return { success: true, user: userData, role: user.role };

@@ -13,21 +13,19 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const handleStartShift = async () => {
+  const handleStartShift = () => {
     if (isLoading) return;
     
     setIsLoading(true);
     try {
-      // Slight delay to ensure UI updates before opening scanner
-      setTimeout(() => {
-        onStartShift();
-        toast({
-          title: "QR Scanner opening",
-          description: "Please scan a QR code to start your shift.",
-          duration: 3000,
-        });
-        setIsLoading(false);
-      }, 300);
+      // Call the provided callback to start the shift
+      onStartShift();
+      
+      toast({
+        title: "QR Scanner opening",
+        description: "Please scan a QR code to start your shift.",
+        duration: 3000,
+      });
     } catch (error: any) {
       console.error("Error starting shift:", error);
       toast({
@@ -35,7 +33,11 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
         description: error.message || "Failed to start shift. Please try again.",
         variant: "destructive",
       });
-      setIsLoading(false);
+    } finally {
+      // Reset loading state after a short delay (for UX)
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
     }
   };
 

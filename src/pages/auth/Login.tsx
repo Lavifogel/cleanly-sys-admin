@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,19 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { login, isAuthenticated, userRole } = useUserData();
+  const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("User already authenticated with role:", userRole);
+      if (userRole === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else if (userRole === 'cleaner') {
+        navigate('/cleaners/dashboard', { replace: true });
+      }
+    }
+  }, [isAuthenticated, userRole, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,11 +57,26 @@ const Login = () => {
           title: "Success",
           description: "Logged in successfully",
         });
-        // Navigation is handled in login
+        
+        // Log the user data to see what we get back
+        console.log("User data after login:", userData);
+        
+        // Explicitly check role and navigate accordingly
+        if (userData.role === 'admin') {
+          console.log("Redirecting admin to dashboard");
+          navigate('/admin/dashboard', { replace: true });
+        } else if (userData.role === 'cleaner') {
+          console.log("Redirecting cleaner to dashboard");
+          navigate('/cleaners/dashboard', { replace: true });
+        } else {
+          console.warn("Unknown role:", userData.role);
+          navigate('/', { replace: true });
+        }
       } else {
         throw new Error("Invalid phone number or password");
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to log in",
