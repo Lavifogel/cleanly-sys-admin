@@ -34,17 +34,17 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       });
       return;
     }
-    
-    if (activeCleaning) {
+  };
+
+  const handleEndCleaningWithScan = () => {
+    if (!activeCleaning) {
       toast({
         title: "Error",
-        description: "You already have an active cleaning session.",
+        description: "No active cleaning to end.",
         variant: "destructive",
       });
       return;
     }
-    
-    console.log("Ready to start cleaning, waiting for QR scan");
   };
 
   const handleEndCleaningWithoutScan = () => {
@@ -56,9 +56,6 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       });
       return;
     }
-    
-    // In this handler we'll directly prepare the cleaning summary
-    prepareSummary(false);
   };
 
   const handleAutoEndCleaning = () => {
@@ -97,6 +94,7 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
     togglePauseCleaning,
     prepareSummary,
     handleStartCleaning,
+    handleEndCleaningWithScan,
     handleEndCleaningWithoutScan,
     handleAutoEndCleaning,
     handleCompleteSummary,

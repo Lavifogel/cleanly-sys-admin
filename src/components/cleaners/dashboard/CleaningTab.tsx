@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
 import CleaningHistoryCard from "@/components/cleaners/CleaningHistoryCard";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
-import { QrCode } from "lucide-react";
+import { PlayIcon } from "lucide-react";
 
 interface CleaningTabProps {
   activeCleaning: Cleaning | null;
   cleaningElapsedTime: number;
   cleaningsHistory: CleaningHistoryItem[];
   handleStartCleaning: () => void;
+  handleEndCleaningWithScan: () => void;
   handleEndCleaningWithoutScan: () => void;
   togglePauseCleaning: () => void;
   handleAutoEndCleaning: () => void;
@@ -22,16 +23,17 @@ const CleaningTab = ({
   cleaningElapsedTime,
   cleaningsHistory,
   handleStartCleaning,
+  handleEndCleaningWithScan,
   handleEndCleaningWithoutScan,
   togglePauseCleaning,
   handleAutoEndCleaning,
-  activeShiftId
+  activeShiftId // Add activeShiftId prop
 }: CleaningTabProps) => {
   // Auto-close cleaning after 5 hours (5 * 60 * 60 = 18000 seconds)
   useEffect(() => {
     const MAX_CLEANING_DURATION = 18000; // 5 hours in seconds
     
-    if (activeCleaning && !activeCleaning.paused && cleaningElapsedTime >= MAX_CLEANING_DURATION) {
+    if (activeCleaning && cleaningElapsedTime >= MAX_CLEANING_DURATION) {
       console.log("Cleaning exceeded 5 hours, automatically ending it");
       handleAutoEndCleaning();
     }
@@ -51,8 +53,8 @@ const CleaningTab = ({
             Start a new cleaning session by scanning a QR code.
           </p>
           <Button onClick={handleStartCleaning} className="mt-4">
-            <QrCode className="mr-2 h-4 w-4" />
-            Scan to Start Cleaning
+            <PlayIcon className="mr-2 h-4 w-4" />
+            Start Cleaning
           </Button>
         </div>
       ) : (
@@ -62,6 +64,7 @@ const CleaningTab = ({
           cleaningElapsedTime={cleaningElapsedTime}
           isPaused={activeCleaning.paused}
           onPauseCleaning={togglePauseCleaning}
+          onEndCleaningWithScan={handleEndCleaningWithScan}
           onEndCleaningWithoutScan={handleEndCleaningWithoutScan}
           onAutoEndCleaning={handleAutoEndCleaning}
         />

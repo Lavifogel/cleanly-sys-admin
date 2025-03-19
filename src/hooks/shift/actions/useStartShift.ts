@@ -2,10 +2,13 @@
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
+import { 
+  createOrFindQrCode, 
+  createShift,
+  generateTemporaryUserId 
+} from "@/hooks/shift/useShiftDatabase";
 import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
-import { createOrFindQrCode, generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
 import { Shift } from "@/hooks/shift/types";
-import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 
 /**
  * Hook for starting shifts
@@ -19,6 +22,7 @@ export function useStartShift(
   // Handle startShift
   const startShift = useCallback(async (qrData: string) => {
     try {
+      const newShiftId = uuidv4();
       const startTime = new Date();
       
       console.log("Starting shift with QR data:", qrData);
@@ -46,17 +50,10 @@ export function useStartShift(
       // Generate a temporary user ID
       const temporaryUserId = await generateTemporaryUserId();
       
-      // Store the shift in the database using the new activity log
-      let activityLog;
+      // Store the shift in the database
       try {
-        activityLog = await createActivityLog({
-          user_id: temporaryUserId,
-          qr_id: qrId,
-          activity_type: 'shift_start',
-          start_time: startTime.toISOString(),
-          status: 'active'
-        });
-        console.log("Shift stored successfully as activity log");
+        await createShift(newShiftId, temporaryUserId, startTime.toISOString(), qrId);
+        console.log("Shift stored successfully");
       } catch (error: any) {
         console.error("Error storing shift:", error);
         toast({
@@ -71,9 +68,7 @@ export function useStartShift(
       setActiveShift({
         startTime: startTime,
         timer: 0,
-        id: activityLog.id, // Use the ID returned from the created activity log
-        location: areaName,
-        qrId: qrId || undefined
+        id: newShiftId,
       });
       setElapsedTime(0);
       

@@ -2,15 +2,17 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { LogOut, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/auth";
+import { useAuth } from "@/App";
 import { useNavigate } from "react-router-dom";
 
 const DashboardHeader = () => {
-  const { performLogout, isLoggingOut } = useAuth();
+  const { logout, isLoggingOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await performLogout();
+  const handleLogout = () => {
+    // Logout first to clear authentication state
+    logout();
+    // Then navigate to login page
     navigate('/login', { replace: true });
   };
 

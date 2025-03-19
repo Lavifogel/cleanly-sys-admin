@@ -37,6 +37,7 @@ export function useDashboardHandlers() {
     togglePauseCleaning,
     prepareSummary,
     handleStartCleaning: baseHandleStartCleaning,
+    handleEndCleaningWithScan: baseHandleEndCleaningWithScan,
     handleEndCleaningWithoutScan: baseHandleEndCleaningWithoutScan,
     handleAutoEndCleaning,
     handleCompleteSummary: baseHandleCompleteSummary,
@@ -57,7 +58,7 @@ export function useDashboardHandlers() {
     onStartShiftScan: (qrData) => startShift(qrData),
     onEndShiftScan: (qrData) => endShift(true, qrData),
     onStartCleaningScan: (qrData) => startCleaning(qrData),
-    onEndCleaningScan: () => {}, // Empty handler as we're removing this functionality
+    onEndCleaningScan: (qrData) => prepareSummary(true, qrData),
     setActiveTab
   });
   
@@ -89,6 +90,11 @@ export function useDashboardHandlers() {
   const handleStartCleaning = () => {
     baseHandleStartCleaning();
     handleQRScannerStart('startCleaning');
+  };
+  
+  const handleEndCleaningWithScan = () => {
+    baseHandleEndCleaningWithScan();
+    handleQRScannerStart('endCleaning');
   };
   
   const handleEndCleaningWithoutScan = () => {
@@ -127,6 +133,7 @@ export function useDashboardHandlers() {
     handleEndShiftWithoutScan,
     handleAutoEndShift,
     handleStartCleaning,
+    handleEndCleaningWithScan,
     handleEndCleaningWithoutScan,
     handleAutoEndCleaning,
     handleCompleteSummary,

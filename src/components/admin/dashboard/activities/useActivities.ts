@@ -7,6 +7,8 @@ import {
   formatDuration, 
   extractLocationFromNotes 
 } from "./types";
+import { processShiftsData } from "./dataProcessors/processShiftsData";
+import { processCleaningsData } from "./dataProcessors/processCleaningsData";
 
 export const useActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -21,21 +23,16 @@ export const useActivities = () => {
     
     setLoading(true);
     try {
-      console.log("Fetching activities data from the unified activity_logs table...");
+      console.log("Fetching activities data...");
       
-      // Fetch from the unified activity_logs table
-      const { data: activityLogs, error: activityError } = await supabase
-        .from('activity_logs')
+      // Fetch shifts with user information
+      const { data: shiftsData, error: shiftsError } = await supabase
+        .from('shifts')
         .select(`
           id,
-          user_id,
-          qr_id,
-          activity_type,
           start_time,
           end_time,
           status,
-          notes,
-          related_id,
           users (
             id,
             first_name,
@@ -47,57 +44,45 @@ export const useActivities = () => {
           )
         `)
         .order('start_time', { ascending: false })
-        .limit(200);
+        .limit(100);
 
-      if (activityError) throw activityError;
+      if (shiftsError) throw shiftsError;
 
-      console.log("Fetched activities data:", activityLogs?.length || 0, "records");
+      // Fetch cleanings with shift and user information
+      const { data: cleaningsData, error: cleaningsError } = await supabase
+        .from('cleanings')
+        .select(`
+          id,
+          start_time,
+          end_time,
+          status,
+          notes,
+          qr_codes (
+            area_name
+          ),
+          shifts (
+            users (
+              id,
+              first_name,
+              last_name,
+              full_name
+            )
+          )
+        `)
+        .order('start_time', { ascending: false })
+        .limit(100);
 
-      if (!activityLogs || activityLogs.length === 0) {
-        setActivities([]);
-        setLoading(false);
-        setLastRefreshTime(Date.now());
-        return;
-      }
+      if (cleaningsError) throw cleaningsError;
 
-      // Process data into a unified format
-      const processedActivities = activityLogs.map(log => {
-        // Handle user details safely
-        const userData = log.users as any;
-        const userName = userData?.full_name || 
-                       (userData?.first_name && userData?.last_name 
-                         ? `${userData.first_name} ${userData.last_name}` 
-                         : "Unknown User");
-        
-        const startTime = log.start_time ? new Date(log.start_time) : new Date();
-        const endTime = log.end_time ? new Date(log.end_time) : null;
-        
-        // Calculate duration only if we have both start and end times
-        const duration = endTime 
-          ? formatDuration(startTime, endTime) 
-          : "In progress";
-        
-        // Get location from QR code or notes
-        const location = log.qr_codes?.area_name || extractLocationFromNotes(log.notes) || "Unknown Location";
+      console.log("Fetched shifts data:", shiftsData?.length || 0, "records");
+      console.log("Fetched cleanings data:", cleaningsData?.length || 0, "records");
 
-        // Determine activity type for display
-        const activityDisplayType = log.activity_type.includes('shift') ? 'shift' as const : 'cleaning' as const;
-
-        return {
-          id: log.id,
-          type: activityDisplayType,
-          date: format(startTime, "MMM dd, yyyy"),
-          userName,
-          location,
-          startTime: format(startTime, "HH:mm"),
-          endTime: endTime ? format(endTime, "HH:mm") : null,
-          duration,
-          status: log.status
-        };
-      });
+      // Process data
+      const shiftActivities = processShiftsData(shiftsData || []);
+      const cleaningActivities = processCleaningsData(cleaningsData || []);
 
       // Combine and sort activities by date and start time
-      processedActivities.sort((a, b) => {
+      const allActivities = [...shiftActivities, ...cleaningActivities].sort((a, b) => {
         // First sort by date (newest first)
         const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
         if (dateComparison !== 0) return dateComparison;
@@ -106,7 +91,7 @@ export const useActivities = () => {
         return b.startTime.localeCompare(a.startTime);
       });
 
-      setActivities(processedActivities);
+      setActivities(allActivities);
       setLastRefreshTime(Date.now());
     } catch (error) {
       console.error("Error fetching activities:", error);

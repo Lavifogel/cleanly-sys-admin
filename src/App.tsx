@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,9 +15,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
-const AdminProfile = lazy(() => import("./pages/admin/Profile"));
 const CleanersDashboard = lazy(() => import("./pages/cleaners/Dashboard"));
-const CleanerProfile = lazy(() => import("./pages/cleaners/Profile"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,26 +93,10 @@ const App = () => (
                     } 
                   />
                   <Route 
-                    path="/admin/profile" 
-                    element={
-                      <RoleProtectedRoute allowedRoles={['admin']}>
-                        <AdminProfile />
-                      </RoleProtectedRoute>
-                    } 
-                  />
-                  <Route 
                     path="/cleaners/dashboard" 
                     element={
                       <RoleProtectedRoute allowedRoles={['cleaner']}>
                         <CleanersDashboard />
-                      </RoleProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/cleaners/profile" 
-                    element={
-                      <RoleProtectedRoute allowedRoles={['cleaner']}>
-                        <CleanerProfile />
                       </RoleProtectedRoute>
                     } 
                   />

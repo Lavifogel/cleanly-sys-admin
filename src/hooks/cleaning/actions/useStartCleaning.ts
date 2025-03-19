@@ -1,35 +1,32 @@
 
-import { useCallback } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 import { Cleaning } from "@/types/cleaning";
+import { 
+  createOrFindCleaningQrCode, 
+  createCleaning 
+} from "@/hooks/shift/useCleaningDatabase";
 import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
-import { createOrFindQrCode, generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
-import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 
 export function useStartCleaning(
   activeShiftId: string | undefined,
   setActiveCleaning: (cleaning: Cleaning | null) => void,
   setCleaningElapsedTime: (time: number) => void
 ) {
-  const { toast } = useToast();
-
-  const startCleaning = useCallback(async (qrData: string) => {
+  // Start a new cleaning session with QR code data
+  const startCleaning = async (qrData: string) => {
     if (!activeShiftId) {
-      toast({
-        title: "Error",
-        description: "You need to start a shift first.",
-        variant: "destructive",
-      });
-      return null;
+      console.error("Cannot start cleaning without an active shift");
+      return;
     }
-
+    
     try {
+      // Generate cleaning ID
+      const cleaningId = uuidv4();
+      const startTime = new Date();
+      
       // Parse QR code data
       const { areaId, areaName, isValid } = parseQrData(qrData);
-      
-      // Start time
-      const startTime = new Date();
+      const locationFromQR = areaName || "Unknown Location";
       
       // If QR data isn't valid, create a mock QR data string
       const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);
@@ -37,62 +34,40 @@ export function useStartCleaning(
       // Find or create QR code in database
       let qrId = null;
       try {
-        qrId = await createOrFindQrCode(areaId, areaName, qrDataToUse);
+        qrId = await createOrFindCleaningQrCode(areaId, areaName, qrDataToUse);
         console.log("QR code ID for cleaning:", qrId);
       } catch (error: any) {
-        console.error("Error with QR code:", error);
-        toast({
-          title: "QR Code Error",
-          description: error.message || "There was an issue with the QR code.",
-          variant: "destructive",
-        });
+        console.error("Error with cleaning QR code:", error);
       }
       
-      // Get user ID
-      const userId = await generateTemporaryUserId();
+      // Store the cleaning in the database
+      try {
+        await createCleaning(
+          cleaningId, 
+          activeShiftId, 
+          startTime.toISOString(), 
+          qrId,
+          locationFromQR
+        );
+        console.log("Cleaning stored successfully");
+      } catch (error: any) {
+        console.error("Error storing cleaning:", error);
+      }
       
-      // Create cleaning in activity_logs table
-      const activityLog = await createActivityLog({
-        user_id: userId,
-        qr_id: qrId,
-        activity_type: 'cleaning_start',
-        start_time: startTime.toISOString(),
-        status: 'active',
-        notes: `Location: ${areaName}`,
-        related_id: activeShiftId
-      });
-      
-      console.log("Created new cleaning activity log:", activityLog);
-      
-      // Update local state
+      // Update local state with the cleaning id included
       setActiveCleaning({
-        id: activityLog.id, // Use the ID from the created activity log
-        location: areaName,
+        id: cleaningId,
+        location: locationFromQR,
         startTime: startTime,
         timer: 0,
-        paused: false
+        paused: false,
       });
-      
       setCleaningElapsedTime(0);
       
-      toast({
-        title: "Cleaning Started",
-        description: `Cleaning of ${areaName} has started.`,
-        duration: 3000,
-      });
-      
-      return activityLog.id;
-    } catch (error: any) {
-      console.error("Error in startCleaning:", error);
-      toast({
-        title: "Error",
-        description: error.message || "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-      
-      return null;
+    } catch (error) {
+      console.error("Failed to start cleaning:", error);
     }
-  }, [activeShiftId, setActiveCleaning, setCleaningElapsedTime, toast]);
+  };
 
   return { startCleaning };
 }

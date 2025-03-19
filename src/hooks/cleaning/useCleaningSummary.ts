@@ -2,9 +2,9 @@
 import { v4 as uuidv4 } from "uuid";
 import { Cleaning, CleaningHistoryItem, CleaningSummary } from "@/types/cleaning";
 import { useCleaningImages } from "@/hooks/useCleaningImages";
+import { updateCleaningEnd, saveCleaningImages } from "@/hooks/shift/useCleaningDatabase";
 import { formatTime } from "@/utils/timeUtils";
 import { useToast } from "@/hooks/use-toast";
-import { createActivityLog, updateActivityLog, saveImagesForCleaning } from "@/hooks/activityLogs/useActivityLogService";
 
 export function useCleaningSummary(
   activeShiftId: string | undefined,
@@ -69,24 +69,27 @@ export function useCleaningSummary(
     }
     
     try {
+      // Ensure we have a valid cleaning ID
+      const cleaningId = activeCleaning.id || uuidv4();
       const endTime = new Date();
       const status = "finished with scan";
       
-      console.log("Completing cleaning with ID:", activeCleaning.id);
+      console.log("Completing cleaning with ID:", cleaningId);
       
-      // Create a cleaning_end activity log
-      await updateActivityLog(activeCleaning.id, {
-        end_time: endTime.toISOString(),
-        status: status,
-        notes: summaryNotes
-      });
+      // Update the cleaning record in the database with end time and notes
+      await updateCleaningEnd(
+        cleaningId,
+        endTime.toISOString(),
+        status,
+        summaryNotes
+      );
       
       // Save any images
       if (images.length > 0) {
         try {
           // Use the dedicated function to save images to the database
-          await saveImagesForCleaning(activeCleaning.id, images);
-          console.log(`Successfully saved ${images.length} images for cleaning ${activeCleaning.id}`);
+          await saveImagesToDatabase(cleaningId);
+          console.log(`Successfully saved ${images.length} images for cleaning ${cleaningId}`);
         } catch (imageError) {
           console.error("Error saving images:", imageError);
           toast({
@@ -99,7 +102,7 @@ export function useCleaningSummary(
       
       // Update the local state with the completed cleaning
       const newCleaning = {
-        id: activeCleaning.id,
+        id: cleaningId,
         location: activeCleaning.location,
         date: formatDateToDDMMYYYY(new Date()),
         startTime: activeCleaning.startTime.toTimeString().slice(0, 5),

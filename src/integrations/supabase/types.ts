@@ -9,56 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      activity_logs: {
-        Row: {
-          activity_type: string
-          created_at: string
-          end_time: string | null
-          id: string
-          notes: string | null
-          qr_id: string | null
-          related_id: string | null
-          start_time: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          activity_type: string
-          created_at?: string
-          end_time?: string | null
-          id?: string
-          notes?: string | null
-          qr_id?: string | null
-          related_id?: string | null
-          start_time?: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          activity_type?: string
-          created_at?: string
-          end_time?: string | null
-          id?: string
-          notes?: string | null
-          qr_id?: string | null
-          related_id?: string | null
-          start_time?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activity_logs_qr_id_fkey"
-            columns: ["qr_id"]
-            isOneToOne: false
-            referencedRelation: "qr_codes"
-            referencedColumns: ["qr_id"]
-          },
-        ]
-      }
       cleanings: {
         Row: {
           created_at: string
@@ -112,34 +62,24 @@ export type Database = {
       }
       images: {
         Row: {
-          activity_log_id: string | null
           cleaning_id: string
           created_at: string
           id: string
           image_url: string
         }
         Insert: {
-          activity_log_id?: string | null
           cleaning_id: string
           created_at?: string
           id?: string
           image_url: string
         }
         Update: {
-          activity_log_id?: string | null
           cleaning_id?: string
           created_at?: string
           id?: string
           image_url?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "images_activity_log_id_fkey"
-            columns: ["activity_log_id"]
-            isOneToOne: false
-            referencedRelation: "activity_logs"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "images_cleaning_id_fkey"
             columns: ["cleaning_id"]
@@ -342,10 +282,6 @@ export type Database = {
           status: string
           phone: string
         }[]
-      }
-      migrate_shifts_and_cleanings: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
       migrate_to_users_table: {
         Args: Record<PropertyKey, never>

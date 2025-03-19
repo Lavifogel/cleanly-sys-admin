@@ -54,6 +54,54 @@ export async function createOrFindQrCode(areaId: string, areaName: string, qrDat
 }
 
 /**
+ * Creates a new shift in the database
+ */
+export async function createShift(shiftId: string, userId: string, startTime: string, qrId: string | null) {
+  // Get or create a proper UUID for the user
+  const properUserId = await getOrCreateUserUUID(userId);
+  
+  console.log("Creating shift with ID:", shiftId, "for user:", properUserId, "QR ID:", qrId);
+  
+  const { data, error } = await supabase
+    .from('shifts')
+    .insert({
+      id: shiftId,
+      user_id: properUserId,
+      start_time: startTime,
+      status: 'active',
+      qr_id: qrId
+    });
+  
+  if (error) {
+    console.error("Error storing shift:", error);
+    throw new Error(`Failed to store shift: ${error.message}`);
+  }
+  
+  console.log("Shift created successfully");
+  return data;
+}
+
+/**
+ * Updates a shift in the database when it ends
+ */
+export async function updateShiftEnd(shiftId: string, endTime: string, status: string) {
+  const { error } = await supabase
+    .from('shifts')
+    .update({
+      end_time: endTime,
+      status: status
+    })
+    .eq('id', shiftId);
+  
+  if (error) {
+    console.error("Error updating shift:", error);
+    throw new Error(`Failed to end shift: ${error.message}`);
+  }
+  
+  return true;
+}
+
+/**
  * Returns the user ID for Lavi Fogel, generating a valid UUID if needed
  */
 export function generateTemporaryUserId() {

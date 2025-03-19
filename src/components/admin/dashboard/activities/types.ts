@@ -1,4 +1,3 @@
-
 export type ActivityStatus = 
   | "active" 
   | "completed" 
@@ -6,8 +5,6 @@ export type ActivityStatus =
   | "cancelled" 
   | "finished" 
   | "finished automatically"
-  | "finished with scan"
-  | "finished without scan"
   | string;
 
 export type ActivityType = "shift" | "cleaning";

@@ -2,10 +2,11 @@
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
+import { 
+  updateShiftEnd 
+} from "@/hooks/shift/useShiftDatabase";
 import { createShiftHistoryItem } from "@/hooks/shift/useShiftHistory";
 import { Shift, ShiftHistoryItem } from "@/hooks/shift/types";
-import { generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
 
 /**
  * Hook for ending shifts
@@ -29,21 +30,11 @@ export function useEndShift(
       const endTime = new Date();
       const status = withScan ? "finished with scan" : "finished without scan";
       
-      // Get user ID for the shift
-      const userId = await generateTemporaryUserId();
-      
-      // Create a shift_end activity log
+      // Update the shift in the database
       try {
-        await createActivityLog({
-          user_id: userId,
-          qr_id: activeShift.qrId,
-          activity_type: 'shift_end',
-          start_time: endTime.toISOString(),
-          status: status,
-          related_id: activeShift.id
-        });
+        await updateShiftEnd(activeShift.id, endTime.toISOString(), status);
       } catch (error: any) {
-        console.error("Error creating shift_end log:", error);
+        console.error("Error updating shift:", error);
         toast({
           title: "Error",
           description: "Failed to end shift. Please try again.",

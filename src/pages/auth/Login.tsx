@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
-import { useUserData } from "@/hooks/auth";
+import { useUserData } from "@/hooks/useUserData";
 import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
@@ -17,20 +17,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { login, isAuthenticated, userRole } = useUserData();
-  const navigate = useNavigate();
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log("User already authenticated with role:", userRole);
-      if (userRole === 'admin') {
-        navigate('/admin/dashboard', { replace: true });
-      } else if (userRole === 'cleaner') {
-        navigate('/cleaners/dashboard', { replace: true });
-      }
-    }
-  }, [isAuthenticated, userRole, navigate]);
+  const { loginWithCredentials, isAuthenticated, userRole } = useUserData();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,33 +37,18 @@ const Login = () => {
       const fullPhoneNumber = `${countryCode}${phoneNumber}`;
       console.log("Attempting login with:", fullPhoneNumber);
       
-      const loginResult = await login(fullPhoneNumber, password);
+      const { success, error } = await loginWithCredentials(fullPhoneNumber, password);
       
-      if (loginResult) {
+      if (success) {
         toast({
           title: "Success",
           description: "Logged in successfully",
         });
-        
-        // Log the user data to see what we get back
-        console.log("User data after login:", loginResult);
-        
-        // Explicitly check role and navigate accordingly
-        if (loginResult.role === 'admin') {
-          console.log("Redirecting admin to dashboard");
-          navigate('/admin/dashboard', { replace: true });
-        } else if (loginResult.role === 'cleaner') {
-          console.log("Redirecting cleaner to dashboard");
-          navigate('/cleaners/dashboard', { replace: true });
-        } else {
-          console.warn("Unknown role:", loginResult.role);
-          navigate('/', { replace: true });
-        }
+        // Navigation is handled in loginWithCredentials
       } else {
-        throw new Error("Login failed - no user data returned");
+        throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
       }
     } catch (error) {
-      console.error("Login error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to log in",

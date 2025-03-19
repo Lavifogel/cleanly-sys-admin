@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import { Scan } from "lucide-react";
 import { QRScannerStates } from "@/types/qrScanner";
 
@@ -13,71 +13,21 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   scannerState 
 }) => {
   const { cameraActive, simulationActive, simulationProgress } = scannerState;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerReady, setContainerReady] = useState(false);
-  
-  // Ensure the container is visible and has proper dimensions before initializing camera
-  useEffect(() => {
-    if (containerRef.current) {
-      // Force a reflow to ensure the element is rendered with proper dimensions
-      const checkDimensions = () => {
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (rect && (rect.width > 10 && rect.height > 10)) {
-          console.log("QR scanner container dimensions:", rect.width, rect.height);
-          setContainerReady(true);
-        } else {
-          console.log("QR scanner container not ready yet, waiting...");
-        }
-      };
-      
-      // Check dimensions immediately
-      checkDimensions();
-      
-      // And also after a short delay to ensure DOM is fully rendered
-      const timer = setTimeout(checkDimensions, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, []);
-  
-  // Apply dynamic sizing to ensure proper camera display
-  useEffect(() => {
-    if (containerRef.current) {
-      // If dimensions are too small, try to force them to be larger
-      const rect = containerRef.current.getBoundingClientRect();
-      if (rect.width < 300 || rect.height < 300) {
-        containerRef.current.style.minWidth = "320px";
-        containerRef.current.style.minHeight = "384px";
-        
-        // Force reflow
-        setTimeout(() => {
-          setContainerReady(true);
-        }, 100);
-      }
-    }
-  }, [containerReady]);
   
   return (
     <div 
-      ref={containerRef}
-      className="w-full max-w-md h-96 rounded-lg overflow-hidden relative bg-black"
-      style={{ minHeight: "384px", minWidth: "320px" }} // Ensure minimum dimensions
+      id={scannerContainerId} 
+      className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-900'}`}
     >
-      {/* This is the actual container where the camera feed will be inserted */}
-      <div 
-        id={scannerContainerId} 
-        className="absolute inset-0 z-10 w-full h-full"
-      />
-      
       {!cameraActive && !simulationActive && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-          <p className="text-white text-sm mb-2">Initializing camera...</p>
-          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-white text-sm">Initializing camera...</p>
+          <div className="mt-2 animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
         </div>
       )}
       
       {simulationActive && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-white z-20">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-white">
           <Scan className="h-16 w-16 animate-pulse" />
           <div className="w-64 bg-gray-700 rounded-full h-4 mt-4">
             <div 
@@ -90,13 +40,10 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
       )}
       
       {cameraActive && !simulationActive && (
-        <div className="absolute inset-0 pointer-events-none z-20">
+        <div className="absolute inset-0 pointer-events-none">
           <div className="absolute inset-0 border-2 border-primary/30"></div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-primary"></div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-white/30 border-dashed animate-pulse"></div>
-          <div className="absolute bottom-4 left-0 right-0 text-center text-white text-sm px-4 py-2 bg-black/50 rounded-md mx-auto w-max">
-            Position QR code within the square
-          </div>
         </div>
       )}
     </div>

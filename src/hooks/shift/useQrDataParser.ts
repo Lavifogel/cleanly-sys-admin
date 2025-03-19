@@ -11,18 +11,6 @@ export function parseQrData(qrData: string) {
     try {
       qrDataObj = JSON.parse(qrData);
       console.log("Parsed JSON data:", qrDataObj);
-      
-      // If JSON parsed but doesn't have required fields, check inside the object
-      if (!qrDataObj.areaId && !qrDataObj.locationId && !qrDataObj.id) {
-        // Check for data property that might contain nested object
-        if (qrDataObj.data && typeof qrDataObj.data === 'object') {
-          qrDataObj = qrDataObj.data;
-        }
-        // Check for content property
-        else if (qrDataObj.content && typeof qrDataObj.content === 'object') {
-          qrDataObj = qrDataObj.content;
-        }
-      }
     } catch (parseError) {
       console.log("Not valid JSON, trying URL parameters");
       
@@ -33,10 +21,10 @@ export function parseQrData(qrData: string) {
           const url = new URL(qrData);
           const params = url.searchParams;
           
-          if (params.has('areaId') || params.has('location') || params.has('id')) {
+          if (params.has('areaId') || params.has('location')) {
             qrDataObj = {
-              areaId: params.get('areaId') || params.get('location') || params.get('id'),
-              areaName: params.get('areaName') || params.get('locationName') || params.get('name') || params.get('location') || 'Scanned Area'
+              areaId: params.get('areaId') || params.get('location'),
+              areaName: params.get('areaName') || params.get('locationName') || params.get('location')
             };
             console.log("Parsed URL query params:", qrDataObj);
           }
@@ -47,44 +35,39 @@ export function parseQrData(qrData: string) {
       
       // If not a URL or couldn't parse URL params, try as plain URL params
       if (!qrDataObj) {
-        try {
-          const params = new URLSearchParams(qrData);
-          if (params.has('areaId') || params.has('location') || params.has('id')) {
-            qrDataObj = {
-              areaId: params.get('areaId') || params.get('location') || params.get('id'),
-              areaName: params.get('areaName') || params.get('locationName') || params.get('name') || params.get('location') || 'Scanned Area'
-            };
-            console.log("Parsed URL params:", qrDataObj);
-          }
-        } catch (error) {
-          console.log("Not valid URL params, treating as plain text");
+        const params = new URLSearchParams(qrData);
+        if (params.has('areaId') || params.has('location')) {
+          qrDataObj = {
+            areaId: params.get('areaId') || params.get('location'),
+            areaName: params.get('areaName') || params.get('locationName') || params.get('location')
+          };
+          console.log("Parsed URL params:", qrDataObj);
         }
       }
       
       // If still no object, handle as plain text
       if (!qrDataObj) {
+        // Try to extract meaningful data from plain text
         // Trim any whitespace and remove common QR code prefixes
         const cleanedQrData = qrData.trim().replace(/^(http[s]?:\/\/|www\.|data:|SMSTO:|mailto:|tel:)/i, '');
         
         console.log("Using as plain text:", cleanedQrData);
         qrDataObj = {
           areaId: cleanedQrData,
-          areaName: cleanedQrData.length > 20 
-            ? `Area ${cleanedQrData.substring(0, 20)}...` 
-            : `Area ${cleanedQrData}`
+          areaName: `Area from ${cleanedQrData.substring(0, 20)}${cleanedQrData.length > 20 ? '...' : ''}`
         };
       }
     }
     
     // Validate and return the parsed data
-    if (qrDataObj && (qrDataObj.areaId || qrDataObj.locationId || qrDataObj.id)) {
+    if (qrDataObj && (qrDataObj.areaId || qrDataObj.locationId)) {
       return {
-        areaId: qrDataObj.areaId || qrDataObj.locationId || qrDataObj.id,
-        areaName: qrDataObj.areaName || qrDataObj.locationName || qrDataObj.name || `Area ${Math.floor(Math.random() * 100)}`,
+        areaId: qrDataObj.areaId || qrDataObj.locationId,
+        areaName: qrDataObj.areaName || qrDataObj.locationName || `Area ${Math.floor(Math.random() * 100)}`,
         isValid: true
       };
     } else {
-      console.warn("QR data missing required fields:", qrDataObj);
+      console.error("Invalid QR data structure:", qrDataObj);
     }
   } catch (e) {
     console.error("Error parsing QR data:", e);
@@ -93,8 +76,8 @@ export function parseQrData(qrData: string) {
   // Fallback for simulation or invalid data
   const randomId = Math.random().toString(36).substring(2, 10);
   return {
-    areaId: `area-${randomId}`,
-    areaName: `Scanned Area ${Math.floor(Math.random() * 100)}`,
+    areaId: `simulated-area-${randomId}`,
+    areaName: `Simulated Area ${Math.floor(Math.random() * 100)}`,
     isValid: false
   };
 }

@@ -30,6 +30,7 @@ const CleanerDashboard = () => {
     handleEndShiftWithoutScan,
     handleAutoEndShift,
     handleStartCleaning,
+    handleEndCleaningWithScan,
     handleEndCleaningWithoutScan,
     handleAutoEndCleaning,
     handleCompleteSummary,
@@ -65,6 +66,7 @@ const CleanerDashboard = () => {
         handleEndShiftWithScan={handleEndShiftWithScan}
         handleEndShiftWithoutScan={handleEndShiftWithoutScan}
         handleStartCleaning={handleStartCleaning}
+        handleEndCleaningWithScan={handleEndCleaningWithScan}
         handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
         handleStartShift={handleStartShift}
         handleAutoEndShift={handleAutoEndShift}
