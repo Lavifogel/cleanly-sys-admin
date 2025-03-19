@@ -22,83 +22,31 @@ const QRScannerHandler = ({
   onQRScan,
   activeShift = false
 }: QRScannerHandlerProps) => {
-  const scannerMounted = useRef(false);
-  const prevShowQRScannerRef = useRef(showQRScanner);
-  const closeTimeoutRef = useRef<number | null>(null);
   const processingQRScanRef = useRef(false);
   const { toast } = useToast();
   
-  // Effect to manage scanner visibility changes
+  // Force cleanup when visibility changes
   useEffect(() => {
-    // Handle when scanner opens
-    if (showQRScanner && !prevShowQRScannerRef.current) {
-      // Ensure all previous streams are stopped
+    if (!showQRScanner) {
+      // Ensure camera cleanup when scanner is closed
       stopAllVideoStreams();
-      
-      // Short delay to ensure resources are released before opening scanner
-      setTimeout(() => {
-        scannerMounted.current = true;
-        processingQRScanRef.current = false;
-        console.log("QR scanner opened");
-        
-        // Show toast to indicate scanner is active
-        toast({
-          title: "QR Scanner active",
-          description: "Position a QR code within the frame to scan",
-          duration: 3000,
-        });
-      }, 200);
-    } 
-    // Handle when scanner closes
-    else if (!showQRScanner && prevShowQRScannerRef.current) {
-      // Ensure camera is released when QR scanner is closed
-      if (scannerMounted.current) {
-        // Immediately force stop all video streams
-        stopAllVideoStreams();
-        console.log("QR scanner closed, camera resources released");
-        
-        // Add a delay before setting scannerMounted to false to avoid conflicts
-        if (closeTimeoutRef.current) {
-          clearTimeout(closeTimeoutRef.current);
-        }
-        
-        closeTimeoutRef.current = window.setTimeout(() => {
-          scannerMounted.current = false;
-          processingQRScanRef.current = false;
-          closeTimeoutRef.current = null;
-          
-          // Force stop streams again to ensure complete cleanup
-          stopAllVideoStreams();
-        }, 300);
-      }
+      processingQRScanRef.current = false;
+    } else {
+      // First cleanup any existing streams before opening scanner
+      stopAllVideoStreams();
+      processingQRScanRef.current = false;
     }
-    
-    // Update previous state reference
-    prevShowQRScannerRef.current = showQRScanner;
-    
-    // Clean up on component unmount
-    return () => {
-      if (closeTimeoutRef.current) {
-        clearTimeout(closeTimeoutRef.current);
-        closeTimeoutRef.current = null;
-      }
-      
-      if (scannerMounted.current) {
-        stopAllVideoStreams();
-        scannerMounted.current = false;
-        console.log("QR scanner handler unmounted, resources cleaned up");
-      }
-    };
-  }, [showQRScanner, toast]);
-
-  // Additional cleanup when component unmounts
+  }, [showQRScanner]);
+  
+  // Force cleanup on component unmount
   useEffect(() => {
     return () => {
       stopAllVideoStreams();
       console.log("QRScannerHandler unmounting, final cleanup");
     };
   }, []);
-
+  
+  // If scanner is not visible, don't render anything
   if (!showQRScanner) return null;
 
   // If 'startShift' and no active shift, show a close button
@@ -124,11 +72,14 @@ const QRScannerHandler = ({
       duration: 2000,
     });
     
-    // Allow a moment for cleanup before processing result
+    // Allow a moment for cleanup before closing
     setTimeout(() => {
-      onQRScan(decodedText);
-      // Processing flag will be reset when the scanner is closed
-    }, 200);
+      closeScanner();
+      // And then a moment more before processing the scan result
+      setTimeout(() => {
+        onQRScan(decodedText);
+      }, 300);
+    }, 300);
   };
 
   return (
@@ -140,7 +91,7 @@ const QRScannerHandler = ({
             size="icon" 
             onClick={() => {
               stopAllVideoStreams();
-              setTimeout(closeScanner, 100);
+              setTimeout(closeScanner, 300);
             }} 
             className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
           >
@@ -156,9 +107,7 @@ const QRScannerHandler = ({
             // Ensure camera is stopped before closing
             stopAllVideoStreams();
             // Allow a moment for cleanup before closing
-            setTimeout(() => {
-              closeScanner();
-            }, 200);
+            setTimeout(closeScanner, 300);
           }
         }}
       />

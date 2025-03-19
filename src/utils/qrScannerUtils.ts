@@ -51,6 +51,7 @@ export const stopAllVideoStreams = () => {
           stream.getTracks().forEach(track => {
             try {
               track.stop();
+              console.log("Track stopped");
             } catch (e) {
               console.log("Error stopping track:", e);
             }
@@ -67,37 +68,38 @@ export const stopAllVideoStreams = () => {
       }
     });
     
-    // Safely stop any MediaStream that might be active
+    // Forcibly stop any active streams from MediaDevices
     try {
-      if (navigator.mediaDevices) {
-        navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-          .then(stream => {
-            stream.getTracks().forEach(track => {
-              track.stop();
-            });
-          })
-          .catch(() => {
-            // Ignore errors, as they might just mean no camera is available
-          });
-      }
+      navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+        .then(stream => {
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch(() => {
+          // Ignore errors, as they might just mean no camera is available
+        });
     } catch (error) {
       // Ignore any errors in this cleanup
+    }
+    
+    // Kill any HTML5QrCode scanner instances that might be running
+    try {
+      const qrScannerElements = document.querySelectorAll('#html5-qrcode-button-camera-stop');
+      if (qrScannerElements.length > 0) {
+        qrScannerElements.forEach(button => {
+          try {
+            (button as HTMLButtonElement).click();
+          } catch (e) {
+            console.log("Error clicking stop button:", e);
+          }
+        });
+      }
+    } catch (e) {
+      console.log("Error stopping QR scanner:", e);
     }
     
     // Then attempt to safely remove video elements in a separate pass after a short delay
     // This avoids issues with modifying the DOM while iterating
     setTimeout(() => {
-      videoElements.forEach(video => {
-        // Only remove if actually in the DOM
-        if (video.parentNode && document.contains(video)) {
-          try {
-            video.parentNode.removeChild(video);
-          } catch (e) {
-            console.log("Error removing video element:", e);
-          }
-        }
-      });
-      
       // Remove any HTML5QrCode scanner UI elements that might be orphaned
       try {
         const scannerElements = document.querySelectorAll('.html5-qrcode-element');
@@ -110,10 +112,23 @@ export const stopAllVideoStreams = () => {
             }
           }
         });
+        
+        // Also remove any lingering video elements
+        document.querySelectorAll('video').forEach(video => {
+          if (video.parentNode && document.contains(video)) {
+            try {
+              video.parentNode.removeChild(video);
+            } catch (e) {
+              console.log("Error removing video element:", e);
+            }
+          }
+        });
       } catch (e) {
-        console.log("Error removing scanner UI elements:", e);
+        console.log("Error removing UI elements:", e);
       }
     }, 100);
+    
+    console.log("All video streams stopped");
   } catch (e) {
     console.log("Error in stopAllVideoStreams:", e);
   }

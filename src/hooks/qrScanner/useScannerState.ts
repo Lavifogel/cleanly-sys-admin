@@ -24,6 +24,8 @@ export const useScannerState = ({
   useEffect(() => {
     return () => {
       mountedRef.current = false;
+      // Make sure to clean up camera on unmount
+      stopAllVideoStreams();
     };
   }, []);
 
@@ -69,7 +71,7 @@ export const useScannerState = ({
           setCameraActive(false);
         }
         stopInProgressRef.current = false;
-      }, 200);
+      }, 300);
     } catch (error) {
       console.error("Error in stopCamera:", error);
       // Even if there's an error, still try to stop all video streams as a fallback
