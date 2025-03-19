@@ -3,10 +3,12 @@ import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { 
-  updateShiftEnd 
+  updateShiftEnd,
+  createOrFindQrCode 
 } from "@/hooks/shift/useShiftDatabase";
 import { createShiftHistoryItem } from "@/hooks/shift/useShiftHistory";
 import { Shift, ShiftHistoryItem } from "@/hooks/shift/types";
+import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
 
 /**
  * Hook for ending shifts
@@ -30,9 +32,27 @@ export function useEndShift(
       const endTime = new Date();
       const status = withScan ? "finished with scan" : "finished without scan";
       
+      // Process QR code data if provided
+      let endQrId = null;
+      if (withScan && qrData) {
+        // Parse QR code data
+        const { areaId, areaName, isValid } = parseQrData(qrData);
+        
+        // If QR data isn't valid, create a mock QR data string
+        const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);
+        
+        try {
+          endQrId = await createOrFindQrCode(areaId, areaName, qrDataToUse);
+          console.log("QR code ID for shift end:", endQrId);
+        } catch (error: any) {
+          console.error("Error with end QR code:", error);
+          // Continue with shift end even if QR code processing fails
+        }
+      }
+      
       // Update the shift in the database
       try {
-        await updateShiftEnd(activeShift.id, endTime.toISOString(), status);
+        await updateShiftEnd(activeShift.id, endTime.toISOString(), status, endQrId);
       } catch (error: any) {
         console.error("Error updating shift:", error);
         toast({

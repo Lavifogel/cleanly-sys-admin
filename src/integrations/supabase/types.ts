@@ -9,41 +9,104 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      cleanings: {
+      activity_logs: {
         Row: {
+          activity_type: string
           created_at: string
           end_time: string | null
           id: string
           notes: string | null
           qr_id: string | null
+          related_id: string | null
+          start_time: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          qr_id?: string | null
+          related_id?: string | null
+          start_time?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          qr_id?: string | null
+          related_id?: string | null
+          start_time?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_qr_id_fkey"
+            columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["qr_id"]
+          },
+        ]
+      }
+      cleanings: {
+        Row: {
+          created_at: string
+          end_qr_id: string | null
+          end_time: string | null
+          id: string
+          notes: string | null
+          qr_id: string | null
           shift_id: string
+          start_qr_id: string | null
           start_time: string | null
           status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          end_qr_id?: string | null
           end_time?: string | null
           id?: string
           notes?: string | null
           qr_id?: string | null
           shift_id: string
+          start_qr_id?: string | null
           start_time?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          end_qr_id?: string | null
           end_time?: string | null
           id?: string
           notes?: string | null
           qr_id?: string | null
           shift_id?: string
+          start_qr_id?: string | null
           start_time?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cleanings_end_qr_id_fkey"
+            columns: ["end_qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["qr_id"]
+          },
           {
             foreignKeyName: "cleanings_qr_id_fkey"
             columns: ["qr_id"]
@@ -58,28 +121,45 @@ export type Database = {
             referencedRelation: "shifts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cleanings_start_qr_id_fkey"
+            columns: ["start_qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["qr_id"]
+          },
         ]
       }
       images: {
         Row: {
+          activity_log_id: string | null
           cleaning_id: string
           created_at: string
           id: string
           image_url: string
         }
         Insert: {
+          activity_log_id?: string | null
           cleaning_id: string
           created_at?: string
           id?: string
           image_url: string
         }
         Update: {
+          activity_log_id?: string | null
           cleaning_id?: string
           created_at?: string
           id?: string
           image_url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "images_activity_log_id_fkey"
+            columns: ["activity_log_id"]
+            isOneToOne: false
+            referencedRelation: "activity_logs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "images_cleaning_id_fkey"
             columns: ["cleaning_id"]
@@ -122,9 +202,11 @@ export type Database = {
       shifts: {
         Row: {
           created_at: string
+          end_qr_id: string | null
           end_time: string | null
           id: string
           qr_id: string | null
+          start_qr_id: string | null
           start_time: string | null
           status: string
           updated_at: string
@@ -132,9 +214,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          end_qr_id?: string | null
           end_time?: string | null
           id?: string
           qr_id?: string | null
+          start_qr_id?: string | null
           start_time?: string | null
           status?: string
           updated_at?: string
@@ -142,9 +226,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          end_qr_id?: string | null
           end_time?: string | null
           id?: string
           qr_id?: string | null
+          start_qr_id?: string | null
           start_time?: string | null
           status?: string
           updated_at?: string
@@ -152,8 +238,22 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "shifts_end_qr_id_fkey"
+            columns: ["end_qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["qr_id"]
+          },
+          {
             foreignKeyName: "shifts_qr_id_fkey"
             columns: ["qr_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["qr_id"]
+          },
+          {
+            foreignKeyName: "shifts_start_qr_id_fkey"
+            columns: ["start_qr_id"]
             isOneToOne: false
             referencedRelation: "qr_codes"
             referencedColumns: ["qr_id"]
@@ -282,6 +382,10 @@ export type Database = {
           status: string
           phone: string
         }[]
+      }
+      migrate_shifts_and_cleanings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       migrate_to_users_table: {
         Args: Record<PropertyKey, never>

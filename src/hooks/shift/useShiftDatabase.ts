@@ -56,11 +56,11 @@ export async function createOrFindQrCode(areaId: string, areaName: string, qrDat
 /**
  * Creates a new shift in the database
  */
-export async function createShift(shiftId: string, userId: string, startTime: string, qrId: string | null) {
+export async function createShift(shiftId: string, userId: string, startTime: string, startQrId: string | null) {
   // Get or create a proper UUID for the user
   const properUserId = await getOrCreateUserUUID(userId);
   
-  console.log("Creating shift with ID:", shiftId, "for user:", properUserId, "QR ID:", qrId);
+  console.log("Creating shift with ID:", shiftId, "for user:", properUserId, "Start QR ID:", startQrId);
   
   const { data, error } = await supabase
     .from('shifts')
@@ -69,7 +69,7 @@ export async function createShift(shiftId: string, userId: string, startTime: st
       user_id: properUserId,
       start_time: startTime,
       status: 'active',
-      qr_id: qrId
+      start_qr_id: startQrId
     });
   
   if (error) {
@@ -84,13 +84,20 @@ export async function createShift(shiftId: string, userId: string, startTime: st
 /**
  * Updates a shift in the database when it ends
  */
-export async function updateShiftEnd(shiftId: string, endTime: string, status: string) {
+export async function updateShiftEnd(shiftId: string, endTime: string, status: string, endQrId: string | null = null) {
+  const updateData: any = {
+    end_time: endTime,
+    status: status
+  };
+  
+  // Only include end_qr_id if it was provided
+  if (endQrId) {
+    updateData.end_qr_id = endQrId;
+  }
+  
   const { error } = await supabase
     .from('shifts')
-    .update({
-      end_time: endTime,
-      status: status
-    })
+    .update(updateData)
     .eq('id', shiftId);
   
   if (error) {

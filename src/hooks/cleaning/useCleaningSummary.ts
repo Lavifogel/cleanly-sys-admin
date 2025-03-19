@@ -2,9 +2,10 @@
 import { v4 as uuidv4 } from "uuid";
 import { Cleaning, CleaningHistoryItem, CleaningSummary } from "@/types/cleaning";
 import { useCleaningImages } from "@/hooks/useCleaningImages";
-import { updateCleaningEnd, saveCleaningImages } from "@/hooks/shift/useCleaningDatabase";
+import { updateCleaningEnd, saveCleaningImages, createOrFindCleaningQrCode } from "@/hooks/shift/useCleaningDatabase";
 import { formatTime } from "@/utils/timeUtils";
 import { useToast } from "@/hooks/use-toast";
+import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
 
 export function useCleaningSummary(
   activeShiftId: string | undefined,
@@ -31,7 +32,7 @@ export function useCleaningSummary(
   };
 
   // Prepare cleaning summary for completion
-  const prepareSummary = (withScan: boolean, qrData?: string) => {
+  const prepareSummary = async (withScan: boolean, qrData?: string) => {
     if (!activeCleaning) {
       toast({
         title: "Error",
@@ -45,8 +46,30 @@ export function useCleaningSummary(
     setSummaryNotes("");
     resetImages();
     
+    // Process QR code data if provided
+    let endQrId = null;
+    let locationFromQR = activeCleaning.location;
+    
+    if (withScan && qrData) {
+      try {
+        // Parse QR code data
+        const { areaId, areaName, isValid } = parseQrData(qrData);
+        if (areaName) {
+          locationFromQR = areaName;
+        }
+        
+        // If QR data isn't valid, create a mock QR data string
+        const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);
+        
+        endQrId = await createOrFindCleaningQrCode(areaId, areaName, qrDataToUse);
+        console.log("QR code ID for cleaning end:", endQrId);
+      } catch (error: any) {
+        console.error("Error with end QR code:", error);
+      }
+    }
+    
     setCleaningSummary({
-      location: activeCleaning.location,
+      location: locationFromQR,
       startTime: activeCleaning.startTime.toLocaleTimeString(),
       endTime: new Date().toLocaleTimeString(),
       duration: formatTime(cleaningElapsedTime),
@@ -55,6 +78,11 @@ export function useCleaningSummary(
     });
     
     setShowSummary(true);
+    
+    // Store endQrId for later use when completing the summary
+    if (endQrId) {
+      (activeCleaning as any).endQrId = endQrId;
+    }
   };
 
   // Complete the cleaning with summary and save to DB
@@ -74,14 +102,18 @@ export function useCleaningSummary(
       const endTime = new Date();
       const status = "finished with scan";
       
-      console.log("Completing cleaning with ID:", cleaningId);
+      // Get any stored end QR ID
+      const endQrId = (activeCleaning as any).endQrId || null;
+      
+      console.log("Completing cleaning with ID:", cleaningId, "End QR ID:", endQrId);
       
       // Update the cleaning record in the database with end time and notes
       await updateCleaningEnd(
         cleaningId,
         endTime.toISOString(),
         status,
-        summaryNotes
+        summaryNotes,
+        endQrId
       );
       
       // Save any images

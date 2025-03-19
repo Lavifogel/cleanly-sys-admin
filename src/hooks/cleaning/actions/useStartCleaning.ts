@@ -32,10 +32,10 @@ export function useStartCleaning(
       const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);
       
       // Find or create QR code in database
-      let qrId = null;
+      let startQrId = null;
       try {
-        qrId = await createOrFindCleaningQrCode(areaId, areaName, qrDataToUse);
-        console.log("QR code ID for cleaning:", qrId);
+        startQrId = await createOrFindCleaningQrCode(areaId, areaName, qrDataToUse);
+        console.log("QR code ID for cleaning start:", startQrId);
       } catch (error: any) {
         console.error("Error with cleaning QR code:", error);
       }
@@ -46,7 +46,7 @@ export function useStartCleaning(
           cleaningId, 
           activeShiftId, 
           startTime.toISOString(), 
-          qrId,
+          startQrId,
           locationFromQR
         );
         console.log("Cleaning stored successfully");
