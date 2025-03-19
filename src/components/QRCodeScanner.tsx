@@ -97,8 +97,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     stopAllVideoStreams();
     
     // Slight delay to ensure cleanup completes before closing
-    setTimeout(() => {
+    cleanupTimeoutRef.current = window.setTimeout(() => {
       handleClose();
+      cleanupTimeoutRef.current = null;
     }, 400); // Increased delay for better cleanup
   };
 
@@ -111,7 +112,8 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
             variant="ghost" 
             size="icon" 
             onClick={safeHandleClose}
-            className="ml-auto"
+            className="ml-auto hover:bg-destructive/10"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </Button>

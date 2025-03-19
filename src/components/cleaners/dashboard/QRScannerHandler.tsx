@@ -109,6 +109,17 @@ const QRScannerHandler = ({
     }, 300); // Increased delay to ensure camera is properly stopped
   };
 
+  const handleClose = () => {
+    // Stop camera streams first
+    stopAllVideoStreams();
+    console.log("Close button clicked, stopping camera streams");
+    
+    // Then close the scanner with a delay to ensure proper cleanup
+    setTimeout(() => {
+      closeScanner();
+    }, 300);
+  };
+
   return (
     <div className="fixed inset-0 z-50">
       {canClose && (
@@ -116,10 +127,7 @@ const QRScannerHandler = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={() => {
-              stopAllVideoStreams();
-              setTimeout(closeScanner, 100);
-            }} 
+            onClick={handleClose} 
             className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
           >
             <X className="h-5 w-5" />
@@ -136,7 +144,14 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 200);
+            }, 300);
+          } else {
+            // For non-closable scanners, we still need to stop the camera
+            // This is a fallback in case the X button is clicked
+            stopAllVideoStreams();
+            setTimeout(() => {
+              closeScanner();
+            }, 300);
           }
         }}
       />
