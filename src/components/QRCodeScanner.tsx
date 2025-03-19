@@ -39,20 +39,23 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     },
     // Wrap close callback to ensure camera shutdown
     () => {
+      console.log("QRCodeScanner onClose handler triggered");
       stopAllVideoStreams();
       setTimeout(() => {
         onClose();
-      }, 300); // Increased delay
+      }, 500); // Increased delay
     }
   );
 
   const { error, cameraActive } = scannerState;
   
-  // Component mount effect
+  // Component mount effect - make sure this runs properly each time component mounts
   useEffect(() => {
     // Mark component as mounted
     scannerMountedRef.current = true;
     scanProcessedRef.current = false;
+    
+    console.log("QRCodeScanner component mounted, initializing camera...");
     
     // Add a delay to ensure DOM is ready
     const timer = setTimeout(() => {
@@ -106,7 +109,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       console.log("Cleanup timeout complete, calling handleClose");
       handleClose();
       cleanupTimeoutRef.current = null;
-    }, 400); // Increased delay for better cleanup
+    }, 500); // Increased delay for better cleanup
   };
 
   return (

@@ -87,15 +87,19 @@ export const stopAllVideoStreams = () => {
       // Ignore any errors in this cleanup
     }
     
-    // Try to stop any active MediaTracks that might be running
+    // Force the release of any active camera resources by specifically 
+    // requesting camera and then immediately stopping it
     try {
-      navigator.mediaDevices.enumerateDevices()
-        .then(devices => {
-          // Force MediaDevices to clean up
-          console.log("Enumerating devices to help release resources");
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          // Immediately stop all tracks
+          stream.getTracks().forEach(track => {
+            track.stop();
+            console.log("Forcibly stopped camera track:", track.kind);
+          });
         })
-        .catch(() => {
-          // Ignore errors
+        .catch(err => {
+          console.log("Could not force-release camera:", err);
         });
     } catch (error) {
       // Ignore any errors
