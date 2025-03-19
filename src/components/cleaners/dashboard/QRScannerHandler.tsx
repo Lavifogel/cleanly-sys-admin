@@ -76,8 +76,8 @@ const QRScannerHandler = ({
 
   if (!showQRScanner) return null;
 
-  // If 'startShift' and no active shift, show a close button
-  const canClose = scannerPurpose === 'startShift' && !activeShift;
+  // Always allow closing the scanner for better UX
+  const canClose = true;
 
   const handleScanSuccess = (decodedText: string) => {
     // Prevent duplicate processing
@@ -127,28 +127,34 @@ const QRScannerHandler = ({
     }, 800);
   };
 
+  const handleCloseScanner = () => {
+    // Stop all camera streams first
+    stopAllVideoStreams();
+    
+    // Add a slight delay to ensure cleanup completes before triggering the close action
+    setTimeout(() => {
+      closeScanner();
+    }, 300);
+  };
+
   return (
     <div className="fixed inset-0 z-50">
       {canClose && (
         <div className="absolute top-4 right-4 z-50">
-          <Button variant="ghost" size="icon" onClick={closeScanner} className="bg-background/50 backdrop-blur-sm hover:bg-background/80">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleCloseScanner} 
+            className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
+            aria-label="Close QR scanner"
+          >
             <X className="h-5 w-5" />
           </Button>
         </div>
       )}
       <QRCodeScanner 
         onScanSuccess={handleScanSuccess}
-        onClose={() => {
-          // Only allow closing if it's the initial scanner
-          if (canClose) {
-            // Ensure camera is stopped before closing
-            stopAllVideoStreams();
-            // Allow a moment for cleanup before closing
-            setTimeout(() => {
-              closeScanner();
-            }, 500);
-          }
-        }}
+        onClose={handleCloseScanner}
       />
     </div>
   );

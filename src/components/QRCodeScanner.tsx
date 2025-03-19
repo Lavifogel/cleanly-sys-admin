@@ -91,6 +91,8 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Slight delay to ensure cleanup completes before closing
     setTimeout(() => {
       handleClose();
+      // Also call the onClose prop to ensure parent components are notified
+      onClose();
     }, 300);
   };
 
@@ -104,6 +106,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
             size="icon" 
             onClick={safeHandleClose}
             className="ml-auto"
+            aria-label="Close QR scanner"
           >
             <X className="h-5 w-5" />
           </Button>
