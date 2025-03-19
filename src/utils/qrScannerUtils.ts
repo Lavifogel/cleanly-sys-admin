@@ -73,6 +73,7 @@ export const stopAllVideoStreams = () => {
       navigator.mediaDevices.getUserMedia({ audio: false, video: true })
         .then(stream => {
           stream.getTracks().forEach(track => track.stop());
+          console.log("Forcibly stopped additional camera streams");
         })
         .catch(() => {
           // Ignore errors, as they might just mean no camera is available
@@ -88,13 +89,14 @@ export const stopAllVideoStreams = () => {
         qrScannerElements.forEach(button => {
           try {
             (button as HTMLButtonElement).click();
+            console.log("Clicked QR scanner stop button");
           } catch (e) {
             console.log("Error clicking stop button:", e);
           }
         });
       }
     } catch (e) {
-      console.log("Error stopping QR scanner:", e);
+      console.log("Error stopping QR scanner UI:", e);
     }
     
     // Then attempt to safely remove video elements in a separate pass after a short delay
@@ -107,6 +109,7 @@ export const stopAllVideoStreams = () => {
           if (element.parentNode && document.contains(element)) {
             try {
               element.parentNode.removeChild(element);
+              console.log("Removed scanner UI element");
             } catch (e) {
               console.log("Error removing scanner UI element:", e);
             }
@@ -118,6 +121,7 @@ export const stopAllVideoStreams = () => {
           if (video.parentNode && document.contains(video)) {
             try {
               video.parentNode.removeChild(video);
+              console.log("Removed video element");
             } catch (e) {
               console.log("Error removing video element:", e);
             }

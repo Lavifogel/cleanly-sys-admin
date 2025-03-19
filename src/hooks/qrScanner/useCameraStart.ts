@@ -111,7 +111,7 @@ export const useCameraStart = ({
       try {
         // First try with any available camera (no specific constraints)
         await scannerRef.current.start(
-          { facingMode: "environment" }, // More relaxed constraint
+          { facingMode: "environment" }, // More relaxed constraint as object
           config,
           qrCodeSuccessCallback,
           (errorMessage) => {

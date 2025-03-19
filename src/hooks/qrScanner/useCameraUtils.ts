@@ -1,6 +1,7 @@
 
 import { useCallback } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeConfigs } from "html5-qrcode";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseCameraUtilsProps {
   scannerRef: React.MutableRefObject<Html5Qrcode | null>;
@@ -15,92 +16,105 @@ export const useCameraUtils = ({
   scannerRef,
   onScanSuccess,
   stopCamera,
-  mountedRef, 
+  mountedRef,
   setCameraActive,
   setError
 }: UseCameraUtilsProps) => {
   
-  // Try fallback camera approach
-  const tryFallbackCamera = useCallback(async (config: any, qrCodeSuccessCallback: (decodedText: string) => void) => {
+  // Try all possible fallback camera approaches
+  const tryFallbackCamera = useCallback(async (
+    config: Html5QrcodeConfigs,
+    qrCodeSuccessCallback: (decodedText: string, result: any) => void
+  ) => {
+    if (!scannerRef.current || !mountedRef.current) return false;
+    
+    console.log("Trying final fallback camera approach...");
+    
     try {
-      if (mountedRef.current && scannerRef.current) {
-        console.log("Trying fallback camera approach...");
-        
-        // Try with user-facing camera
-        try {
-          await scannerRef.current.start(
-            { facingMode: "user" },
-            config,
-            qrCodeSuccessCallback,
-            () => {}
-          );
-          
-          if (mountedRef.current) {
-            console.log("User-facing camera started successfully");
-            setCameraActive(true);
-            setError(null);
-            return true;
-          }
-        } catch (err) {
-          console.log("User-facing camera failed, trying with fallback approach");
-          
-          // Try with a different approach as last resort
-          try {
-            await scannerRef.current.start(
-              { facingMode: { ideal: "environment" } }, // Use an object instead of boolean
-              config,
-              qrCodeSuccessCallback,
-              () => {}
-            );
-            
-            if (mountedRef.current) {
-              console.log("Camera started with fallback approach");
-              setCameraActive(true);
-              setError(null);
-              return true;
-            }
-          } catch (finalErr) {
-            console.error("All camera approaches failed");
-            throw finalErr;
-          }
-        }
-      }
-      return false;
-    } catch (fallbackErr) {
-      console.error("Fallback camera approaches failed:", fallbackErr);
+      // Try a very generic approach that should work on most devices
+      await scannerRef.current.start(
+        { facingMode: "user" }, // Try user-facing as a last resort
+        config,
+        qrCodeSuccessCallback,
+        () => {}
+      );
+      
       if (mountedRef.current) {
-        setError("Could not access the camera. Please check camera permissions in your browser settings.");
+        console.log("Camera started with user-facing camera");
+        setCameraActive(true);
+        return true;
       }
-      return false;
+    } catch (err) {
+      console.error("Final fallback camera approach failed:", err);
+      
+      if (mountedRef.current) {
+        setError("Could not access camera. Please check camera permissions and try again.");
+        await stopCamera();
+      }
     }
-  }, [scannerRef, mountedRef, onScanSuccess, stopCamera, setCameraActive, setError]);
-
-  // Setup camera timeout to handle permission issues
+    
+    return false;
+  }, [scannerRef, mountedRef, setCameraActive, setError, stopCamera]);
+  
+  // Setup timeout for camera initialization
   const setupCameraTimeout = useCallback((cameraActive: boolean) => {
-    const timeoutId = setTimeout(() => {
-      if (mountedRef.current && !cameraActive) {
-        setError("Camera access timed out. Please ensure camera permissions are enabled and try again.");
+    if (cameraActive) return undefined;
+    
+    // Set a timeout to handle if camera doesn't start in a reasonable time
+    return setTimeout(async () => {
+      if (!mountedRef.current) return;
+      
+      console.log("Camera start timeout reached!");
+      
+      if (!scannerRef.current || cameraActive) return;
+      
+      try {
+        // Force stop any existing attempts
+        stopAllVideoStreams();
+        
+        if (mountedRef.current) {
+          setError("Camera initialization timed out. Please check your permissions and try again.");
+          await stopCamera();
+        }
+      } catch (e) {
+        console.error("Error in camera timeout handler:", e);
       }
-    }, 10000); // Shorter timeout for better UX
-    
-    return timeoutId;
-  }, [mountedRef, setError]);
-
-  // Handles camera errors and tries fallback options
-  const handleCameraError = useCallback((err: any, currentAttempt: number) => {
-    console.error("Error starting QR scanner:", err);
-    
+    }, 15000); // 15 seconds should be enough for any reasonable camera start
+  }, [scannerRef, mountedRef, cameraActive, setError, stopCamera]);
+  
+  // Handle camera errors
+  const handleCameraError = useCallback(async (error: any, attemptNumber: number) => {
     if (!mountedRef.current) return;
     
-    if (err.toString().includes("permission")) {
-      setError("Camera access denied. Please enable camera permissions in your browser settings.");
-    } else if (err.toString().includes("OverconstrainedError")) {
-      setError("Your device doesn't support the required camera mode. Trying alternatives...");
-    } else {
-      setError("Could not access the camera. Please ensure your device has a working camera.");
+    console.error(`Camera error (attempt ${attemptNumber}):`, error);
+    
+    let errorMessage = "Could not access camera.";
+    
+    // Check for specific error types and provide better error messages
+    if (error.name === "NotAllowedError") {
+      errorMessage = "Camera access denied. Please check your browser permissions.";
+    } else if (error.name === "NotFoundError") {
+      errorMessage = "No camera found. Please connect a camera and try again.";
+    } else if (error.name === "NotReadableError") {
+      errorMessage = "Camera is in use by another application. Please close other apps using your camera.";
+    } else if (error.name === "OverconstrainedError") {
+      errorMessage = "Camera does not meet the required constraints. Trying alternative settings.";
+      
+      // For this specific error, we will try again with different settings
+      if (attemptNumber < 3 && mountedRef.current) {
+        return; // Let the retry logic handle it
+      }
+    } else if (error.name === "AbortError") {
+      errorMessage = "Camera access was aborted. Please try again.";
     }
-  }, [mountedRef, setError]);
-
+    
+    // Update error state
+    if (mountedRef.current) {
+      setError(errorMessage);
+      await stopCamera();
+    }
+  }, [mountedRef, setError, stopCamera]);
+  
   return {
     tryFallbackCamera,
     setupCameraTimeout,

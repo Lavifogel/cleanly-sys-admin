@@ -62,7 +62,7 @@ const QRScannerHandler = ({
     processingQRScanRef.current = true;
     console.log("QR scan successful, data:", decodedText);
     
-    // First stop all camera streams
+    // First aggressively stop all camera streams
     stopAllVideoStreams();
     
     // Notify user
@@ -72,14 +72,13 @@ const QRScannerHandler = ({
       duration: 2000,
     });
     
-    // Allow a moment for cleanup before closing
+    // Close scanner immediately to hide camera UI
+    closeScanner();
+    
+    // Process scan after a delay to ensure camera is fully stopped
     setTimeout(() => {
-      closeScanner();
-      // And then a moment more before processing the scan result
-      setTimeout(() => {
-        onQRScan(decodedText);
-      }, 300);
-    }, 300);
+      onQRScan(decodedText);
+    }, 500);
   };
 
   return (

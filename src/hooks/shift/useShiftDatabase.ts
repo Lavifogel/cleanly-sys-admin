@@ -62,6 +62,7 @@ export async function createShift(shiftId: string, userId: string, startTime: st
   
   console.log("Creating shift with ID:", shiftId, "for user:", properUserId, "QR ID:", qrId);
   
+  // Use the field name start_qr_id instead of qr_id to match the database schema
   const { data, error } = await supabase
     .from('shifts')
     .insert({
@@ -69,7 +70,7 @@ export async function createShift(shiftId: string, userId: string, startTime: st
       user_id: properUserId,
       start_time: startTime,
       status: 'active',
-      qr_id: qrId
+      start_qr_id: qrId // Use the correct field name for the QR code ID
     });
   
   if (error) {
