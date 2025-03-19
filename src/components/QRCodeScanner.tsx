@@ -10,7 +10,6 @@ import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const scannerMountedRef = useRef(false);
-  const cleanupTimeoutRef = useRef<number | null>(null);
   const scanProcessedRef = useRef(false);
   
   const {
@@ -35,14 +34,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       // Call the original success callback with a delay to ensure camera is fully stopped
       setTimeout(() => {
         onScanSuccess(decodedText);
-      }, 500); // Increased delay for more thorough cleanup
+      }, 600); // Increased delay for more thorough cleanup
     },
     // Wrap close callback to ensure camera shutdown
     () => {
       stopAllVideoStreams();
       setTimeout(() => {
         onClose();
-      }, 300); // Increased delay
+      }, 400); // Increased delay
     }
   );
 
@@ -54,36 +53,33 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     scannerMountedRef.current = true;
     scanProcessedRef.current = false;
     
-    // Add a delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      if (scannerMountedRef.current) {
-        console.log("QR scanner mounted, camera active:", cameraActive);
+    // Ensure the container exists in the DOM
+    const ensureContainer = () => {
+      const container = document.getElementById(scannerContainerId);
+      if (!container) {
+        // Create container if it doesn't exist
+        const newContainer = document.createElement('div');
+        newContainer.id = scannerContainerId;
+        newContainer.className = 'absolute inset-0 z-10 flex items-center justify-center';
+        document.body.appendChild(newContainer);
       }
-    }, 500);
+    };
     
+    // Ensure container exists before camera initialization
+    ensureContainer();
+    
+    // Clean up on unmount
     return () => {
-      clearTimeout(timer);
-      
       console.log("QRCodeScanner component unmounting, cleaning up resources");
-      // Set mounted ref to false to prevent any subsequent state updates
       scannerMountedRef.current = false;
-      
-      // Ensure any pending cleanup timeouts are cleared
-      if (cleanupTimeoutRef.current) {
-        clearTimeout(cleanupTimeoutRef.current);
-        cleanupTimeoutRef.current = null;
-      }
-      
-      // Force stop all camera streams
       stopAllVideoStreams();
       
-      // Add a small delay before final cleanup to avoid race conditions
+      // Delay before final cleanup
       setTimeout(() => {
-        // Stop all video streams on unmount
         stopAllVideoStreams();
       }, 300);
     };
-  }, []);
+  }, [scannerContainerId]);
 
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {

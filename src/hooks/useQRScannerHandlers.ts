@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
@@ -24,7 +24,7 @@ export function useQRScannerHandlers({
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
   const processingRef = useRef(false);
   
-  const closeScanner = () => {
+  const closeScanner = useCallback(() => {
     // Force stop all camera streams before hiding the scanner UI
     stopAllVideoStreams();
     setShowQRScanner(false);
@@ -36,24 +36,25 @@ export function useQRScannerHandlers({
       // Reset processing state after a delay
       setTimeout(() => {
         processingRef.current = false;
-      }, 200);
-    }, 100);
-  };
+      }, 300);
+    }, 200);
+  }, []);
   
-  const handleQRScannerStart = (purpose: ScannerPurpose) => {
+  const handleQRScannerStart = useCallback((purpose: ScannerPurpose) => {
+    // Reset processing state
     processingRef.current = false;
     setScannerPurpose(purpose);
     
     // Ensure any existing camera is fully closed before opening scanner
     stopAllVideoStreams();
     
-    // Add small delay before showing scanner
+    // Add small delay before showing scanner to ensure previous resources are released
     setTimeout(() => {
       setShowQRScanner(true);
-    }, 100);
-  };
+    }, 300);
+  }, []);
   
-  const handleQRScan = (decodedText: string) => {
+  const handleQRScan = useCallback((decodedText: string) => {
     // Prevent duplicate processing
     if (processingRef.current) {
       console.log("Already processing a scan result, ignoring duplicate");
@@ -109,8 +110,8 @@ export function useQRScannerHandlers({
           processingRef.current = false;
         }, 300);
       }
-    }, 300);
-  };
+    }, 500);
+  }, [scannerPurpose, onStartShiftScan, onEndShiftScan, onStartCleaningScan, onEndCleaningScan, setActiveTab]);
   
   return {
     showQRScanner,

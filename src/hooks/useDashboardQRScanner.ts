@@ -2,6 +2,8 @@
 import { ScannerPurpose, useQRScanner } from "@/hooks/useQRScanner";
 import { useShift } from "@/hooks/useShift";
 import { useCleaning } from "@/hooks/useCleaning";
+import { useEffect } from "react";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export function useDashboardQRScanner(
   activeShift: ReturnType<typeof useShift>["activeShift"],
@@ -19,35 +21,48 @@ export function useDashboardQRScanner(
     closeScanner
   } = useQRScanner();
   
+  // Close and clean up scanner on unmount
+  useEffect(() => {
+    return () => {
+      stopAllVideoStreams();
+    };
+  }, []);
+  
   // Handle scanning QR code
   const handleQRScan = (decodedText: string) => {
     console.log("QR Code scanned with purpose:", scannerPurpose, "data:", decodedText);
     
     // Close scanner before processing the result
     closeScanner();
+    
+    // Ensure camera is fully stopped
+    stopAllVideoStreams();
 
-    switch (scannerPurpose) {
-      case "startShift":
-        console.log("Starting shift with QR data:", decodedText);
-        startShift(decodedText);
-        break;
-      case "endShift":
-        console.log("Ending shift with QR data:", decodedText);
-        endShift(true, decodedText);
-        break;
-      case "startCleaning":
-        console.log("Starting cleaning with QR data:", decodedText);
-        startCleaning(decodedText);
-        setActiveTab("cleaning");
-        break;
-      case "endCleaning":
-        console.log("Ending cleaning with QR data:", decodedText);
-        prepareSummary(true, decodedText);
-        break;
-      default:
-        console.warn("Unknown scanner purpose:", scannerPurpose);
-        break;
-    }
+    // Add delay before processing to ensure camera resources are released
+    setTimeout(() => {
+      switch (scannerPurpose) {
+        case "startShift":
+          console.log("Starting shift with QR data:", decodedText);
+          startShift(decodedText);
+          break;
+        case "endShift":
+          console.log("Ending shift with QR data:", decodedText);
+          endShift(true, decodedText);
+          break;
+        case "startCleaning":
+          console.log("Starting cleaning with QR data:", decodedText);
+          startCleaning(decodedText);
+          setActiveTab("cleaning");
+          break;
+        case "endCleaning":
+          console.log("Ending cleaning with QR data:", decodedText);
+          prepareSummary(true, decodedText);
+          break;
+        default:
+          console.warn("Unknown scanner purpose:", scannerPurpose);
+          break;
+      }
+    }, 300);
   };
   
   // Handler functions for different QR scanning purposes
@@ -57,6 +72,8 @@ export function useDashboardQRScanner(
       return;
     }
     console.log("Opening scanner for startShift");
+    // Ensure camera is completely stopped before starting a new scan
+    stopAllVideoStreams();
     openScanner("startShift");
   };
 
@@ -66,6 +83,8 @@ export function useDashboardQRScanner(
       return;
     }
     console.log("Opening scanner for endShift");
+    // Ensure camera is completely stopped before starting a new scan
+    stopAllVideoStreams();
     openScanner("endShift");
   };
 
@@ -75,6 +94,8 @@ export function useDashboardQRScanner(
       return;
     }
     console.log("Opening scanner for startCleaning");
+    // Ensure camera is completely stopped before starting a new scan
+    stopAllVideoStreams();
     openScanner("startCleaning");
   };
 
@@ -84,6 +105,8 @@ export function useDashboardQRScanner(
       return;
     }
     console.log("Opening scanner for endCleaning");
+    // Ensure camera is completely stopped before starting a new scan
+    stopAllVideoStreams();
     openScanner("endCleaning");
   };
   
