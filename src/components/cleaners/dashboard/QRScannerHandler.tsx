@@ -30,13 +30,18 @@ const QRScannerHandler = ({
   
   useEffect(() => {
     if (showQRScanner && !prevShowQRScannerRef.current) {
+      // Scanner is being opened
       scannerMounted.current = true;
       processingQRRef.current = false;
       lastProcessedCodeRef.current = null;
       mountTimeRef.current = Date.now();
       console.log("QR scanner opened for purpose:", scannerPurpose);
+      
+      // Force any existing video streams to stop before starting a new one
+      stopAllVideoStreams();
     } 
     else if (!showQRScanner && prevShowQRScannerRef.current) {
+      // Scanner is being closed
       stopAllVideoStreams();
       console.log("QR scanner closed, camera resources released");
       
@@ -91,6 +96,7 @@ const QRScannerHandler = ({
     const isCleaning = scannerPurpose === 'startCleaning';
     const processingDelay = isCleaning ? 800 : 500;
     
+    // Stop camera first
     stopAllVideoStreams();
     
     setTimeout(() => {

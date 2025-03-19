@@ -18,9 +18,15 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   // Ensure the container is visible and has proper dimensions before initializing camera
   useEffect(() => {
     if (containerRef.current) {
-      // Force a reflow to ensure the element is rendered
+      // Force a reflow to ensure the element is rendered with proper dimensions
       const rect = containerRef.current.getBoundingClientRect();
       console.log("QR scanner container dimensions:", rect.width, rect.height);
+      
+      // If dimensions are too small, try to force them to be larger
+      if (rect.width < 300 || rect.height < 300) {
+        containerRef.current.style.minWidth = "320px";
+        containerRef.current.style.minHeight = "384px";
+      }
     }
   }, []);
   
@@ -28,7 +34,7 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
     <div 
       ref={containerRef}
       className="w-full max-w-md h-96 rounded-lg overflow-hidden relative bg-black"
-      style={{ minHeight: "384px", minWidth: "320px" }} // Ensure larger minimum dimensions
+      style={{ minHeight: "384px", minWidth: "320px" }} // Ensure minimum dimensions
     >
       {/* This is the actual container where the camera feed will be inserted */}
       <div 
@@ -38,8 +44,8 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
       
       {!cameraActive && !simulationActive && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-          <p className="text-white text-sm">Initializing camera...</p>
-          <div className="mt-2 animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
+          <p className="text-white text-sm mb-2">Initializing camera...</p>
+          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
         </div>
       )}
       
@@ -61,6 +67,9 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
           <div className="absolute inset-0 border-2 border-primary/30"></div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-primary"></div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-white/30 border-dashed animate-pulse"></div>
+          <div className="absolute bottom-4 left-0 right-0 text-center text-white text-sm px-4 py-2 bg-black/50 rounded-md mx-auto w-max">
+            Position QR code within the square
+          </div>
         </div>
       )}
     </div>

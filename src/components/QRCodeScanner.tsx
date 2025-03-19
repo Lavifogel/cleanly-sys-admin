@@ -36,7 +36,11 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       
       // Call the original success callback with a slight delay
       setTimeout(() => {
-        onScanSuccess(decodedText);
+        try {
+          onScanSuccess(decodedText);
+        } catch (error) {
+          console.error("Error in scan success callback:", error);
+        }
       }, 700);
     },
     onClose
@@ -135,7 +139,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         />
         
         {error && (
-          <div className="mt-4 text-destructive text-center text-sm">
+          <div className="mt-4 text-destructive text-center text-sm p-2 bg-destructive/10 rounded-md">
             {error}
           </div>
         )}

@@ -120,35 +120,60 @@ export const useCameraStart = ({
       // Set timeout to prevent infinite loading when camera permissions are denied
       const timeoutId = setupCameraTimeout(cameraActive);
 
-      // Start scanning - using string camera id format for better compatibility
-      await scannerRef.current.start(
-        { facingMode: { exact: "environment" } },
-        config,
-        qrCodeSuccessCallback,
-        (errorMessage) => {
-          // Only log essential errors to reduce console noise
-          if (!errorMessage.includes("No MultiFormat Readers")) {
-            console.log("QR Scanner error:", errorMessage);
+      try {
+        // First, try with environment camera (rear camera)
+        await scannerRef.current.start(
+          { facingMode: { exact: "environment" } },
+          config,
+          qrCodeSuccessCallback,
+          (errorMessage) => {
+            // Only log essential errors to reduce console noise
+            if (!errorMessage.includes("No MultiFormat Readers")) {
+              console.log("QR Scanner error:", errorMessage);
+            }
           }
+        );
+        
+        if (!mountedRef.current) {
+          await stopCamera();
+          isStartingRef.current = false;
+          return;
         }
-      );
-      
-      if (!mountedRef.current) {
-        // If unmounted during initialization, stop camera
-        if (scannerRef.current) {
-          try {
-            await scannerRef.current.stop();
-          } catch (err) {
-            console.error("Error stopping camera after unmount:", err);
+        
+        console.log("QR scanner started successfully with environment camera");
+        setCameraActive(true);
+        clearTimeout(timeoutId);
+      } catch (envCameraErr) {
+        console.log("Environment camera failed, trying default camera:", envCameraErr);
+        
+        if (!mountedRef.current) {
+          isStartingRef.current = false;
+          return;
+        }
+        
+        // Try with default camera settings if environment camera fails
+        try {
+          await scannerRef.current.start(
+            { facingMode: "environment" }, // Less strict constraint
+            config,
+            qrCodeSuccessCallback,
+            () => {}
+          );
+          
+          if (!mountedRef.current) {
+            await stopCamera();
+            isStartingRef.current = false;
+            return;
           }
+          
+          console.log("QR scanner started successfully with default camera");
+          setCameraActive(true);
+          clearTimeout(timeoutId);
+        } catch (defaultCameraErr) {
+          console.error("Default camera also failed:", defaultCameraErr);
+          handleCameraError(defaultCameraErr, currentAttempt);
         }
-        isStartingRef.current = false;
-        return;
       }
-      
-      console.log("QR scanner started successfully");
-      setCameraActive(true);
-      clearTimeout(timeoutId);
     } catch (err: any) {
       handleCameraError(err, currentAttempt);
     } finally {
