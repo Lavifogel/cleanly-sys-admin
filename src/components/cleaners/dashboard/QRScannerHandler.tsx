@@ -24,12 +24,14 @@ const QRScannerHandler = ({
   const scannerMounted = useRef(false);
   const prevShowQRScannerRef = useRef(showQRScanner);
   const closeTimeoutRef = useRef<number | null>(null);
+  const processingQRRef = useRef(false);
   
   // Effect to manage scanner visibility changes
   useEffect(() => {
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
       scannerMounted.current = true;
+      processingQRRef.current = false;
       console.log("QR scanner opened");
     } 
     // Handle when scanner closes
@@ -46,8 +48,9 @@ const QRScannerHandler = ({
         
         closeTimeoutRef.current = window.setTimeout(() => {
           scannerMounted.current = false;
+          processingQRRef.current = false;
           closeTimeoutRef.current = null;
-        }, 300);
+        }, 500);
       }
     }
     
@@ -64,6 +67,7 @@ const QRScannerHandler = ({
       if (scannerMounted.current) {
         stopAllVideoStreams();
         scannerMounted.current = false;
+        processingQRRef.current = false;
         console.log("QR scanner handler unmounted, resources cleaned up");
       }
     };
@@ -85,13 +89,21 @@ const QRScannerHandler = ({
       )}
       <QRCodeScanner 
         onScanSuccess={(decodedText) => {
+          if (processingQRRef.current) {
+            console.log("Already processing a QR code, ignoring duplicate scan");
+            return;
+          }
+          
+          processingQRRef.current = true;
           console.log("QR scan successful, data:", decodedText);
+          
           // First stop all camera streams
           stopAllVideoStreams();
+          
           // Allow a moment for cleanup before processing result
           setTimeout(() => {
             onQRScan(decodedText);
-          }, 150);
+          }, 300);
         }}
         onClose={() => {
           // Only allow closing if it's the initial scanner
@@ -101,7 +113,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 150);
+            }, 300);
           }
         }}
       />

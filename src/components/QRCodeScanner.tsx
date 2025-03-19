@@ -11,6 +11,7 @@ import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const scannerMountedRef = useRef(false);
   const cleanupTimeoutRef = useRef<number | null>(null);
+  const scanProcessingRef = useRef(false);
   
   const {
     scannerState,
@@ -20,12 +21,22 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   } = useQRScannerLogic(
     // Wrap the success callback to ensure proper cleanup before callback
     (decodedText: string) => {
+      // Prevent duplicate scan processing
+      if (scanProcessingRef.current) {
+        console.log("Scan already being processed, ignoring duplicate");
+        return;
+      }
+      
+      scanProcessingRef.current = true;
       console.log("QR scan successful, data:", decodedText);
       
-      // Call the original success callback with a slight delay to ensure UI updates
+      // Stop all video streams before processing result
+      stopAllVideoStreams();
+      
+      // Call the original success callback with a slight delay
       setTimeout(() => {
         onScanSuccess(decodedText);
-      }, 300);
+      }, 500);
     },
     onClose
   );
@@ -36,6 +47,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   useEffect(() => {
     // Mark component as mounted
     scannerMountedRef.current = true;
+    scanProcessingRef.current = false;
     
     // Add a delay to ensure DOM is ready
     const timer = setTimeout(() => {
@@ -79,7 +91,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Slight delay to ensure cleanup completes before closing
     setTimeout(() => {
       handleClose();
-    }, 250);
+    }, 300);
   };
 
   return (

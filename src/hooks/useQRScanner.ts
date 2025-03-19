@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export type ScannerPurpose = "startShift" | "endShift" | "startCleaning" | "endCleaning";
@@ -7,6 +7,7 @@ export type ScannerPurpose = "startShift" | "endShift" | "startCleaning" | "endC
 export function useQRScanner() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>("startShift");
+  const isProcessingScan = useRef(false);
 
   // Effect to release camera resources when QR scanner is closed
   useEffect(() => {
@@ -14,6 +15,11 @@ export function useQRScanner() {
       // When the scanner is closed, ensure camera is released
       stopAllVideoStreams();
       console.log("Camera resources released from useQRScanner hook");
+      
+      // Reset processing state after a delay
+      setTimeout(() => {
+        isProcessingScan.current = false;
+      }, 1000);
     }
   }, [showQRScanner]);
 
@@ -26,11 +32,14 @@ export function useQRScanner() {
   }, []);
 
   const openScanner = (purpose: ScannerPurpose) => {
+    // Reset processing state when opening scanner
+    isProcessingScan.current = false;
     setScannerPurpose(purpose);
     setShowQRScanner(true);
   };
 
   const closeScanner = () => {
+    stopAllVideoStreams();
     setShowQRScanner(false);
   };
 
@@ -38,6 +47,7 @@ export function useQRScanner() {
     showQRScanner,
     scannerPurpose,
     openScanner,
-    closeScanner
+    closeScanner,
+    isProcessingScan
   };
 }
