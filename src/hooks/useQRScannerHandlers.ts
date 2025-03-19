@@ -69,13 +69,13 @@ export function useQRScannerHandlers({
       return;
     }
     
+    console.log(`Starting QR scanner with purpose: ${purpose}`);
+    
     // Reset processing flag and last processed code before starting
     processingQRCodeRef.current = false;
     lastProcessedCodeRef.current = null;
     setScannerPurpose(purpose);
     setShowQRScanner(true);
-    
-    console.log(`Starting QR scanner with purpose: ${purpose}`);
   };
   
   const handleQRScan = (decodedText: string) => {
@@ -126,6 +126,10 @@ export function useQRScannerHandlers({
             if (setActiveTab) {
               setActiveTab('cleaning');
             }
+            break;
+          case 'endCleaning':
+            console.log("Calling onEndCleaningScan with data:", decodedText);
+            onEndCleaningScan(decodedText);
             break;
           default:
             console.warn("Unknown scanner purpose:", scannerPurpose);
