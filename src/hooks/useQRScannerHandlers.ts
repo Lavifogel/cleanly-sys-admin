@@ -25,6 +25,7 @@ export function useQRScannerHandlers({
   const processingRef = useRef(false);
   const timerRef = useRef<number | null>(null);
   const attemptCountRef = useRef(0);
+  const scannerActiveTimestampRef = useRef<number>(0);
   
   // Clear any pending timers on unmount
   useEffect(() => {
@@ -37,6 +38,16 @@ export function useQRScannerHandlers({
   }, []);
   
   const closeScanner = useCallback(() => {
+    // Prevent closing the scanner if it's been open for less than 2 seconds
+    // This prevents the rapid open/close cycle
+    const currentTime = Date.now();
+    const timeSinceOpen = currentTime - scannerActiveTimestampRef.current;
+    
+    if (timeSinceOpen < 2000) {
+      console.log(`[useQRScannerHandlers] Preventing early scanner closure, open for only ${timeSinceOpen}ms`);
+      return;
+    }
+    
     // Clear any pending timers
     if (timerRef.current !== null) {
       clearTimeout(timerRef.current);
@@ -82,6 +93,8 @@ export function useQRScannerHandlers({
       stopAllVideoStreams();
       
       setTimeout(() => {
+        // Record when the scanner is activated
+        scannerActiveTimestampRef.current = Date.now();
         setShowQRScanner(true);
         console.log(`[useQRScannerHandlers] QR scanner opened for purpose: ${purpose}`);
       }, 500);
@@ -101,7 +114,7 @@ export function useQRScannerHandlers({
     // Immediately stop all camera streams
     stopAllVideoStreams();
     
-    // Hide scanner UI
+    // Hide scanner UI - only after successful scan
     setShowQRScanner(false);
     
     // Add a longer delay before processing the scan result

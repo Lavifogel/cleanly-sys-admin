@@ -24,6 +24,7 @@ const QRScannerHandler = ({
   const scannerMounted = useRef(false);
   const prevShowQRScannerRef = useRef(showQRScanner);
   const processingQRScanRef = useRef(false);
+  const scannerOpenTimestampRef = useRef<number>(0);
   
   // Effect to manage scanner visibility changes and resource cleanup
   useEffect(() => {
@@ -32,6 +33,7 @@ const QRScannerHandler = ({
       console.log(`[QRScannerHandler] QR scanner opened for purpose: ${scannerPurpose}`);
       scannerMounted.current = true;
       processingQRScanRef.current = false;
+      scannerOpenTimestampRef.current = Date.now();
       
       // Force stop any existing camera resources
       stopAllVideoStreams();
@@ -49,6 +51,12 @@ const QRScannerHandler = ({
         setTimeout(() => {
           stopAllVideoStreams();
         }, 400);
+      } else if (scannerPurpose === "endShift") {
+        console.log("[QRScannerHandler] Special initialization for endShift purpose");
+        // Additional cleanup for endShift
+        setTimeout(() => {
+          stopAllVideoStreams();
+        }, 600);
       }
     } 
     // Handle when scanner closes
@@ -94,6 +102,16 @@ const QRScannerHandler = ({
       return;
     }
     
+    // Prevent processing if scanner has been open for less than 1.5 seconds
+    // This prevents false triggers from rapid open/close cycles
+    const currentTime = Date.now();
+    const scannerOpenDuration = currentTime - scannerOpenTimestampRef.current;
+    
+    if (scannerOpenDuration < 1500) {
+      console.log(`[QRScannerHandler] Ignoring scan, scanner only open for ${scannerOpenDuration}ms`);
+      return;
+    }
+    
     processingQRScanRef.current = true;
     console.log("[QRScannerHandler] QR scan successful, purpose:", scannerPurpose, "data:", decodedText);
     
@@ -114,6 +132,15 @@ const QRScannerHandler = ({
             variant="ghost" 
             size="icon" 
             onClick={() => {
+              // Prevent close if scanner has been open for less than 2 seconds
+              const currentTime = Date.now();
+              const scannerOpenDuration = currentTime - scannerOpenTimestampRef.current;
+              
+              if (scannerOpenDuration < 2000) {
+                console.log(`[QRScannerHandler] Preventing early close, scanner only open for ${scannerOpenDuration}ms`);
+                return;
+              }
+              
               stopAllVideoStreams();
               setTimeout(closeScanner, 500);
             }} 
@@ -128,6 +155,15 @@ const QRScannerHandler = ({
         onClose={() => {
           // Only allow closing if it's the initial scanner
           if (canClose) {
+            // Prevent close if scanner has been open for less than 2 seconds
+            const currentTime = Date.now();
+            const scannerOpenDuration = currentTime - scannerOpenTimestampRef.current;
+            
+            if (scannerOpenDuration < 2000) {
+              console.log(`[QRScannerHandler] Preventing early close, scanner only open for ${scannerOpenDuration}ms`);
+              return;
+            }
+            
             // Ensure camera is stopped before closing
             stopAllVideoStreams();
             // Allow a moment for cleanup before closing
