@@ -13,6 +13,11 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   const cleanupTimeoutRef = useRef<number | null>(null);
   const scanProcessedRef = useRef(false);
   
+  // Pre-clean any existing camera before initializing
+  useEffect(() => {
+    stopAllVideoStreams();
+  }, []);
+  
   const {
     scannerState,
     scannerContainerId,
@@ -46,7 +51,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     }
   );
 
-  const { error, cameraActive } = scannerState;
+  const { error, cameraActive, isScanning } = scannerState;
   
   // Component mount effect
   useEffect(() => {
@@ -59,7 +64,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       if (scannerMountedRef.current) {
         console.log("QR scanner mounted, camera active:", cameraActive);
       }
-    }, 500);
+    }, 300);
     
     return () => {
       clearTimeout(timer);
@@ -129,6 +134,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         {error && (
           <div className="mt-4 text-destructive text-center text-sm">
             {error}
+          </div>
+        )}
+        
+        {isScanning && !cameraActive && (
+          <div className="mt-4 text-center text-sm">
+            Activating camera... Please wait
           </div>
         )}
 

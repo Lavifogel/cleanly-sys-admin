@@ -5,6 +5,7 @@ import { ScannerPurpose } from "@/hooks/useQRScanner";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface QRScannerHandlerProps {
   showQRScanner: boolean;
@@ -25,14 +26,28 @@ const QRScannerHandler = ({
   const prevShowQRScannerRef = useRef(showQRScanner);
   const closeTimeoutRef = useRef<number | null>(null);
   const processingQRScanRef = useRef(false);
+  const { toast } = useToast();
   
   // Effect to manage scanner visibility changes
   useEffect(() => {
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
-      scannerMounted.current = true;
-      processingQRScanRef.current = false;
-      console.log("QR scanner opened");
+      // Ensure all previous streams are stopped
+      stopAllVideoStreams();
+      
+      // Short delay to ensure resources are released before opening scanner
+      setTimeout(() => {
+        scannerMounted.current = true;
+        processingQRScanRef.current = false;
+        console.log("QR scanner opened");
+        
+        // Show toast to indicate scanner is active
+        toast({
+          title: "QR Scanner active",
+          description: "Position a QR code within the frame to scan",
+          duration: 3000,
+        });
+      }, 200);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
@@ -74,7 +89,7 @@ const QRScannerHandler = ({
         console.log("QR scanner handler unmounted, resources cleaned up");
       }
     };
-  }, [showQRScanner]);
+  }, [showQRScanner, toast]);
 
   // Additional cleanup when component unmounts
   useEffect(() => {
@@ -101,6 +116,13 @@ const QRScannerHandler = ({
     
     // First stop all camera streams
     stopAllVideoStreams();
+    
+    // Notify user
+    toast({
+      title: "QR Code detected",
+      description: "Processing your scan...",
+      duration: 2000,
+    });
     
     // Allow a moment for cleanup before processing result
     setTimeout(() => {

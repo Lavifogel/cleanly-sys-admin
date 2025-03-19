@@ -107,10 +107,11 @@ export const useCameraStart = ({
       const currentAttempt = incrementAttempt();
       console.log(`Attempting to start camera (attempt ${currentAttempt})...`);
 
-      // Start scanning - using facingMode object format for better compatibility
+      // Try with more relaxed camera constraints
       try {
+        // First try with any available camera (no specific constraints)
         await scannerRef.current.start(
-          { facingMode: { exact: "environment" } },
+          { facingMode: "environment" }, // More relaxed constraint
           config,
           qrCodeSuccessCallback,
           (errorMessage) => {
@@ -138,19 +139,31 @@ export const useCameraStart = ({
         setCameraActive(true);
         clearTimeout(timeoutId);
       } catch (err: any) {
-        console.error("Error starting camera:", err);
+        console.error("Error starting camera with environment facing mode:", err);
         
-        // Try fallback camera if initial attempt fails
-        if (currentAttempt <= 2) {
-          console.log("Trying fallback camera options...");
-          await tryFallbackCamera(config, qrCodeSuccessCallback);
-          
-          // Separately check if fallback was successful
-          if (mountedRef.current) {
-            setCameraActive(true);
-            clearTimeout(timeoutId);
-            resetStartingState();
-            return;
+        // Try with no constraints at all
+        if (currentAttempt <= 2 && mountedRef.current) {
+          console.log("Trying with no camera constraints...");
+          try {
+            await scannerRef.current.start(
+              true, // Use any camera
+              config,
+              qrCodeSuccessCallback,
+              () => {}
+            );
+            
+            if (mountedRef.current) {
+              console.log("Camera started with no constraints");
+              setCameraActive(true);
+              clearTimeout(timeoutId);
+              resetStartingState();
+              return;
+            }
+          } catch (fallbackErr) {
+            console.error("Error starting with no constraints:", fallbackErr);
+            
+            // Try one more fallback approach
+            await tryFallbackCamera(config, qrCodeSuccessCallback);
           }
         }
         

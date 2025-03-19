@@ -12,34 +12,43 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   scannerContainerId, 
   scannerState 
 }) => {
-  const { cameraActive, simulationActive, simulationProgress } = scannerState;
+  const { cameraActive, simulationActive, simulationProgress, isScanning } = scannerState;
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Ensure the container is visible and has proper dimensions before initializing camera
   useEffect(() => {
     if (containerRef.current) {
-      // Force a reflow to ensure the element is rendered
-      const rect = containerRef.current.getBoundingClientRect();
-      console.log("QR scanner container dimensions:", rect.width, rect.height);
+      // Force a reflow to ensure the element is rendered with correct dimensions
+      setTimeout(() => {
+        if (containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          console.log("QR scanner container dimensions:", rect.width, rect.height);
+        }
+      }, 0);
     }
   }, []);
   
   return (
     <div 
       ref={containerRef}
-      className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-900'}`}
-      style={{ minHeight: "320px", minWidth: "300px" }} // Ensure minimum dimensions
+      className="w-full max-w-md h-80 rounded-lg overflow-hidden relative bg-black"
+      style={{ 
+        minHeight: "320px", 
+        minWidth: "320px",
+        maxHeight: "70vh"
+      }}
     >
       {/* This is the actual container where the camera feed will be inserted */}
       <div 
         id={scannerContainerId} 
-        className="absolute inset-0 z-10"
+        className="absolute inset-0 z-10 w-full h-full"
+        style={{ minHeight: "320px", minWidth: "320px" }}
       />
       
-      {!cameraActive && !simulationActive && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-          <p className="text-white text-sm">Initializing camera...</p>
-          <div className="mt-2 animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
+      {isScanning && !cameraActive && !simulationActive && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/80">
+          <p className="text-white text-sm mb-2">Initializing camera...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-primary border-r-transparent border-b-primary border-l-transparent"></div>
         </div>
       )}
       
