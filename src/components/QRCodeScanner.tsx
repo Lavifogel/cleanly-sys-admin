@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
@@ -50,17 +51,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     
     console.log("QRCodeScanner component mounted, initializing camera...");
     
+    // Immediate cleanup to ensure no existing camera is running
     stopAllVideoStreams();
     
-    const timer = setTimeout(() => {
-      if (scannerMountedRef.current) {
-        console.log("QR scanner mounted, camera active:", cameraActive);
-      }
-    }, 300);
-    
     return () => {
-      clearTimeout(timer);
-      
       console.log("QRCodeScanner component unmounting, cleaning up resources");
       scannerMountedRef.current = false;
       
@@ -112,6 +106,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         <p className="text-sm text-muted-foreground mb-4">
           Position the QR code within the frame
         </p>
+        
+        {/* Force immediate creation of scanner container to avoid timing issues */}
+        <div id={scannerContainerId} style={{ display: 'none' }}></div>
         
         <QRScannerView 
           scannerContainerId={scannerContainerId} 

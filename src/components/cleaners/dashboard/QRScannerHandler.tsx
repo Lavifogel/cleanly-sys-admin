@@ -33,6 +33,16 @@ const QRScannerHandler = ({
       // First ensure that any existing camera is fully stopped before starting a new one
       stopAllVideoStreams();
       
+      // Pre-create the scanner container to ensure it exists before the QRCodeScanner component renders
+      const containerId = "qr-scanner-container";
+      if (!document.getElementById(containerId)) {
+        const containerElement = document.createElement('div');
+        containerElement.id = containerId;
+        containerElement.style.position = 'absolute';
+        containerElement.style.visibility = 'hidden';
+        document.body.appendChild(containerElement);
+      }
+      
       // Small delay before mounting scanner to ensure clean camera state
       setTimeout(() => {
         if (!scannerMounted.current) {
@@ -40,7 +50,7 @@ const QRScannerHandler = ({
           processingQRScanRef.current = false;
           console.log(`QR scanner opened for purpose: ${scannerPurpose}`);
         }
-      }, 100);
+      }, 50); // Reduced delay
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
@@ -62,7 +72,7 @@ const QRScannerHandler = ({
           
           // Force stop streams again to ensure complete cleanup
           stopAllVideoStreams();
-        }, 300);
+        }, 200); // Reduced delay
       }
     }
     
@@ -110,11 +120,11 @@ const QRScannerHandler = ({
     // First stop all camera streams BEFORE processing the result
     stopAllVideoStreams();
     
-    // Delay processing to ensure camera cleanup completes first
+    // Use a shorter delay for better responsiveness
     setTimeout(() => {
       onQRScan(decodedText);
       // Processing flag will be reset when the scanner is closed
-    }, 300);
+    }, 200);
   };
 
   const handleClose = () => {
@@ -131,7 +141,7 @@ const QRScannerHandler = ({
     // Then close the scanner with a delay to ensure proper cleanup
     setTimeout(() => {
       closeScanner();
-    }, 300);
+    }, 200);
   };
 
   return (
@@ -159,7 +169,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 300);
+            }, 200);
           }}
         />
       )}
