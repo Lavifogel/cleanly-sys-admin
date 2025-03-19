@@ -56,7 +56,6 @@ export function useStartCleaning(
       
       // Create cleaning in activity_logs table
       const activityLog = await createActivityLog({
-        id: newCleaningId,
         user_id: userId,
         qr_id: qrId,
         activity_type: 'cleaning_start',
@@ -70,7 +69,7 @@ export function useStartCleaning(
       
       // Update local state
       setActiveCleaning({
-        id: newCleaningId,
+        id: activityLog.id, // Use the ID from the created activity log
         location: areaName,
         startTime: startTime,
         timer: 0,
@@ -85,7 +84,7 @@ export function useStartCleaning(
         duration: 3000,
       });
       
-      return newCleaningId;
+      return activityLog.id;
     } catch (error: any) {
       console.error("Error in startCleaning:", error);
       toast({

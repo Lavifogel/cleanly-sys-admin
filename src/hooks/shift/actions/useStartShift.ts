@@ -19,7 +19,6 @@ export function useStartShift(
   // Handle startShift
   const startShift = useCallback(async (qrData: string) => {
     try {
-      const newShiftId = uuidv4();
       const startTime = new Date();
       
       console.log("Starting shift with QR data:", qrData);
@@ -48,9 +47,9 @@ export function useStartShift(
       const temporaryUserId = await generateTemporaryUserId();
       
       // Store the shift in the database using the new activity log
+      let activityLog;
       try {
-        await createActivityLog({
-          id: newShiftId,
+        activityLog = await createActivityLog({
           user_id: temporaryUserId,
           qr_id: qrId,
           activity_type: 'shift_start',
@@ -72,7 +71,7 @@ export function useStartShift(
       setActiveShift({
         startTime: startTime,
         timer: 0,
-        id: newShiftId,
+        id: activityLog.id, // Use the ID returned from the created activity log
         location: areaName,
         qrId: qrId || undefined
       });
