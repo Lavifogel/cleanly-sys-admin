@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,6 +146,7 @@ export function useCleaningImages({ maxImages = 5 }: UseCleaningImagesProps = {}
           .from('images')
           .insert({
             cleaning_id: cleaningId,
+            activity_log_id: cleaningId,
             image_url: imageUrl
           });
         

@@ -36,7 +36,7 @@ export const useActivities = () => {
           status,
           notes,
           related_id,
-          users:user_id (
+          users (
             id,
             first_name,
             last_name,
@@ -62,9 +62,11 @@ export const useActivities = () => {
 
       // Process data into a unified format
       const processedActivities = activityLogs.map(log => {
-        const userName = log.users?.full_name || 
-                       (log.users?.first_name && log.users?.last_name 
-                         ? `${log.users.first_name} ${log.users.last_name}` 
+        // Handle user details safely
+        const userData = log.users as any;
+        const userName = userData?.full_name || 
+                       (userData?.first_name && userData?.last_name 
+                         ? `${userData.first_name} ${userData.last_name}` 
                          : "Unknown User");
         
         const startTime = log.start_time ? new Date(log.start_time) : new Date();
@@ -79,11 +81,11 @@ export const useActivities = () => {
         const location = log.qr_codes?.area_name || extractLocationFromNotes(log.notes) || "Unknown Location";
 
         // Determine activity type for display
-        const activityType = log.activity_type.includes('shift') ? 'shift' : 'cleaning';
+        const activityDisplayType = log.activity_type.includes('shift') ? 'shift' as const : 'cleaning' as const;
 
         return {
           id: log.id,
-          type: activityType,
+          type: activityDisplayType,
           date: format(startTime, "MMM dd, yyyy"),
           userName,
           location,

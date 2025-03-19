@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   ActivityLog, 
@@ -37,7 +36,7 @@ export async function createActivityLog(params: CreateActivityLogParams): Promis
     throw new Error(`Failed to create activity log: ${error.message}`);
   }
   
-  return data;
+  return data as ActivityLog;
 }
 
 /**
@@ -66,7 +65,7 @@ export async function updateActivityLog(
     throw new Error(`Failed to update activity log: ${error.message}`);
   }
   
-  return data;
+  return data as ActivityLog;
 }
 
 /**
@@ -88,7 +87,7 @@ export async function getActivityLogById(id: string): Promise<ActivityLog | null
     throw new Error(`Failed to fetch activity log: ${error.message}`);
   }
   
-  return data;
+  return data as ActivityLog;
 }
 
 /**
@@ -395,6 +394,7 @@ export async function saveImagesForCleaning(cleaningId: string, imageUrls: strin
   const imagesToInsert = imageUrls.map(url => ({
     id: uuidv4(),
     activity_log_id: cleaningId,
+    cleaning_id: cleaningId,
     image_url: url
   }));
   
