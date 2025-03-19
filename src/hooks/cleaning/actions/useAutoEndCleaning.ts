@@ -1,11 +1,13 @@
 
 import { useCallback } from "react";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
-import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 import { useToast } from "@/hooks/use-toast";
-import { formatDateToDDMMYYYY } from "@/utils/timeUtils";
+import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 import { generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
 
+/**
+ * Hook for automatically ending cleaning sessions
+ */
 export function useAutoEndCleaning(
   activeCleaning: Cleaning | null,
   activeShiftId: string | undefined,
@@ -16,19 +18,20 @@ export function useAutoEndCleaning(
 ) {
   const { toast } = useToast();
 
-  // Automatically end cleaning after 5 hours
+  // Automatically end cleaning without user confirmation
   const autoEndCleaning = useCallback(async () => {
-    if (!activeCleaning || !activeShiftId) return;
+    if (!activeCleaning || !activeShiftId) {
+      console.log("No active cleaning to auto-end");
+      return;
+    }
     
     try {
-      const cleaningId = activeCleaning.id || "";
+      console.log("Auto-ending cleaning:", activeCleaning.id);
+      
       const endTime = new Date();
-      const status = "finished automatically";
-      const notes = "This cleaning was automatically ended after 5 hours.";
+      const status = "ended automatically";
       
-      console.log("Auto-ending cleaning with ID:", cleaningId);
-      
-      // Get user ID
+      // Get user ID for the cleaning
       const userId = await generateTemporaryUserId();
       
       // Create a cleaning_end activity log
@@ -38,48 +41,67 @@ export function useAutoEndCleaning(
           activity_type: 'cleaning_end',
           start_time: endTime.toISOString(),
           status: status,
-          notes: notes,
-          related_id: cleaningId
+          related_id: activeCleaning.id // Reference to the cleaning_start log
         });
+        console.log("Cleaning end log created successfully");
       } catch (error: any) {
         console.error("Error creating cleaning_end log:", error);
+        return;
       }
       
-      // Update the local state with formatted date
-      const newCleaning = {
-        id: cleaningId,
-        location: activeCleaning.location,
-        date: formatDateToDDMMYYYY(new Date()),
-        startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
-        endTime: endTime.toTimeString().slice(0, 5),
-        duration: `${Math.floor((endTime.getTime() - activeCleaning.startTime.getTime()) / 60000)}m`,
-        status: status,
-        images: 0,
-        notes: notes,
-        shiftId: activeShiftId,
-        imageUrls: []
+      // Format date for history
+      const formatDateToDDMMYYYY = (date: Date): string => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
       };
       
+      // Calculate time elapsed
+      const durationMs = endTime.getTime() - activeCleaning.startTime.getTime();
+      const durationMinutes = Math.floor(durationMs / (1000 * 60));
+      
+      // Create a new cleaning history item
+      const newCleaning: CleaningHistoryItem = {
+        id: activeCleaning.id,
+        location: activeCleaning.location,
+        date: formatDateToDDMMYYYY(activeCleaning.startTime),
+        startTime: activeCleaning.startTime.toTimeString().slice(0, 5),
+        endTime: endTime.toTimeString().slice(0, 5),
+        duration: `${durationMinutes}m`,
+        status: status,
+        notes: "",
+        images: 0,
+        shiftId: activeShiftId
+      };
+      
+      // Update local state
       setCleaningsHistory([newCleaning, ...cleaningsHistory]);
       setActiveCleaning(null);
       setCleaningElapsedTime(0);
       
-      // Show toast notification
+      console.log("Cleaning automatically ended");
+      
       toast({
-        title: "Cleaning Ended Automatically",
-        description: "Your cleaning has been automatically ended after 5 hours.",
+        title: "Cleaning Ended",
+        description: "Your cleaning has been automatically ended due to inactivity.",
         duration: 3000,
       });
       
-    } catch (error) {
+      return newCleaning;
+    } catch (error: any) {
       console.error("Error in autoEndCleaning:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while auto-ending the cleaning.",
-        variant: "destructive",
-      });
+      return null;
     }
-  }, [activeCleaning, activeShiftId, cleaningsHistory, setActiveCleaning, setCleaningElapsedTime, setCleaningsHistory, toast]);
+  }, [
+    activeCleaning, 
+    activeShiftId, 
+    cleaningsHistory, 
+    setActiveCleaning, 
+    setCleaningElapsedTime, 
+    setCleaningsHistory, 
+    toast
+  ]);
 
   return { autoEndCleaning };
 }

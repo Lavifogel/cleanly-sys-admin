@@ -75,3 +75,35 @@ export interface ActiveCleaning {
   notes?: string;       // Any notes associated with the cleaning
   paused: boolean;      // Whether the cleaning is paused
 }
+
+/**
+ * Structure for activity log based shift history
+ */
+export interface ShiftHistoryItem {
+  id: string;           // ID of the shift_start log
+  date: string;         // Formatted date of the shift
+  startTime: string;    // Formatted start time
+  endTime: string | null; // Formatted end time or null if active
+  duration: string;     // Formatted duration
+  status: string;       // Status of the shift
+  cleanings: number;    // Number of cleanings in this shift
+  location?: string;    // Location name if available
+}
+
+/**
+ * Structure for activity log based cleaning history
+ */
+export interface CleaningHistoryItem {
+  id: string;           // ID of the cleaning_start log
+  location: string;     // Location name
+  date: string;         // Formatted date
+  startTime: string;    // Formatted start time
+  endTime: string | null; // Formatted end time or null if active
+  duration: string;     // Formatted duration
+  status: string;       // Status of the cleaning
+  notes: string;        // Notes for the cleaning
+  images: number;       // Number of associated images
+  shiftId: string;      // Related shift ID
+  imageUrls?: string[]; // URLs of associated images
+  isActive?: boolean;   // Whether this is the active cleaning
+}

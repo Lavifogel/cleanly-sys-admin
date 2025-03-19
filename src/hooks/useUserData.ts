@@ -1,184 +1,214 @@
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { closeActiveCleaning, closeActiveShift, loginWithCredentials } from '@/services/authService';
-import { checkAuthFromStorage, clearAuthData } from '@/utils/authUtils';
-import { createActivityLog } from '@/hooks/activityLogs/useActivityLogService';
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { User } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import { generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
+import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 
-export const useUserData = () => {
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
-  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState<boolean>(false);
-  const [hasActiveShift, setHasActiveShift] = useState<boolean>(false);
+type AuthStatus = "loading" | "authenticated" | "unauthenticated";
+
+export function useUserData() {
+  const [user, setUser] = useState<User | null>(null);
+  const [status, setStatus] = useState<AuthStatus>("loading");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+  const [hasActiveShift, setHasActiveShift] = useState(false);
+  
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Fetch user session
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
-    },
-  });
-
-  // Check if a user is authenticated (either via session or manual login)
+  // Authentication check on mount
   useEffect(() => {
-    const checkAuthState = async () => {
-      const { isAuthenticated, userRole, userName } = checkAuthFromStorage();
-      
-      setIsAuthenticated(isAuthenticated);
-      setUserRole(userRole);
-      setUserName(userName);
-      
-      if (isAuthenticated) {
-        // If on login page, redirect to appropriate dashboard
-        if (location.pathname === '/login' || location.pathname === '/auth/login') {
-          const dashboardPath = userRole === 'admin' ? '/admin/dashboard' : '/cleaners/dashboard';
-          navigate(dashboardPath, { replace: true });
+    const checkAuth = async () => {
+      try {
+        const storedAuth = localStorage.getItem('auth');
+        
+        if (storedAuth) {
+          const parsedAuth = JSON.parse(storedAuth);
+          setUser(parsedAuth.userData);
+          setStatus("authenticated");
+          
+          // Check if the user has an active shift
+          const activeShift = localStorage.getItem('activeShift');
+          if (activeShift) {
+            setHasActiveShift(true);
+          }
+        } else {
+          setStatus("unauthenticated");
         }
-      } else {
-        // If not authenticated and not on login page or index page, redirect to login
-        if (!location.pathname.includes('/login') && location.pathname !== '/') {
-          navigate('/login', { replace: true });
-        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        setStatus("unauthenticated");
       }
     };
+    
+    checkAuth();
+  }, []);
 
-    checkAuthState();
-  }, [location.pathname, navigate]);
-
-  // Function to handle login with credentials
-  const handleLoginWithCredentials = async (phoneNumber: string, password: string) => {
+  // Login function
+  const login = useCallback(async (username: string, password: string) => {
+    setStatus("loading");
+    
     try {
-      const { success, user, role, error } = await loginWithCredentials(phoneNumber, password);
+      // Fetch user by phone/username
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', username)
+        .limit(1);
       
-      if (success) {
-        // Update state
-        setUserRole(role);
-        // Create a full name from first_name and last_name if full_name doesn't exist
-        const fullName = user.first_name && user.last_name 
-          ? `${user.first_name} ${user.last_name}`
-          : user.phone || 'User';
-        
-        setUserName(fullName);
-        setIsAuthenticated(true);
-        
-        // Log login activity
+      if (error) throw new Error(error.message);
+      
+      if (!users || users.length === 0) {
+        throw new Error("User not found");
+      }
+      
+      const user = users[0];
+      
+      // Simple password check (in a real app, use proper password hashing)
+      if (user.password !== password) {
+        throw new Error("Invalid credentials");
+      }
+      
+      // Set user data
+      const userData = {
+        id: user.id,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        fullName: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        role: user.role,
+        email: user.email,
+        phone: user.phone
+      };
+      
+      // Store in localStorage
+      localStorage.setItem('auth', JSON.stringify({ userData }));
+      localStorage.setItem('tempUserId', user.id);
+      
+      // Log login activity
+      try {
+        await createActivityLog({
+          user_id: user.id,
+          activity_type: 'login',
+          start_time: new Date().toISOString(),
+          status: 'success'
+        });
+      } catch (error) {
+        console.error("Error logging login activity:", error);
+      }
+      
+      setUser(userData);
+      setStatus("authenticated");
+      
+      return userData;
+    } catch (error) {
+      console.error("Login error:", error);
+      setStatus("unauthenticated");
+      throw error;
+    }
+  }, []);
+
+  // Handle showing logout confirmation
+  const logout = useCallback(() => {
+    const activeShift = localStorage.getItem('activeShift');
+    setHasActiveShift(!!activeShift);
+    setShowLogoutConfirmation(true);
+  }, []);
+
+  // Close logout confirmation
+  const closeLogoutConfirmation = useCallback(() => {
+    setShowLogoutConfirmation(false);
+  }, []);
+
+  // Perform actual logout
+  const performLogout = useCallback(async () => {
+    try {
+      setIsLoggingOut(true);
+      
+      // Log logout activity
+      if (user && user.id) {
         try {
           await createActivityLog({
             user_id: user.id,
-            activity_type: 'login',
-            start_time: new Date().toISOString(),
-            status: 'completed'
-          });
-          console.log("Login activity logged");
-        } catch (logError) {
-          console.error("Failed to log login activity:", logError);
-        }
-        
-        // Redirect to dashboard
-        const dashboardPath = role === 'admin' ? '/admin/dashboard' : '/cleaners/dashboard';
-        navigate(dashboardPath, { replace: true });
-        
-        return { success: true, user };
-      } else {
-        return { success: false, error };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, error };
-    }
-  };
-
-  // Function to check for active shift
-  const checkForActiveShift = () => {
-    const activeShiftData = localStorage.getItem('activeShift');
-    return !!activeShiftData;
-  };
-
-  // Function to initiate logout process
-  const initiateLogout = () => {
-    if (userRole === 'cleaner') {
-      const hasShift = checkForActiveShift();
-      setHasActiveShift(hasShift);
-      setShowLogoutConfirmation(true);
-    } else {
-      // For admin users, logout directly
-      performLogout();
-    }
-  };
-
-  // Function to perform actual logout
-  const performLogout = async () => {
-    if (isLoggingOut) return; // Prevent multiple logout attempts
-    
-    setIsLoggingOut(true);
-    
-    try {
-      // Get user data from storage before clearing it
-      const { userData } = checkAuthFromStorage();
-      
-      // If user is a cleaner, check for active cleaning
-      if (userRole === 'cleaner') {
-        try {
-          // First close any active cleaning - ensure we await this
-          const cleaningClosed = await closeActiveCleaning();
-          console.log("Cleaning closed on logout:", cleaningClosed);
-        } catch (error) {
-          console.error("Error closing active cleaning on logout:", error);
-        }
-      }
-      
-      // Log logout activity if we have user data
-      if (userData && userData.id) {
-        try {
-          await createActivityLog({
-            user_id: userData.id,
             activity_type: 'logout',
             start_time: new Date().toISOString(),
-            status: 'completed'
+            status: 'success'
           });
-          console.log("Logout activity logged");
-        } catch (logError) {
-          console.error("Failed to log logout activity:", logError);
+        } catch (error) {
+          console.error("Error logging logout activity:", error);
+        }
+      } else {
+        const temporaryUserId = await generateTemporaryUserId();
+        
+        try {
+          await createActivityLog({
+            user_id: temporaryUserId,
+            activity_type: 'logout',
+            start_time: new Date().toISOString(),
+            status: 'success'
+          });
+        } catch (error) {
+          console.error("Error logging logout activity with temporary ID:", error);
         }
       }
       
-      // Clear authentication data and state
-      clearAuthData();
-      setUserRole(null);
-      setUserName(null);
-      setIsAuthenticated(false);
+      // Clear authentication data
+      localStorage.removeItem('auth');
       
-      // Navigate after all operations are complete
-      navigate('/login', { replace: true });
+      // Optionally clear all shift and cleaning related data
+      const shouldClearActivityData = window.confirm("Do you want to end all active sessions?");
+      if (shouldClearActivityData) {
+        localStorage.removeItem('activeShift');
+        localStorage.removeItem('shiftTimer');
+        localStorage.removeItem('shiftStartTime');
+        localStorage.removeItem('activeCleaning');
+        localStorage.removeItem('cleaningTimer');
+        localStorage.removeItem('cleaningStartTime');
+        localStorage.removeItem('cleaningPaused');
+      }
+      
+      setUser(null);
+      setStatus("unauthenticated");
+      
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      
+      // Navigate to login page
+      navigate("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoggingOut(false);
       setShowLogoutConfirmation(false);
     }
-  };
+  }, [navigate, toast, user]);
 
-  // Function to close the confirmation dialog
-  const closeLogoutConfirmation = () => {
-    setShowLogoutConfirmation(false);
-  };
+  // Extract role from user data
+  const userRole = user?.role || 'cleaner';
+  const userName = user?.fullName || 'User';
+  const isAuthenticated = status === "authenticated";
 
   return {
+    user,
     userRole,
     userName,
-    session,
+    status,
     isAuthenticated,
     isLoggingOut,
     showLogoutConfirmation,
     hasActiveShift,
-    loginWithCredentials: handleLoginWithCredentials,
-    logout: initiateLogout,
+    login,
+    logout,
     performLogout,
     closeLogoutConfirmation
   };
-};
+}
