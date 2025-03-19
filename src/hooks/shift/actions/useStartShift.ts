@@ -2,11 +2,8 @@
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import { 
-  createOrFindQrCode, 
-  generateTemporaryUserId 
-} from "@/hooks/shift/useShiftDatabase";
 import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
+import { createOrFindQrCode, generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
 import { Shift } from "@/hooks/shift/types";
 import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 
@@ -53,6 +50,7 @@ export function useStartShift(
       // Store the shift in the database using the new activity log
       try {
         await createActivityLog({
+          id: newShiftId,
           user_id: temporaryUserId,
           qr_id: qrId,
           activity_type: 'shift_start',
