@@ -68,18 +68,28 @@ export const stopAllVideoStreams = () => {
       }
     });
     
-    // Forcibly stop any active streams from MediaDevices
+    // Additionally, stop any active MediaDevices
     try {
-      navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-        .then(stream => {
-          stream.getTracks().forEach(track => track.stop());
-          console.log("Forcibly stopped additional camera streams");
+      navigator.mediaDevices.enumerateDevices()
+        .then(() => {
+          // Try to forcibly release camera by requesting and immediately stopping
+          return navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+              stream.getTracks().forEach(track => {
+                track.stop();
+              });
+              console.log("Force-stopped additional camera stream");
+            })
+            .catch(err => {
+              // This might fail if camera is already stopped, which is fine
+              console.log("Could not force-stop camera:", err);
+            });
         })
-        .catch(() => {
-          // Ignore errors, as they might just mean no camera is available
+        .catch(err => {
+          console.log("Error enumerating devices:", err);
         });
-    } catch (error) {
-      // Ignore any errors in this cleanup
+    } catch (e) {
+      console.log("Error in MediaDevices cleanup:", e);
     }
     
     // Kill any HTML5QrCode scanner instances that might be running
@@ -130,7 +140,7 @@ export const stopAllVideoStreams = () => {
       } catch (e) {
         console.log("Error removing UI elements:", e);
       }
-    }, 100);
+    }, 300);
     
     console.log("All video streams stopped");
   } catch (e) {

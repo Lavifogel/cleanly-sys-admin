@@ -36,6 +36,12 @@ const QRScannerHandler = ({
       stopAllVideoStreams();
       processingQRScanRef.current = false;
     }
+    
+    // Always cleanup on dismount
+    return () => {
+      stopAllVideoStreams();
+      console.log("QRScannerHandler useEffect cleanup, stopping video streams");
+    };
   }, [showQRScanner]);
   
   // Force cleanup on component unmount
@@ -78,7 +84,9 @@ const QRScannerHandler = ({
     // Process scan after a delay to ensure camera is fully stopped
     setTimeout(() => {
       onQRScan(decodedText);
-    }, 500);
+      // Force one more cleanup after processing the scan
+      stopAllVideoStreams();
+    }, 800);
   };
 
   return (

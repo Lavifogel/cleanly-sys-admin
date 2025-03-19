@@ -22,9 +22,12 @@ export const useScannerState = ({
 
   // Set mounted ref to false when unmounting
   useEffect(() => {
+    mountedRef.current = true;
+    
     return () => {
       mountedRef.current = false;
       // Make sure to clean up camera on unmount
+      console.log("useScannerState unmounting, cleaning up...");
       stopAllVideoStreams();
     };
   }, []);
@@ -71,7 +74,7 @@ export const useScannerState = ({
           setCameraActive(false);
         }
         stopInProgressRef.current = false;
-      }, 300);
+      }, 500);
     } catch (error) {
       console.error("Error in stopCamera:", error);
       // Even if there's an error, still try to stop all video streams as a fallback

@@ -17,8 +17,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Force stop all camera streams when component mounts
     stopAllVideoStreams();
     scanProcessedRef.current = false;
+    scannerMountedRef.current = true;
     
     return () => {
+      scannerMountedRef.current = false;
       // Make absolutely sure camera is stopped on unmount
       stopAllVideoStreams();
       console.log("QRCodeScanner unmounting, cleaning up resources");
@@ -33,8 +35,8 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   } = useQRScannerLogic(
     // Wrap the success callback to ensure proper cleanup before callback
     (decodedText: string) => {
-      if (scanProcessedRef.current) {
-        console.log("Scan already processed, ignoring duplicate");
+      if (scanProcessedRef.current || !scannerMountedRef.current) {
+        console.log("Scan already processed or component unmounted, ignoring duplicate");
         return;
       }
       
@@ -46,8 +48,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       
       // Wait to ensure camera is fully stopped
       setTimeout(() => {
-        onScanSuccess(decodedText);
-      }, 500);
+        if (scannerMountedRef.current) {
+          onScanSuccess(decodedText);
+          // Force one more cleanup after processing
+          stopAllVideoStreams();
+        }
+      }, 800);
     },
     // Wrap close callback to ensure camera shutdown
     () => {
@@ -56,8 +62,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       
       // Small delay to ensure camera is fully stopped before closing
       setTimeout(() => {
-        onClose();
-      }, 300);
+        if (scannerMountedRef.current) {
+          onClose();
+          // Final cleanup
+          stopAllVideoStreams();
+        }
+      }, 500);
     }
   );
 
@@ -71,7 +81,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Slight delay to ensure cleanup completes before closing
     setTimeout(() => {
       handleClose();
-    }, 300);
+      // Final cleanup
+      stopAllVideoStreams();
+    }, 500);
   };
 
   return (

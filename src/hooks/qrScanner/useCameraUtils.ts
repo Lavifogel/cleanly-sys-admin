@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeConfigs } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeFullConfig } from "html5-qrcode";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseCameraUtilsProps {
@@ -23,7 +23,7 @@ export const useCameraUtils = ({
   
   // Try all possible fallback camera approaches
   const tryFallbackCamera = useCallback(async (
-    config: Html5QrcodeConfigs,
+    config: Html5QrcodeFullConfig,
     qrCodeSuccessCallback: (decodedText: string, result: any) => void
   ) => {
     if (!scannerRef.current || !mountedRef.current) return false;
@@ -57,8 +57,8 @@ export const useCameraUtils = ({
   }, [scannerRef, mountedRef, setCameraActive, setError, stopCamera]);
   
   // Setup timeout for camera initialization
-  const setupCameraTimeout = useCallback((cameraActive: boolean) => {
-    if (cameraActive) return undefined;
+  const setupCameraTimeout = useCallback((isActive: boolean) => {
+    if (isActive) return undefined;
     
     // Set a timeout to handle if camera doesn't start in a reasonable time
     return setTimeout(async () => {
@@ -66,7 +66,7 @@ export const useCameraUtils = ({
       
       console.log("Camera start timeout reached!");
       
-      if (!scannerRef.current || cameraActive) return;
+      if (!scannerRef.current || isActive) return;
       
       try {
         // Force stop any existing attempts
@@ -80,7 +80,7 @@ export const useCameraUtils = ({
         console.error("Error in camera timeout handler:", e);
       }
     }, 15000); // 15 seconds should be enough for any reasonable camera start
-  }, [scannerRef, mountedRef, cameraActive, setError, stopCamera]);
+  }, [scannerRef, mountedRef, setError, stopCamera]);
   
   // Handle camera errors
   const handleCameraError = useCallback(async (error: any, attemptNumber: number) => {
