@@ -25,6 +25,13 @@ export function useAuth() {
           const parsedAuth = JSON.parse(storedAuth);
           setUser(parsedAuth.userData);
           setStatus("authenticated");
+          
+          // Auto-redirect based on role when page refreshes or app reopens
+          if (parsedAuth.userData.role === 'admin') {
+            navigate('/admin/profile');
+          } else if (parsedAuth.userData.role === 'cleaner') {
+            navigate('/cleaners/profile');
+          }
         } else {
           setStatus("unauthenticated");
         }
@@ -35,7 +42,7 @@ export function useAuth() {
     };
     
     checkAuth();
-  }, []);
+  }, [navigate]);
 
   // Login function
   const login = useCallback(async (username: string, password: string) => {
@@ -61,8 +68,11 @@ export function useAuth() {
         setUser(adminUser);
         setStatus("authenticated");
         
-        // Redirect to admin profile instead of dashboard
-        navigate('/admin/profile');
+        // Explicitly navigate to admin profile
+        setTimeout(() => {
+          navigate('/admin/profile', { replace: true });
+        }, 100);
+        
         return adminUser;
       }
       
@@ -117,12 +127,14 @@ export function useAuth() {
       setUser(userData);
       setStatus("authenticated");
       
-      // Navigate based on role
-      if (userData.role === 'admin') {
-        navigate('/admin/profile');
-      } else {
-        navigate('/cleaners/profile');
-      }
+      // Navigate based on role with a slight delay to ensure state is updated
+      setTimeout(() => {
+        if (userData.role === 'admin') {
+          navigate('/admin/profile', { replace: true });
+        } else {
+          navigate('/cleaners/profile', { replace: true });
+        }
+      }, 100);
       
       return userData;
     } catch (error) {
