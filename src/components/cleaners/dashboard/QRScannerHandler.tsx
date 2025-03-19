@@ -32,12 +32,14 @@ const QRScannerHandler = ({
     if (showQRScanner && !prevShowQRScannerRef.current) {
       // Make sure we're starting fresh
       stopAllVideoStreams();
+      processingQRScanRef.current = false;
       
       // Give time for previous resources to clean up
       setTimeout(() => {
-        scannerMounted.current = true;
-        processingQRScanRef.current = false;
-        console.log(`QR scanner opened for purpose: ${scannerPurpose}`);
+        if (showQRScanner) { // Double check scanner should still be shown
+          scannerMounted.current = true;
+          console.log(`QR scanner opened for purpose: ${scannerPurpose}`);
+        }
       }, 100);
     } 
     // Handle when scanner closes
@@ -111,7 +113,6 @@ const QRScannerHandler = ({
     // Allow a moment for cleanup before processing result
     setTimeout(() => {
       onQRScan(decodedText);
-      // Processing flag will be reset when the scanner is closed
     }, 200);
   };
 
@@ -124,7 +125,7 @@ const QRScannerHandler = ({
             size="icon" 
             onClick={() => {
               stopAllVideoStreams();
-              setTimeout(closeScanner, 100);
+              closeScanner();
             }} 
             className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
           >
@@ -137,10 +138,7 @@ const QRScannerHandler = ({
         onClose={() => {
           // Ensure camera is stopped before closing
           stopAllVideoStreams();
-          // Allow a moment for cleanup before closing
-          setTimeout(() => {
-            closeScanner();
-          }, 200);
+          closeScanner();
         }}
       />
     </div>

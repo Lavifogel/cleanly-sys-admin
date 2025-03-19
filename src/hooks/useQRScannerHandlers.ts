@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
@@ -25,6 +25,14 @@ export function useQRScannerHandlers({
   const processingRef = useRef(false);
   const scannerTimeoutRef = useRef<number | null>(null);
   
+  // Reset processing flag when scanner is closed
+  useEffect(() => {
+    if (!showQRScanner) {
+      console.log("Scanner closed, resetting processing flag");
+      processingRef.current = false;
+    }
+  }, [showQRScanner]);
+  
   const closeScanner = () => {
     console.log(`Closing scanner with purpose: ${scannerPurpose}`);
     
@@ -33,11 +41,6 @@ export function useQRScannerHandlers({
     
     // Hide scanner immediately
     setShowQRScanner(false);
-    
-    // Reset processing state after a delay
-    setTimeout(() => {
-      processingRef.current = false;
-    }, 500);
   };
   
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
@@ -49,6 +52,9 @@ export function useQRScannerHandlers({
       scannerTimeoutRef.current = null;
     }
     
+    // Reset processing flag explicitly
+    processingRef.current = false;
+    
     // First make sure any existing scanner is fully closed
     if (showQRScanner) {
       stopAllVideoStreams();
@@ -56,14 +62,12 @@ export function useQRScannerHandlers({
       
       // Short delay to ensure resources are released before opening a new scanner
       scannerTimeoutRef.current = window.setTimeout(() => {
-        processingRef.current = false;
         setScannerPurpose(purpose);
         setShowQRScanner(true);
         scannerTimeoutRef.current = null;
       }, 500);
     } else {
       // If no scanner is currently open, just open a new one
-      processingRef.current = false;
       setScannerPurpose(purpose);
       
       // Small delay to ensure clean state
@@ -116,13 +120,8 @@ export function useQRScannerHandlers({
             onEndCleaningScan(decodedText);
             break;
         }
-        
-        // Reset processing state after successful handling
-        processingRef.current = false;
       } catch (error) {
         console.error("Error processing QR scan:", error);
-        // Even if there's an error, reset processing state
-        processingRef.current = false;
       }
     }, 300);
   };
@@ -135,6 +134,11 @@ export function useQRScannerHandlers({
     }
     stopAllVideoStreams();
   };
+  
+  // Explicitly clean up on unmount
+  useEffect(() => {
+    return cleanup;
+  }, []);
   
   return {
     showQRScanner,
