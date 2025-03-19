@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
@@ -6,7 +5,7 @@ import { QRCodeScannerProps } from "@/types/qrScanner";
 import { useQRScannerLogic } from "@/hooks/useQRScannerLogic";
 import QRScannerView from "@/components/qrScanner/QRScannerView";
 import { Button } from "./ui/button";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { stopAllVideoStreams } from "@/utils/qrScanner";
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const scannerMountedRef = useRef(false);
@@ -19,7 +18,6 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     handleClose,
     handleManualSimulation
   } = useQRScannerLogic(
-    // Wrap the success callback to ensure proper cleanup before callback
     (decodedText: string) => {
       if (scanProcessedRef.current) {
         console.log("Scan already processed, ignoring duplicate");
@@ -29,15 +27,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       scanProcessedRef.current = true;
       console.log("QR scan successful, data:", decodedText);
       
-      // Stop camera streams first and ensure complete cleanup
       stopAllVideoStreams();
       
-      // Call the original success callback with a delay to ensure camera is fully stopped
       setTimeout(() => {
         onScanSuccess(decodedText);
       }, 300);
     },
-    // Wrap close callback to ensure camera shutdown
     () => {
       console.log("QRCodeScanner onClose handler triggered");
       stopAllVideoStreams();
@@ -49,18 +44,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
   const { error, cameraActive } = scannerState;
   
-  // Component mount effect - make sure this runs properly each time component mounts
   useEffect(() => {
-    // Mark component as mounted
     scannerMountedRef.current = true;
     scanProcessedRef.current = false;
     
     console.log("QRCodeScanner component mounted, initializing camera...");
     
-    // Force cleanup of any existing camera resources before starting new ones
     stopAllVideoStreams();
     
-    // Add a delay to ensure DOM is ready
     const timer = setTimeout(() => {
       if (scannerMountedRef.current) {
         console.log("QR scanner mounted, camera active:", cameraActive);
@@ -71,23 +62,18 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       clearTimeout(timer);
       
       console.log("QRCodeScanner component unmounting, cleaning up resources");
-      // Set mounted ref to false to prevent any subsequent state updates
       scannerMountedRef.current = false;
       
-      // Ensure any pending cleanup timeouts are cleared
       if (cleanupTimeoutRef.current) {
         clearTimeout(cleanupTimeoutRef.current);
         cleanupTimeoutRef.current = null;
       }
       
-      // Force stop all camera streams
       stopAllVideoStreams();
     };
   }, []);
 
-  // Safely handle close with proper cleanup
   const safeHandleClose = () => {
-    // Prevent duplicate close attempts
     if (!scannerMountedRef.current) {
       console.log("Scanner not mounted, skipping close attempt");
       return;
@@ -95,13 +81,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     
     console.log("Safe handle close triggered, stopping all streams first");
     
-    // Mark as unmounting to prevent further state updates
     scannerMountedRef.current = false;
     
-    // First stop all camera streams
     stopAllVideoStreams();
     
-    // Slight delay to ensure cleanup completes before closing
     cleanupTimeoutRef.current = window.setTimeout(() => {
       console.log("Cleanup timeout complete, calling handleClose");
       handleClose();

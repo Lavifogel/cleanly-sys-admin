@@ -1,9 +1,8 @@
-
 import { useEffect, useRef } from "react";
 import { useCameraSetup } from "./useCameraSetup";
 import { useScannerState } from "./useScannerState";
 import { useCameraStart } from "./useCameraStart";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { stopAllVideoStreams } from "@/utils/qrScanner";
 
 interface UseCameraControlsProps {
   onScanSuccess: (decodedText: string) => void;

@@ -4,7 +4,7 @@ import { QRScannerStates } from "@/types/qrScanner";
 import { useCameraControls } from "./useCameraControls";
 import { useSimulation } from "./useSimulation";
 import { useFileInput } from "./useFileInput";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { stopAllVideoStreams } from "@/utils/qrScanner";
 
 export const useQRScannerLogic = (
   onScanSuccess: (decodedText: string) => void,

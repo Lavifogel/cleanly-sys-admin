@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { stopAllVideoStreams } from "@/utils/qrScanner";
 import { Html5Qrcode } from "html5-qrcode";
 
 interface UseCameraOperationsProps {

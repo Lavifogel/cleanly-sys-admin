@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { ScannerPurpose } from "@/hooks/useQRScanner";
-import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { stopAllVideoStreams } from "@/utils/qrScanner";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
