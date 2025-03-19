@@ -28,7 +28,7 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
     <div 
       ref={containerRef}
       className="w-full max-w-md h-96 rounded-lg overflow-hidden relative bg-black"
-      style={{ minHeight: "400px", minWidth: "340px" }} // Increased dimensions for better visibility
+      style={{ minHeight: "384px", minWidth: "320px" }} // Ensure larger minimum dimensions
     >
       {/* This is the actual container where the camera feed will be inserted */}
       <div 
@@ -59,8 +59,8 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
       {cameraActive && !simulationActive && (
         <div className="absolute inset-0 pointer-events-none z-20">
           <div className="absolute inset-0 border-2 border-primary/30"></div>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 border-2 border-primary"></div>
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 border border-white/30 border-dashed animate-pulse"></div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-primary"></div>
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border border-white/30 border-dashed animate-pulse"></div>
         </div>
       )}
     </div>

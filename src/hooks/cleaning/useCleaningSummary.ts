@@ -32,8 +32,6 @@ export function useCleaningSummary(
 
   // Prepare cleaning summary for completion
   const prepareSummary = (withScan: boolean, qrData?: string) => {
-    console.log("Preparing cleaning summary with scan:", withScan, "QR data:", qrData);
-    
     if (!activeCleaning) {
       toast({
         title: "Error",
@@ -47,7 +45,6 @@ export function useCleaningSummary(
     setSummaryNotes("");
     resetImages();
     
-    // Create the summary object
     setCleaningSummary({
       location: activeCleaning.location,
       startTime: activeCleaning.startTime.toLocaleTimeString(),
@@ -57,7 +54,6 @@ export function useCleaningSummary(
       images: []
     });
     
-    // Show the summary dialog
     setShowSummary(true);
   };
 
