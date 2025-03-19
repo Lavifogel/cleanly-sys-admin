@@ -47,8 +47,8 @@ export function useQRScannerHandlers({
       setTimeout(() => {
         processingRef.current = false;
         closeTimeoutRef.current = null;
-      }, 300);
-    }, 300);
+      }, 200);
+    }, 200);
   };
   
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
@@ -87,7 +87,7 @@ export function useQRScannerHandlers({
     // Hide scanner UI
     setShowQRScanner(false);
     
-    // Add a larger delay before processing the scan result
+    // Add a delay before processing the scan result
     // This ensures camera resources are fully released
     setTimeout(() => {
       try {
@@ -121,9 +121,9 @@ export function useQRScannerHandlers({
         // Reset processing flag
         setTimeout(() => {
           processingRef.current = false;
-        }, 500);
+        }, 300);
       }
-    }, 500);
+    }, 300);
   };
   
   // Clean up on unmount

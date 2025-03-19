@@ -70,52 +70,26 @@ export const stopAllVideoStreams = () => {
       }
     });
     
-    // Try to revoke any existing MediaStream permissions
+    // Immediately release any existing MediaStream permissions
     try {
-      navigator.mediaDevices.getUserMedia({ audio: false, video: false })
-        .then(stream => {
-          if (stream) {
+      if (navigator.mediaDevices) {
+        // Force release camera by requesting and immediately stopping it
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
             stream.getTracks().forEach(track => {
               track.stop();
+              console.log("Forcibly stopped camera track:", track.kind);
             });
-          }
-        })
-        .catch(() => {
-          // Ignore errors, as they might just mean no camera is available
-        });
+          })
+          .catch(() => {
+            // Silently catch errors - this is just a cleanup step
+          });
+      }
     } catch (error) {
       // Ignore any errors in this cleanup
     }
     
-    // Force the release of any active camera resources by specifically 
-    // requesting camera and then immediately stopping it
-    try {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          // Immediately stop all tracks
-          stream.getTracks().forEach(track => {
-            track.stop();
-            console.log("Forcibly stopped camera track:", track.kind);
-          });
-        })
-        .catch(err => {
-          console.log("Could not force-release camera:", err);
-        });
-    } catch (error) {
-      // Ignore any errors
-    }
-    
-    // Try to find and stop any HTML5QrCode instances
-    try {
-      // Look for scanner elements
-      const scannerElements = document.querySelectorAll('[id*="qr-scanner"], [id*="qrcode-scanner"]');
-      console.log(`Found ${scannerElements.length} scanner elements to clean up`);
-    } catch (e) {
-      console.log("Error finding scanner elements:", e);
-    }
-    
-    // Then attempt to safely remove video elements in a separate pass after a short delay
-    // This avoids issues with modifying the DOM while iterating
+    // Then remove video elements from DOM after a short delay
     setTimeout(() => {
       videoElements.forEach((video, index) => {
         // Only remove if actually in the DOM
@@ -147,7 +121,7 @@ export const stopAllVideoStreams = () => {
         console.log("Error removing scanner UI elements:", e);
       }
       
-      // Second pass to ensure all streams are really stopped
+      // Final cleanup after another short delay
       setTimeout(() => {
         try {
           // Last-resort cleanup of any video-related DOM elements
@@ -178,7 +152,7 @@ export const stopAllVideoStreams = () => {
         } catch (e) {
           console.log("Error in final DOM cleanup:", e);
         }
-      }, 200);
+      }, 100);
     }, 100);
   } catch (e) {
     console.log("Error in stopAllVideoStreams:", e);

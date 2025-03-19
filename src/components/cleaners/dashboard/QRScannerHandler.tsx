@@ -40,7 +40,7 @@ const QRScannerHandler = ({
           processingQRScanRef.current = false;
           console.log(`QR scanner opened for purpose: ${scannerPurpose}`);
         }
-      }, 300);
+      }, 100);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
@@ -62,7 +62,7 @@ const QRScannerHandler = ({
           
           // Force stop streams again to ensure complete cleanup
           stopAllVideoStreams();
-        }, 500); // Increased timeout for better cleanup
+        }, 300);
       }
     }
     
@@ -114,7 +114,7 @@ const QRScannerHandler = ({
     setTimeout(() => {
       onQRScan(decodedText);
       // Processing flag will be reset when the scanner is closed
-    }, 500); // Increased delay to ensure camera is properly stopped
+    }, 300);
   };
 
   const handleClose = () => {
@@ -131,7 +131,7 @@ const QRScannerHandler = ({
     // Then close the scanner with a delay to ensure proper cleanup
     setTimeout(() => {
       closeScanner();
-    }, 500);
+    }, 300);
   };
 
   return (
@@ -159,7 +159,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 500);
+            }, 300);
           }}
         />
       )}

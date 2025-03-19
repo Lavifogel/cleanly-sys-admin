@@ -4,6 +4,7 @@ import { QRScannerStates } from "@/types/qrScanner";
 import { useCameraControls } from "./useCameraControls";
 import { useSimulation } from "./useSimulation";
 import { useFileInput } from "./useFileInput";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export const useQRScannerLogic = (
   onScanSuccess: (decodedText: string) => void,
@@ -53,6 +54,9 @@ export const useQRScannerLogic = (
 
   // Initialize the scanner when component mounts with a slight delay to ensure DOM is ready
   useEffect(() => {
+    // First clean up any existing camera resources
+    stopAllVideoStreams();
+    
     const initTimer = setTimeout(() => {
       if (scannerRef.current) {
         console.log("Scanner reference already exists, starting scanner");
@@ -60,18 +64,21 @@ export const useQRScannerLogic = (
           startScanner();
         }
       }
-    }, 500);
+    }, 300);
     
     // Clean up when component unmounts
     return () => {
       clearTimeout(initTimer);
       stopCamera();
+      // Extra cleanup to ensure camera is fully released
+      stopAllVideoStreams();
     };
   }, []);
 
   const handleClose = () => {
     stopCamera(); // Ensure camera is stopped before closing
     resetSimulation(); // Reset any active simulation
+    stopAllVideoStreams(); // Additional cleanup
     onClose();
   };
 
