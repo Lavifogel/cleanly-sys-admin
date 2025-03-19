@@ -51,24 +51,6 @@ export const useQRScannerLogic = (
     simulationProgress
   };
 
-  // Initialize the scanner when component mounts with a slight delay to ensure DOM is ready
-  useEffect(() => {
-    const initTimer = setTimeout(() => {
-      if (scannerRef.current) {
-        console.log("Scanner reference already exists, starting scanner");
-        if (!isScanning) {
-          startScanner();
-        }
-      }
-    }, 500);
-    
-    // Clean up when component unmounts
-    return () => {
-      clearTimeout(initTimer);
-      stopCamera();
-    };
-  }, []);
-
   const handleClose = () => {
     stopCamera(); // Ensure camera is stopped before closing
     resetSimulation(); // Reset any active simulation
@@ -88,6 +70,6 @@ export const useQRScannerLogic = (
     handleTakePicture,
     handleFileSelect,
     handleManualSimulation,
-    startScanner  // Add startScanner to the returned object
+    startScanner
   };
 };

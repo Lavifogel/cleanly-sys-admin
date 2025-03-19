@@ -68,13 +68,7 @@ export function useQRScannerHandlers({
     
     console.log(`[useQRScannerHandlers] Starting QR scanner for purpose: ${purpose} (attempt ${attemptCountRef.current})`);
     
-    // Special handling per purpose type
-    if (purpose === "startCleaning") {
-      console.log("[useQRScannerHandlers] Special handling for startCleaning");
-    } else if (purpose === "endCleaning") {
-      console.log("[useQRScannerHandlers] Special handling for endCleaning");
-    }
-    
+    // Set purpose before any async operations
     setScannerPurpose(purpose);
     
     // Ensure any existing camera is fully closed before opening scanner

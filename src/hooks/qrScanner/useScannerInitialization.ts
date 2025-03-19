@@ -24,57 +24,75 @@ export const useScannerInitialization = ({
   onScanSuccess
 }: UseScannerInitializationProps) => {
   
-  // Validates the scanner container to ensure it exists and has sufficient dimensions
+  // Check if scanner container is valid with appropriate dimensions
   const validateScannerContainer = useCallback(async (): Promise<boolean> => {
+    // Check if container exists
     const containerElement = document.getElementById(scannerContainerId);
     if (!containerElement) {
-      throw new Error("Scanner container element not found");
+      console.log(`Container element '${scannerContainerId}' not found`);
+      setError("Scanner initialization failed. Please try again.");
+      return false;
     }
     
-    // Log container dimensions to help debug
+    // Wait a brief moment to ensure the container is properly sized in the DOM
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Get dimensions after a slight delay
     const rect = containerElement.getBoundingClientRect();
     console.log("Scanner container dimensions:", rect.width, rect.height);
     
-    if (rect.width < 10 || rect.height < 10) {
+    // Ensure container has some minimum dimensions
+    if (rect.width < 100 || rect.height < 100) {
       console.log("Container has insufficient dimensions, adding delay");
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Check again after delay
-      if (!mountedRef.current) return false;
+      // Add a longer delay and try again for late-rendering containers
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      const updatedRect = containerElement.getBoundingClientRect();
-      if (updatedRect.width < 10 || updatedRect.height < 10) {
-        throw new Error("Scanner container has insufficient dimensions");
+      // Get dimensions again after the delay
+      const newRect = containerElement.getBoundingClientRect();
+      console.log("Scanner container dimensions after delay:", newRect.width, newRect.height);
+      
+      // Final check
+      if (newRect.width < 100 || newRect.height < 100) {
+        console.error("Scanner container has insufficient dimensions after delay");
+        setError("QR Scanner could not initialize. Please try again.");
+        return false;
       }
     }
     
     return true;
-  }, [scannerContainerId, mountedRef]);
-  
-  // Create scanner configuration
+  }, [scannerContainerId, setError]);
+
+  // Create configuration for QR scanner
   const createScannerConfig = useCallback(() => {
     return {
-      fps: 10, // Lower FPS for more stability
+      fps: 10,
       qrbox: { width: 250, height: 250 },
-      formatsToSupport: ["QR_CODE"],
-      experimentalFeatures: {
-        useBarCodeDetectorIfSupported: true
-      }
+      aspectRatio: 1.0,
+      disableFlip: false,
+      formatsToSupport: [Html5Qrcode.FORMATS.QR_CODE],
+      rememberLastUsedCamera: true,
+      showTorchButtonIfSupported: true,
     };
   }, []);
-  
+
   // Setup QR code success callback
-  const setupQRCodeCallback = useCallback((onSuccess: (decodedText: string) => void, stopFn: () => Promise<void>) => {
+  const setupQRCodeCallback = useCallback((
+    onScanSuccess: (decodedText: string) => void,
+    stopCamera: () => Promise<void>
+  ) => {
+    // Return the success handler function
     return (decodedText: string) => {
-      console.log("Successfully scanned QR code:", decodedText);
-      // Handle the scanned code here
-      onSuccess(decodedText);
+      if (!mountedRef.current) return;
       
-      // Stop scanning after successful scan
-      stopFn();
+      console.log("QR code scanned successfully:", decodedText);
+      setIsScanning(false);
+      
+      // Call the original success callback
+      onScanSuccess(decodedText);
     };
-  }, []);
-  
+  }, [mountedRef, setIsScanning]);
+
   return {
     validateScannerContainer,
     createScannerConfig,

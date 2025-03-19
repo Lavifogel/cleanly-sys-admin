@@ -21,23 +21,39 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
       // Force a reflow to ensure the element is rendered
       const rect = containerRef.current.getBoundingClientRect();
       console.log("QR scanner container dimensions:", rect.width, rect.height);
+      
+      // If dimensions are 0, try to force layout recalculation
+      if (rect.width === 0 || rect.height === 0) {
+        // Apply explicit dimensions to ensure the container is sizeable
+        containerRef.current.style.minWidth = "300px";
+        containerRef.current.style.minHeight = "300px";
+        
+        // Force a layout recalculation
+        setTimeout(() => {
+          if (containerRef.current) {
+            const newRect = containerRef.current.getBoundingClientRect();
+            console.log("Updated container dimensions:", newRect.width, newRect.height);
+          }
+        }, 100);
+      }
     }
   }, []);
   
   return (
     <div 
       ref={containerRef}
-      className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-900'}`}
-      style={{ minHeight: "320px", minWidth: "300px" }} // Ensure minimum dimensions
+      className="w-full max-w-md h-80 rounded-lg overflow-hidden relative bg-gray-900"
+      style={{ minHeight: "320px", minWidth: "320px" }} // Ensure minimum dimensions
     >
-      {/* This is the container where the camera feed will be inserted */}
+      {/* Scanner container with explicit size */}
       <div 
         id={scannerContainerId} 
         className="absolute inset-0 z-10 flex items-center justify-center"
+        style={{ minHeight: "300px", minWidth: "300px" }}
       >
         {/* Inner element to ensure the scanner UI is visible and properly positioned */}
         <div className="relative w-full h-full">
-          {/* The Html5QrCode library will insert the video element here */}
+          {/* The Html5Qrcode library will insert the video element here */}
         </div>
       </div>
       
