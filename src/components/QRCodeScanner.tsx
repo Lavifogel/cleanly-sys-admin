@@ -50,20 +50,20 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
   const { error, cameraActive } = scannerState;
   
-  // Component mount effect - explicitly start camera
+  // Component mount effect - explicitly start camera with increased delay
   useEffect(() => {
     // Mark component as mounted
     scannerMountedRef.current = true;
     scanProcessedRef.current = false;
     
-    // Add a delay to ensure DOM is ready
+    // Add a delay to ensure DOM is ready before starting camera
     const timer = setTimeout(() => {
       if (scannerMountedRef.current) {
-        console.log("QR scanner mounted, starting camera...");
+        console.log("QR scanner mounted, explicitly starting camera...");
         // Explicitly start the scanner
         startScanner();
       }
-    }, 300);
+    }, 500); // Increased delay for better reliability
     
     return () => {
       clearTimeout(timer);

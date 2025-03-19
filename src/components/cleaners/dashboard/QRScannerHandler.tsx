@@ -92,8 +92,8 @@ const QRScannerHandler = ({
 
   if (!showQRScanner) return null;
 
-  // If 'startShift' and no active shift, show a close button
-  const canClose = scannerPurpose === 'startShift' && !activeShift;
+  // All scanning purposes now allow closing
+  const canClose = true;
 
   const handleScanSuccess = (decodedText: string) => {
     // Prevent duplicate scan handling
@@ -135,20 +135,12 @@ const QRScannerHandler = ({
       <QRCodeScanner 
         onScanSuccess={handleScanSuccess}
         onClose={() => {
-          // Only allow closing if it's the initial scanner
-          if (canClose) {
-            // Ensure camera is stopped before closing
-            stopAllVideoStreams();
-            // Allow a moment for cleanup before closing
-            setTimeout(() => {
-              closeScanner();
-            }, 200);
-          } else {
-            // For non-cancellable scans, make sure we release camera resources
-            stopAllVideoStreams();
-            // Close immediately since user can't cancel anyway
+          // Ensure camera is stopped before closing
+          stopAllVideoStreams();
+          // Allow a moment for cleanup before closing
+          setTimeout(() => {
             closeScanner();
-          }
+          }, 200);
         }}
       />
     </div>

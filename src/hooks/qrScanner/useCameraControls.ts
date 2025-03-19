@@ -52,12 +52,15 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     incrementAttempt
   });
 
-  // Start scanning when the scanner is initialized
+  // Start scanning when the scanner is initialized, but don't rely on this
+  // as the component will explicitly call startScanner
   useEffect(() => {
     // Use a flag to ensure we only attempt to start the camera once per mount
     if (scannerRef.current && !isScanning && !hasAttemptedStart.current) {
       hasAttemptedStart.current = true;
       console.log("Scheduling initial camera start");
+      
+      // Increase this delay to give more time for component mounting
       const startTimer = setTimeout(() => {
         console.log("Starting scanner after initialization");
         startScanner();

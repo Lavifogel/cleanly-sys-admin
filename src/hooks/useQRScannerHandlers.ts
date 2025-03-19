@@ -23,6 +23,7 @@ export function useQRScannerHandlers({
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
   const processingRef = useRef(false);
+  const scannerTimeoutRef = useRef<number | null>(null);
   
   const closeScanner = () => {
     console.log(`Closing scanner with purpose: ${scannerPurpose}`);
@@ -42,22 +43,34 @@ export function useQRScannerHandlers({
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
     console.log(`Starting QR scanner for purpose: ${purpose}`);
     
+    // Clear any existing timeouts
+    if (scannerTimeoutRef.current) {
+      clearTimeout(scannerTimeoutRef.current);
+      scannerTimeoutRef.current = null;
+    }
+    
     // First make sure any existing scanner is fully closed
     if (showQRScanner) {
       stopAllVideoStreams();
       setShowQRScanner(false);
       
       // Short delay to ensure resources are released before opening a new scanner
-      setTimeout(() => {
+      scannerTimeoutRef.current = window.setTimeout(() => {
         processingRef.current = false;
         setScannerPurpose(purpose);
         setShowQRScanner(true);
-      }, 300);
+        scannerTimeoutRef.current = null;
+      }, 500);
     } else {
       // If no scanner is currently open, just open a new one
       processingRef.current = false;
       setScannerPurpose(purpose);
-      setShowQRScanner(true);
+      
+      // Small delay to ensure clean state
+      scannerTimeoutRef.current = window.setTimeout(() => {
+        setShowQRScanner(true);
+        scannerTimeoutRef.current = null;
+      }, 100);
     }
   };
   
@@ -113,12 +126,22 @@ export function useQRScannerHandlers({
       }
     }, 300);
   };
+
+  // Clean up on unmount
+  const cleanup = () => {
+    if (scannerTimeoutRef.current) {
+      clearTimeout(scannerTimeoutRef.current);
+      scannerTimeoutRef.current = null;
+    }
+    stopAllVideoStreams();
+  };
   
   return {
     showQRScanner,
     scannerPurpose,
     handleQRScan,
     handleQRScannerStart,
-    closeScanner
+    closeScanner,
+    cleanup
   };
 }
