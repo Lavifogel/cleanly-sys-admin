@@ -35,9 +35,6 @@ export function useDashboardQRScanner(
     // Close scanner before processing the result
     closeScanner();
     
-    // Ensure camera is fully stopped
-    stopAllVideoStreams();
-
     // Add delay before processing to ensure camera resources are released
     setTimeout(() => {
       switch (scannerPurpose) {
@@ -62,7 +59,7 @@ export function useDashboardQRScanner(
           console.warn("Unknown scanner purpose:", scannerPurpose);
           break;
       }
-    }, 300);
+    }, 500); // Longer delay to ensure complete cleanup
   };
   
   // Handler functions for different QR scanning purposes
@@ -72,9 +69,11 @@ export function useDashboardQRScanner(
       return;
     }
     console.log("Opening scanner for startShift");
-    // Ensure camera is completely stopped before starting a new scan
+    // Force cleanup before opening scanner
     stopAllVideoStreams();
-    openScanner("startShift");
+    setTimeout(() => {
+      openScanner("startShift");
+    }, 300);
   };
 
   const handleEndShiftWithScan = () => {
@@ -83,9 +82,11 @@ export function useDashboardQRScanner(
       return;
     }
     console.log("Opening scanner for endShift");
-    // Ensure camera is completely stopped before starting a new scan
+    // Force cleanup before opening scanner
     stopAllVideoStreams();
-    openScanner("endShift");
+    setTimeout(() => {
+      openScanner("endShift");
+    }, 300);
   };
 
   const handleStartCleaning = () => {
@@ -94,9 +95,11 @@ export function useDashboardQRScanner(
       return;
     }
     console.log("Opening scanner for startCleaning");
-    // Ensure camera is completely stopped before starting a new scan
+    // Force cleanup before opening scanner
     stopAllVideoStreams();
-    openScanner("startCleaning");
+    setTimeout(() => {
+      openScanner("startCleaning");
+    }, 300);
   };
 
   const handleEndCleaningWithScan = () => {
@@ -105,9 +108,11 @@ export function useDashboardQRScanner(
       return;
     }
     console.log("Opening scanner for endCleaning");
-    // Ensure camera is completely stopped before starting a new scan
+    // Force cleanup before opening scanner
     stopAllVideoStreams();
-    openScanner("endCleaning");
+    setTimeout(() => {
+      openScanner("endCleaning");
+    }, 300);
   };
   
   return {

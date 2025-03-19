@@ -1,5 +1,5 @@
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
@@ -23,8 +23,25 @@ export function useQRScannerHandlers({
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
   const processingRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
+  
+  // Clear any pending timers on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        clearTimeout(timerRef.current);
+      }
+      stopAllVideoStreams();
+    };
+  }, []);
   
   const closeScanner = useCallback(() => {
+    // Clear any pending timers
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    
     // Force stop all camera streams before hiding the scanner UI
     stopAllVideoStreams();
     setShowQRScanner(false);
@@ -36,8 +53,8 @@ export function useQRScannerHandlers({
       // Reset processing state after a delay
       setTimeout(() => {
         processingRef.current = false;
-      }, 300);
-    }, 200);
+      }, 500);
+    }, 300);
   }, []);
   
   const handleQRScannerStart = useCallback((purpose: ScannerPurpose) => {
@@ -48,10 +65,11 @@ export function useQRScannerHandlers({
     // Ensure any existing camera is fully closed before opening scanner
     stopAllVideoStreams();
     
-    // Add small delay before showing scanner to ensure previous resources are released
-    setTimeout(() => {
+    // Add longer delay before showing scanner to ensure previous resources are released
+    timerRef.current = window.setTimeout(() => {
       setShowQRScanner(true);
-    }, 300);
+      console.log(`QR scanner opened for purpose: ${purpose}`);
+    }, 600);
   }, []);
   
   const handleQRScan = useCallback((decodedText: string) => {
@@ -70,9 +88,9 @@ export function useQRScannerHandlers({
     // Hide scanner UI
     setShowQRScanner(false);
     
-    // Add a delay before processing the scan result
+    // Add a longer delay before processing the scan result
     // This ensures camera resources are fully released
-    setTimeout(() => {
+    timerRef.current = window.setTimeout(() => {
       try {
         // Force stop camera streams again to ensure complete cleanup
         stopAllVideoStreams();
@@ -105,12 +123,12 @@ export function useQRScannerHandlers({
         // Final camera cleanup
         stopAllVideoStreams();
         
-        // Reset processing flag with a delay
+        // Reset processing flag with a longer delay
         setTimeout(() => {
           processingRef.current = false;
-        }, 300);
+        }, 800);
       }
-    }, 500);
+    }, 800);
   }, [scannerPurpose, onStartShiftScan, onEndShiftScan, onStartCleaningScan, onEndCleaningScan, setActiveTab]);
   
   return {

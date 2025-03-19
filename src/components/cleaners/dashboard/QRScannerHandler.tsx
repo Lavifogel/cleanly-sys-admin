@@ -47,7 +47,7 @@ const QRScannerHandler = ({
         stopAllVideoStreams();
         scannerMounted.current = false;
         processingQRScanRef.current = false;
-      }, 300);
+      }, 600);
     }
     
     // Update previous state reference
@@ -88,7 +88,7 @@ const QRScannerHandler = ({
     // Call the scan handler with a delay to ensure camera cleanup completes first
     setTimeout(() => {
       onQRScan(decodedText);
-    }, 300);
+    }, 800); // Increased delay for more thorough cleanup
   };
 
   return (
@@ -100,7 +100,7 @@ const QRScannerHandler = ({
             size="icon" 
             onClick={() => {
               stopAllVideoStreams();
-              setTimeout(closeScanner, 100);
+              setTimeout(closeScanner, 300);
             }} 
             className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
           >
@@ -118,7 +118,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 300);
+            }, 600);
           }
         }}
       />
