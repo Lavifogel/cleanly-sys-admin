@@ -18,27 +18,22 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   // Ensure the container is visible and has proper dimensions before initializing camera
   useEffect(() => {
     if (containerRef.current) {
-      // Force a reflow to ensure the element is rendered with proper dimensions
+      // Force a reflow to ensure the element is rendered
       const rect = containerRef.current.getBoundingClientRect();
-      console.log(`Scanner container dimensions: ${rect.width}x${rect.height}`);
-      
-      // Apply specific height to ensure the container has dimensions
-      containerRef.current.style.height = "320px";
-      containerRef.current.style.minHeight = "320px";
+      console.log("QR scanner container dimensions:", rect.width, rect.height);
     }
   }, []);
   
   return (
     <div 
       ref={containerRef}
-      className="w-full max-w-md rounded-lg overflow-hidden relative bg-gray-900"
-      style={{ height: "320px", minHeight: "320px" }} // Enforced inline dimensions
+      className={`w-full max-w-md h-80 rounded-lg overflow-hidden relative ${cameraActive ? 'bg-black' : 'bg-gray-900'}`}
+      style={{ minHeight: "320px", minWidth: "300px" }} // Ensure minimum dimensions
     >
       {/* This is the actual container where the camera feed will be inserted */}
       <div 
         id={scannerContainerId} 
         className="absolute inset-0 z-10"
-        style={{ minHeight: "320px", width: "100%" }} // Ensure minimum dimensions for the scanner
       />
       
       {!cameraActive && !simulationActive && (

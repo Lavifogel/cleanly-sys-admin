@@ -12,8 +12,7 @@ export const useCameraSetup = ({ onScanSuccess }: UseCameraSetupProps) => {
     scannerRef, 
     scannerContainerId, 
     incrementAttempt,
-    initAttemptCount,
-    isInitialized
+    initAttemptCount
   } = useCameraInitialization();
 
   // Effect to check if scanner is initialized
@@ -27,7 +26,6 @@ export const useCameraSetup = ({ onScanSuccess }: UseCameraSetupProps) => {
     scannerRef, 
     scannerContainerId, 
     incrementAttempt,
-    initAttemptCount,
-    isInitialized
+    initAttemptCount
   };
 };

@@ -5,7 +5,36 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function useCleaningHistory(activeShiftId: string | undefined) {
   // Initial cleaning history
-  const [cleaningsHistory, setCleaningsHistory] = useState<CleaningHistoryItem[]>([]);
+  const [cleaningsHistory, setCleaningsHistory] = useState<CleaningHistoryItem[]>([
+    {
+      id: "1",
+      location: "Conference Room A",
+      date: "15/08/2023",
+      startTime: "09:30",
+      endTime: "10:05",
+      duration: "35m",
+      status: "finished with scan",
+      images: 2,
+      notes: "Cleaned and restocked supplies",
+      shiftId: "previous-shift-1",
+      imageUrls: [
+        "https://evkldsfnndkgpifhgvic.supabase.co/storage/v1/object/public/cleaning-images/cleanings/mockImage1.jpg",
+        "https://evkldsfnndkgpifhgvic.supabase.co/storage/v1/object/public/cleaning-images/cleanings/mockImage2.jpg"
+      ]
+    },
+    {
+      id: "2",
+      location: "Main Office",
+      date: "15/08/2023",
+      startTime: "10:30",
+      endTime: "11:12",
+      duration: "42m",
+      status: "finished without scan",
+      images: 0,
+      notes: "",
+      shiftId: "previous-shift-1",
+    },
+  ]);
 
   // Format date to DD/MM/YYYY
   const formatDateToDDMMYYYY = (dateStr: string): string => {
@@ -27,12 +56,12 @@ export function useCleaningHistory(activeShiftId: string | undefined) {
           .select(`
             id, 
             shift_id, 
-            start_qr_id, 
+            qr_id, 
             start_time, 
             end_time, 
             status, 
             notes,
-            qr_codes!start_qr_id(area_name)
+            qr_codes(area_name)
           `)
           .eq('shift_id', activeShiftId)
           .order('start_time', { ascending: false });

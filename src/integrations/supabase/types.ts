@@ -12,44 +12,41 @@ export type Database = {
       cleanings: {
         Row: {
           created_at: string
-          end_qr_id: string | null
           end_time: string | null
           id: string
           notes: string | null
+          qr_id: string | null
           shift_id: string
-          start_qr_id: string | null
           start_time: string | null
           status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          end_qr_id?: string | null
           end_time?: string | null
           id?: string
           notes?: string | null
+          qr_id?: string | null
           shift_id: string
-          start_qr_id?: string | null
           start_time?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          end_qr_id?: string | null
           end_time?: string | null
           id?: string
           notes?: string | null
+          qr_id?: string | null
           shift_id?: string
-          start_qr_id?: string | null
           start_time?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "cleanings_end_qr_id_fkey"
-            columns: ["end_qr_id"]
+            foreignKeyName: "cleanings_qr_id_fkey"
+            columns: ["qr_id"]
             isOneToOne: false
             referencedRelation: "qr_codes"
             referencedColumns: ["qr_id"]
@@ -60,13 +57,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "shifts"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cleanings_start_qr_id_fkey"
-            columns: ["start_qr_id"]
-            isOneToOne: false
-            referencedRelation: "qr_codes"
-            referencedColumns: ["qr_id"]
           },
         ]
       }
@@ -132,10 +122,9 @@ export type Database = {
       shifts: {
         Row: {
           created_at: string
-          end_qr_id: string | null
           end_time: string | null
           id: string
-          start_qr_id: string | null
+          qr_id: string | null
           start_time: string | null
           status: string
           updated_at: string
@@ -143,10 +132,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          end_qr_id?: string | null
           end_time?: string | null
           id?: string
-          start_qr_id?: string | null
+          qr_id?: string | null
           start_time?: string | null
           status?: string
           updated_at?: string
@@ -154,10 +142,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          end_qr_id?: string | null
           end_time?: string | null
           id?: string
-          start_qr_id?: string | null
+          qr_id?: string | null
           start_time?: string | null
           status?: string
           updated_at?: string
@@ -165,15 +152,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "shifts_end_qr_id_fkey"
-            columns: ["end_qr_id"]
-            isOneToOne: false
-            referencedRelation: "qr_codes"
-            referencedColumns: ["qr_id"]
-          },
-          {
-            foreignKeyName: "shifts_start_qr_id_fkey"
-            columns: ["start_qr_id"]
+            foreignKeyName: "shifts_qr_id_fkey"
+            columns: ["qr_id"]
             isOneToOne: false
             referencedRelation: "qr_codes"
             referencedColumns: ["qr_id"]
@@ -302,10 +282,6 @@ export type Database = {
           status: string
           phone: string
         }[]
-      }
-      migrate_shifts_and_cleanings: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
       migrate_to_users_table: {
         Args: Record<PropertyKey, never>

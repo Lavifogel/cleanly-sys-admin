@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 import { 
   Activity, 
   formatDuration, 
@@ -38,7 +39,7 @@ export const useActivities = () => {
             last_name,
             full_name
           ),
-          qr_codes!start_qr_id (
+          qr_codes (
             area_name
           )
         `)
@@ -56,7 +57,7 @@ export const useActivities = () => {
           end_time,
           status,
           notes,
-          qr_codes!start_qr_id (
+          qr_codes (
             area_name
           ),
           shifts (

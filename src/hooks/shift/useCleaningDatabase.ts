@@ -56,8 +56,8 @@ export async function createOrFindCleaningQrCode(areaId: string, areaName: strin
 /**
  * Creates a new cleaning in the database
  */
-export async function createCleaning(cleaningId: string, shiftId: string, startTime: string, startQrId: string | null, location: string) {
-  console.log("Creating cleaning with ID:", cleaningId, "for shift:", shiftId, "Start QR ID:", startQrId);
+export async function createCleaning(cleaningId: string, shiftId: string, startTime: string, qrId: string | null, location: string) {
+  console.log("Creating cleaning with ID:", cleaningId, "for shift:", shiftId, "QR ID:", qrId);
   
   const { data, error } = await supabase
     .from('cleanings')
@@ -66,7 +66,7 @@ export async function createCleaning(cleaningId: string, shiftId: string, startT
       shift_id: shiftId,
       start_time: startTime,
       status: 'active',
-      start_qr_id: startQrId,
+      qr_id: qrId,
       notes: `Location: ${location}`
     });
   
@@ -82,23 +82,16 @@ export async function createCleaning(cleaningId: string, shiftId: string, startT
 /**
  * Updates a cleaning in the database when it ends
  */
-export async function updateCleaningEnd(cleaningId: string, endTime: string, status: string, notes: string, endQrId: string | null = null) {
+export async function updateCleaningEnd(cleaningId: string, endTime: string, status: string, notes: string) {
   console.log("Updating cleaning end with ID:", cleaningId);
-  
-  const updateData: any = {
-    end_time: endTime,
-    status: status,
-    notes: notes
-  };
-  
-  // Only include end_qr_id if it was provided
-  if (endQrId) {
-    updateData.end_qr_id = endQrId;
-  }
   
   const { error } = await supabase
     .from('cleanings')
-    .update(updateData)
+    .update({
+      end_time: endTime,
+      status: status,
+      notes: notes
+    })
     .eq('id', cleaningId);
   
   if (error) {

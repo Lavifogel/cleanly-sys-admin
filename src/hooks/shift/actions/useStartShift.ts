@@ -35,10 +35,10 @@ export function useStartShift(
       const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);
       
       // Find or create QR code in database
-      let startQrId = null;
+      let qrId = null;
       try {
-        startQrId = await createOrFindQrCode(areaId, areaName, qrDataToUse);
-        console.log("QR code ID for shift start:", startQrId);
+        qrId = await createOrFindQrCode(areaId, areaName, qrDataToUse);
+        console.log("QR code ID for shift:", qrId);
       } catch (error: any) {
         console.error("Error with QR code:", error);
         toast({
@@ -54,7 +54,7 @@ export function useStartShift(
       
       // Store the shift in the database
       try {
-        await createShift(newShiftId, temporaryUserId, startTime.toISOString(), startQrId);
+        await createShift(newShiftId, temporaryUserId, startTime.toISOString(), qrId);
         console.log("Shift stored successfully");
       } catch (error: any) {
         console.error("Error storing shift:", error);
