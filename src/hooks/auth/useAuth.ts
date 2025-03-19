@@ -100,7 +100,7 @@ export function useAuth() {
       }
       
       // Log logout activity
-      if (userId) {
+      if (userId && userId !== 'admin-id') {
         try {
           await createActivityLog({
             user_id: userId,

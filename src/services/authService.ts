@@ -161,12 +161,16 @@ export const loginWithCredentials = async (phoneNumber: string, password: string
         user.password = password;
       } 
       // Verify password matches - important to ensure password values are compared properly
-      else if (String(user.password).trim() === String(password).trim()) {
-        console.log('Password match successful');
-      } else {
-        console.error('Invalid password. Expected:', user.password, 'Received:', password);
+      // FIX: Correctly compare passwords and handle the match/mismatch logic
+      const storedPassword = String(user.password).trim();
+      const providedPassword = String(password).trim();
+      
+      if (storedPassword !== providedPassword) {
+        console.error('Invalid password. Expected:', storedPassword, 'Received:', providedPassword);
         return { success: false, error: new Error("Invalid phone number or password") };
       }
+      
+      console.log('Password match successful');
       
       // Prepare user data for localStorage
       const userData = {
