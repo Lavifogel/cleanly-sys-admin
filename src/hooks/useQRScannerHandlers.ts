@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 
-// Importing ScannerPurpose from useQRScanner instead of qrScanner types
+// Importing ScannerPurpose from useQRScanner
 import { ScannerPurpose } from "@/hooks/useQRScanner";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
