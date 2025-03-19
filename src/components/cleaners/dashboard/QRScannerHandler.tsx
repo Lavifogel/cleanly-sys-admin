@@ -36,13 +36,19 @@ const QRScannerHandler = ({
       // Force stop any existing camera resources
       stopAllVideoStreams();
       
-      // Special handling for endCleaning
+      // Special handling for different scanner purposes
       if (scannerPurpose === "endCleaning") {
         console.log("[QRScannerHandler] Special initialization for endCleaning purpose");
         // Additional cleanup after a delay
         setTimeout(() => {
           stopAllVideoStreams();
         }, 500);
+      } else if (scannerPurpose === "startCleaning") {
+        console.log("[QRScannerHandler] Special initialization for startCleaning purpose");
+        // Additional cleanup for startCleaning too
+        setTimeout(() => {
+          stopAllVideoStreams();
+        }, 400);
       }
     } 
     // Handle when scanner closes

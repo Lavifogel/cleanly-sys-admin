@@ -68,9 +68,11 @@ export function useQRScannerHandlers({
     
     console.log(`[useQRScannerHandlers] Starting QR scanner for purpose: ${purpose} (attempt ${attemptCountRef.current})`);
     
-    // If purpose is endCleaning, add special handling
-    if (purpose === "endCleaning") {
-      console.log("[useQRScannerHandlers] Using special handling for endCleaning");
+    // Special handling per purpose type
+    if (purpose === "startCleaning") {
+      console.log("[useQRScannerHandlers] Special handling for startCleaning");
+    } else if (purpose === "endCleaning") {
+      console.log("[useQRScannerHandlers] Special handling for endCleaning");
     }
     
     setScannerPurpose(purpose);
@@ -127,6 +129,7 @@ export function useQRScannerHandlers({
             onEndShiftScan(decodedText);
             break;
           case 'startCleaning':
+            console.log("[useQRScannerHandlers] Calling startCleaning handler with data:", decodedText);
             onStartCleaningScan(decodedText);
             // Switch to cleaning tab after starting a cleaning
             if (setActiveTab) {

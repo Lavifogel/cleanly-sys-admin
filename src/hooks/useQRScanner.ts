@@ -58,13 +58,18 @@ export function useQRScanner() {
     // Set the scanner purpose
     setScannerPurpose(purpose);
     
-    // Different delay for different purposes, give more time for endCleaning
-    const openDelay = purpose === "endCleaning" ? 1000 : 800;
+    // Different delay for different purposes
+    let openDelay = 800;
+    if (purpose === "endCleaning") {
+      openDelay = 1000;
+    } else if (purpose === "startCleaning") {
+      openDelay = 900; // Give a bit more time for startCleaning too
+    }
     
     // Add a delay before showing the scanner to ensure clean state
     setTimeout(() => {
-      if (purpose === "endCleaning") {
-        console.log("[useQRScanner] Running additional cleanup for endCleaning purpose");
+      if (purpose === "endCleaning" || purpose === "startCleaning") {
+        console.log(`[useQRScanner] Running additional cleanup for ${purpose} purpose`);
         stopAllVideoStreams();
       }
       
