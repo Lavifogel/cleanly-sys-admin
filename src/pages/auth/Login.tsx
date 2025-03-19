@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
-import { useUserData } from "@/hooks/useUserData";
+import { useUserData } from "@/hooks/auth";
 import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
