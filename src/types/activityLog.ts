@@ -1,3 +1,4 @@
+
 /**
  * Activity types supported in the unified activity_logs table
  */

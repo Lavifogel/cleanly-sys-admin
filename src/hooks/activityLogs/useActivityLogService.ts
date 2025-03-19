@@ -4,7 +4,10 @@ import {
   ActivityLog, 
   ActivityType,
   CreateActivityLogParams,
-  ActivityLogRequest
+  ActivityLogRequest,
+  ActiveShift,
+  ActiveCleaning,
+  UpdateActivityLogParams
 } from "@/types/activityLog";
 import { v4 as uuidv4 } from "uuid";
 
@@ -41,7 +44,7 @@ export async function createActivityLog(request: ActivityLogRequest): Promise<Ac
 /**
  * Updates an existing activity log record
  */
-export async function updateActivityLog(id: string, updates: Partial<ActivityLogRequest>): Promise<ActivityLog> {
+export async function updateActivityLog(id: string, updates: UpdateActivityLogParams): Promise<ActivityLog> {
   console.log(`Updating activity log ${id}:`, updates);
   
   // Prepare the update data
@@ -110,7 +113,7 @@ export async function getActivityLogById(id: string): Promise<ActivityLog | null
  * Gets active shift for a user by looking for the most recent shift_start activity 
  * without a corresponding shift_end
  */
-export async function getActiveShiftForUser(userId: string) {
+export async function getActiveShiftForUser(userId: string): Promise<ActiveShift | null> {
   // First find the most recent shift_start activity
   const { data: shiftStarts, error: shiftStartError } = await supabase
     .from('activity_logs')
@@ -157,7 +160,7 @@ export async function getActiveShiftForUser(userId: string) {
   // Return the active shift
   return {
     id: shiftStart.id,
-    qrId: shiftStart.qr_id,
+    qrId: shiftStart.qr_id || undefined,
     startTime: new Date(shiftStart.start_time),
     userId: shiftStart.user_id,
     status: shiftStart.status,
@@ -169,7 +172,7 @@ export async function getActiveShiftForUser(userId: string) {
  * Gets active cleaning for a shift by looking for the most recent cleaning_start activity 
  * without a corresponding cleaning_end
  */
-export async function getActiveCleaningForShift(shiftId: string) {
+export async function getActiveCleaningForShift(shiftId: string): Promise<ActiveCleaning | null> {
   // First find the most recent cleaning_start activity
   const { data: cleaningStarts, error: cleaningStartError } = await supabase
     .from('activity_logs')
@@ -217,7 +220,7 @@ export async function getActiveCleaningForShift(shiftId: string) {
   return {
     id: cleaningStart.id,
     shiftId: cleaningStart.related_id || '',
-    qrId: cleaningStart.qr_id,
+    qrId: cleaningStart.qr_id || undefined,
     startTime: new Date(cleaningStart.start_time),
     userId: cleaningStart.user_id,
     status: cleaningStart.status,
@@ -415,7 +418,7 @@ export async function saveImagesForCleaning(cleaningId: string, imageUrls: strin
     const imagesToInsert = imageUrls.map(url => ({
       id: uuidv4(),
       activity_log_id: cleaningId,
-      cleaning_id: cleaningId,
+      cleaning_id: cleaningId, // Keep this field for backward compatibility
       image_url: url
     }));
     
