@@ -159,14 +159,20 @@ export const loginWithCredentials = async (phoneNumber: string, password: string
         }
         
         user.password = password;
-      } 
-      // Verify password matches - important to ensure password values are compared properly
-      // FIX: Correctly compare passwords and handle the match/mismatch logic
-      const storedPassword = String(user.password).trim();
-      const providedPassword = String(password).trim();
+      }
+      
+      // Critical fix: Properly compare passwords
+      const storedPassword = String(user.password || '').trim();
+      const providedPassword = String(password || '').trim();
+      
+      console.log('Comparing passwords:', { 
+        storedLength: storedPassword.length, 
+        providedLength: providedPassword.length,
+        match: storedPassword === providedPassword 
+      });
       
       if (storedPassword !== providedPassword) {
-        console.error('Invalid password. Expected:', storedPassword, 'Received:', providedPassword);
+        console.error('Invalid password match. Stored:', storedPassword, 'Provided:', providedPassword);
         return { success: false, error: new Error("Invalid phone number or password") };
       }
       
