@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
+import { loginWithCredentials } from "@/services/authService";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -41,6 +42,31 @@ export function useAuth() {
     setStatus("loading");
     
     try {
+      // Check for admin login first
+      if (username === '+1234567890' && password === '654321') {
+        // Create admin user object
+        const adminUser = {
+          id: 'admin-id',
+          firstName: 'Admin',
+          lastName: 'User',
+          fullName: 'Admin User',
+          role: 'admin',
+          phone: username
+        };
+        
+        // Store in localStorage
+        localStorage.setItem('auth', JSON.stringify({ userData: adminUser }));
+        
+        console.log("Admin login successful");
+        setUser(adminUser);
+        setStatus("authenticated");
+        
+        // Redirect to admin dashboard
+        navigate('/admin/dashboard');
+        return adminUser;
+      }
+      
+      // Regular user login flow
       // Fetch user by phone/username
       const { data: users, error } = await supabase
         .from('users')
@@ -91,13 +117,20 @@ export function useAuth() {
       setUser(userData);
       setStatus("authenticated");
       
+      // Navigate based on role
+      if (userData.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/cleaners/dashboard');
+      }
+      
       return userData;
     } catch (error) {
       console.error("Login error:", error);
       setStatus("unauthenticated");
       throw error;
     }
-  }, []);
+  }, [navigate]);
 
   return {
     user,
