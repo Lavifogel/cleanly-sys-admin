@@ -99,14 +99,14 @@ const QRScannerHandler = ({
     processingQRScanRef.current = true;
     console.log("QR scan successful, data:", decodedText);
     
-    // First stop all camera streams BEFORE processing the result
+    // First stop all camera streams
     stopAllVideoStreams();
     
-    // Delay processing to ensure camera cleanup completes first
+    // Allow a moment for cleanup before processing result
     setTimeout(() => {
       onQRScan(decodedText);
       // Processing flag will be reset when the scanner is closed
-    }, 300); // Increased delay to ensure camera is properly stopped
+    }, 200);
   };
 
   return (

@@ -67,35 +67,21 @@ export const stopAllVideoStreams = () => {
       }
     });
     
-    // Try to revoke any existing MediaStream permissions
+    // Safely stop any MediaStream that might be active
     try {
-      navigator.mediaDevices.getUserMedia({ audio: false, video: false })
-        .then(stream => {
-          if (stream) {
+      if (navigator.mediaDevices) {
+        navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+          .then(stream => {
             stream.getTracks().forEach(track => {
               track.stop();
             });
-          }
-        })
-        .catch(() => {
-          // Ignore errors, as they might just mean no camera is available
-        });
+          })
+          .catch(() => {
+            // Ignore errors, as they might just mean no camera is available
+          });
+      }
     } catch (error) {
       // Ignore any errors in this cleanup
-    }
-    
-    // Try to stop any active MediaTracks that might be running
-    try {
-      navigator.mediaDevices.enumerateDevices()
-        .then(devices => {
-          // Force MediaDevices to clean up
-          console.log("Enumerating devices to help release resources");
-        })
-        .catch(() => {
-          // Ignore errors
-        });
-    } catch (error) {
-      // Ignore any errors
     }
     
     // Then attempt to safely remove video elements in a separate pass after a short delay
@@ -127,36 +113,6 @@ export const stopAllVideoStreams = () => {
       } catch (e) {
         console.log("Error removing scanner UI elements:", e);
       }
-      
-      // Second pass to ensure all streams are really stopped
-      setTimeout(() => {
-        try {
-          // Last-resort cleanup of any video-related DOM elements
-          const videoRelatedElements = document.querySelectorAll('video, .html5-qrcode-element, [id*="qr-scanner"]');
-          videoRelatedElements.forEach(element => {
-            if (element.parentNode && document.contains(element)) {
-              try {
-                if (element instanceof HTMLVideoElement && element.srcObject) {
-                  const stream = element.srcObject as MediaStream;
-                  if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                  }
-                  element.srcObject = null;
-                  element.pause();
-                }
-                // Don't remove the container elements, just clean them
-                if (!element.id?.includes('container')) {
-                  element.parentNode.removeChild(element);
-                }
-              } catch (e) {
-                console.log("Error in final element cleanup:", e);
-              }
-            }
-          });
-        } catch (e) {
-          console.log("Error in final DOM cleanup:", e);
-        }
-      }, 200);
     }, 100);
   } catch (e) {
     console.log("Error in stopAllVideoStreams:", e);
