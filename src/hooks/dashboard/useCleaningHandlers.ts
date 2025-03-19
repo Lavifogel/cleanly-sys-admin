@@ -60,6 +60,9 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       });
       return;
     }
+    
+    // In this handler we'll directly prepare the cleaning summary
+    prepareSummary(false);
   };
 
   const handleAutoEndCleaning = () => {

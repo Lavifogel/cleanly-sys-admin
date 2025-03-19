@@ -101,16 +101,6 @@ export function useQRScannerHandlers({
       // First close the scanner to release camera resources
       closeScanner();
       
-      // Special handling for endCleaning scan type
-      if (scannerPurpose === 'endCleaning') {
-        console.log("Processing endCleaning scan with special handling");
-        // Add extra delay for endCleaning to ensure clean UI transition
-        setTimeout(() => {
-          onEndCleaningScan(decodedText);
-        }, 800);
-        return;
-      }
-      
       // Use setTimeout to ensure UI updates before processing the scan
       setTimeout(() => {
         switch (scannerPurpose) {
