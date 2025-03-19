@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { User } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
-import { loginWithCredentials } from "@/services/authService";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -67,23 +66,39 @@ export function useAuth() {
       }
       
       // Regular user login flow
-      // Fetch user by phone/username
+      console.log("Attempting to log in with credentials:", username);
+      
+      // Fetch user by phone
       const { data: users, error } = await supabase
         .from('users')
         .select('*')
         .eq('phone', username)
         .limit(1);
       
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error("Supabase query error:", error);
+        throw new Error(error.message);
+      }
+      
+      console.log("Users found:", users);
       
       if (!users || users.length === 0) {
+        console.error("No user found with phone:", username);
         throw new Error("User not found");
       }
       
       const user = users[0];
+      console.log("User data retrieved:", user);
       
-      // Simple password check (in a real app, use proper password hashing)
+      // Check if password exists and matches
+      if (!user.password) {
+        console.error("User has no password set");
+        throw new Error("User account not properly configured");
+      }
+      
+      // Simple password check 
       if (user.password !== password) {
+        console.error("Password doesn't match");
         throw new Error("Invalid credentials");
       }
       
@@ -97,6 +112,8 @@ export function useAuth() {
         email: user.email,
         phone: user.phone
       };
+      
+      console.log("User data prepared:", userData);
       
       // Store in localStorage
       localStorage.setItem('auth', JSON.stringify({ userData }));
@@ -130,7 +147,7 @@ export function useAuth() {
       setStatus("unauthenticated");
       throw error;
     }
-  }, [navigate]);
+  }, [navigate, toast]);
 
   return {
     user,
