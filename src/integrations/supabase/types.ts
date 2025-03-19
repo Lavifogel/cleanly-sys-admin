@@ -66,7 +66,6 @@ export type Database = {
           end_time: string | null
           id: string
           notes: string | null
-          qr_id: string | null
           shift_id: string
           start_qr_id: string | null
           start_time: string | null
@@ -79,7 +78,6 @@ export type Database = {
           end_time?: string | null
           id?: string
           notes?: string | null
-          qr_id?: string | null
           shift_id: string
           start_qr_id?: string | null
           start_time?: string | null
@@ -92,7 +90,6 @@ export type Database = {
           end_time?: string | null
           id?: string
           notes?: string | null
-          qr_id?: string | null
           shift_id?: string
           start_qr_id?: string | null
           start_time?: string | null
@@ -103,13 +100,6 @@ export type Database = {
           {
             foreignKeyName: "cleanings_end_qr_id_fkey"
             columns: ["end_qr_id"]
-            isOneToOne: false
-            referencedRelation: "qr_codes"
-            referencedColumns: ["qr_id"]
-          },
-          {
-            foreignKeyName: "cleanings_qr_id_fkey"
-            columns: ["qr_id"]
             isOneToOne: false
             referencedRelation: "qr_codes"
             referencedColumns: ["qr_id"]
@@ -205,7 +195,6 @@ export type Database = {
           end_qr_id: string | null
           end_time: string | null
           id: string
-          qr_id: string | null
           start_qr_id: string | null
           start_time: string | null
           status: string
@@ -217,7 +206,6 @@ export type Database = {
           end_qr_id?: string | null
           end_time?: string | null
           id?: string
-          qr_id?: string | null
           start_qr_id?: string | null
           start_time?: string | null
           status?: string
@@ -229,7 +217,6 @@ export type Database = {
           end_qr_id?: string | null
           end_time?: string | null
           id?: string
-          qr_id?: string | null
           start_qr_id?: string | null
           start_time?: string | null
           status?: string
@@ -240,13 +227,6 @@ export type Database = {
           {
             foreignKeyName: "shifts_end_qr_id_fkey"
             columns: ["end_qr_id"]
-            isOneToOne: false
-            referencedRelation: "qr_codes"
-            referencedColumns: ["qr_id"]
-          },
-          {
-            foreignKeyName: "shifts_qr_id_fkey"
-            columns: ["qr_id"]
             isOneToOne: false
             referencedRelation: "qr_codes"
             referencedColumns: ["qr_id"]
