@@ -1,9 +1,10 @@
 
 import { useCallback } from "react";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
-import { updateCleaningEnd } from "@/hooks/shift/useCleaningDatabase";
+import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 import { useToast } from "@/hooks/use-toast";
 import { formatDateToDDMMYYYY } from "@/utils/timeUtils";
+import { generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
 
 export function useAutoEndCleaning(
   activeCleaning: Cleaning | null,
@@ -27,13 +28,22 @@ export function useAutoEndCleaning(
       
       console.log("Auto-ending cleaning with ID:", cleaningId);
       
-      // Update the cleaning in the database
-      await updateCleaningEnd(
-        cleaningId,
-        endTime.toISOString(),
-        status,
-        notes
-      );
+      // Get user ID
+      const userId = await generateTemporaryUserId();
+      
+      // Create a cleaning_end activity log
+      try {
+        await createActivityLog({
+          user_id: userId,
+          activity_type: 'cleaning_end',
+          start_time: endTime.toISOString(),
+          status: status,
+          notes: notes,
+          related_id: cleaningId
+        });
+      } catch (error: any) {
+        console.error("Error creating cleaning_end log:", error);
+      }
       
       // Update the local state with formatted date
       const newCleaning = {

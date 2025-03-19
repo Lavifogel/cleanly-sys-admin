@@ -4,11 +4,11 @@ import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
 import { 
   createOrFindQrCode, 
-  createShift,
   generateTemporaryUserId 
 } from "@/hooks/shift/useShiftDatabase";
 import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
 import { Shift } from "@/hooks/shift/types";
+import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 
 /**
  * Hook for starting shifts
@@ -50,10 +50,16 @@ export function useStartShift(
       // Generate a temporary user ID
       const temporaryUserId = await generateTemporaryUserId();
       
-      // Store the shift in the database
+      // Store the shift in the database using the new activity log
       try {
-        await createShift(newShiftId, temporaryUserId, startTime.toISOString(), qrId);
-        console.log("Shift stored successfully");
+        await createActivityLog({
+          user_id: temporaryUserId,
+          qr_id: qrId,
+          activity_type: 'shift_start',
+          start_time: startTime.toISOString(),
+          status: 'active'
+        });
+        console.log("Shift stored successfully as activity log");
       } catch (error: any) {
         console.error("Error storing shift:", error);
         toast({
@@ -69,6 +75,8 @@ export function useStartShift(
         startTime: startTime,
         timer: 0,
         id: newShiftId,
+        location: areaName,
+        qrId: qrId || undefined
       });
       setElapsedTime(0);
       

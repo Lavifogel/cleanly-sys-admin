@@ -1,12 +1,11 @@
 
 import { v4 as uuidv4 } from "uuid";
 import { Cleaning } from "@/types/cleaning";
-import { 
-  createOrFindCleaningQrCode, 
-  createCleaning 
-} from "@/hooks/shift/useCleaningDatabase";
+import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
 import { useToast } from "@/hooks/use-toast";
+import { createOrFindCleaningQrCode } from "@/hooks/shift/useCleaningDatabase";
+import { generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
 
 export function useStartCleaning(
   activeShiftId: string | undefined,
@@ -47,16 +46,21 @@ export function useStartCleaning(
         console.error("Error with cleaning QR code:", error);
       }
       
-      // Store the cleaning in the database
+      // Get user ID 
+      const userId = await generateTemporaryUserId();
+      
+      // Store the cleaning in the database as an activity log
       try {
-        await createCleaning(
-          cleaningId, 
-          activeShiftId, 
-          startTime.toISOString(), 
-          qrId,
-          locationFromQR
-        );
-        console.log("Cleaning stored successfully");
+        await createActivityLog({
+          user_id: userId,
+          qr_id: qrId,
+          activity_type: 'cleaning_start',
+          start_time: startTime.toISOString(),
+          status: 'active',
+          notes: `Location: ${locationFromQR}`,
+          related_id: activeShiftId
+        });
+        console.log("Cleaning stored successfully as activity log");
       } catch (error: any) {
         console.error("Error storing cleaning:", error);
       }

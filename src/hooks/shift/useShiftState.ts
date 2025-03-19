@@ -1,29 +1,35 @@
 
 import { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { Shift, ShiftHistoryItem } from "./types";
+import { getActiveShiftForUser, getShiftHistoryForUser } from "@/hooks/activityLogs/useActivityLogService";
+import { generateTemporaryUserId } from "./useShiftDatabase";
 
 export function useShiftState() {
-  // State for tracking shift
+  // Core shift state
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [shiftsHistory, setShiftsHistory] = useState<ShiftHistoryItem[]>([]);
 
-  // Load active shift from local storage on component mount
+  // Load active shift from localStorage on component mount
   useEffect(() => {
     const storedShiftData = localStorage.getItem('activeShift');
     const storedShiftTimer = localStorage.getItem('shiftTimer');
-    const storedStartTime = localStorage.getItem('shiftStartTime');
+    const storedShiftStartTime = localStorage.getItem('shiftStartTime');
     
-    if (storedShiftData && storedStartTime) {
+    if (storedShiftData && storedShiftStartTime) {
       try {
         const shiftData = JSON.parse(storedShiftData);
-        const startTime = new Date(storedStartTime);
-        const savedShift: Shift = {
-          ...shiftData,
-          startTime
-        };
+        const startTime = new Date(storedShiftStartTime);
         
-        setActiveShift(savedShift);
+        // Create a shift object from stored data
+        setActiveShift({
+          id: shiftData.id,
+          startTime,
+          timer: 0,
+          location: shiftData.location,
+          qrId: shiftData.qrId
+        });
         
         if (storedShiftTimer) {
           setElapsedTime(parseInt(storedShiftTimer, 10));
@@ -38,33 +44,39 @@ export function useShiftState() {
     }
   }, []);
 
-  // Save active shift to local storage whenever it changes
+  // Fetch shift history on component mount
+  useEffect(() => {
+    const fetchShiftHistory = async () => {
+      try {
+        const userId = await generateTemporaryUserId();
+        const history = await getShiftHistoryForUser(userId);
+        if (history && history.length > 0) {
+          setShiftsHistory(history);
+        }
+      } catch (error) {
+        console.error("Error fetching shift history:", error);
+      }
+    };
+    
+    fetchShiftHistory();
+  }, []);
+
+  // Save active shift to localStorage whenever it changes
   useEffect(() => {
     if (activeShift) {
-      // Store shift data in localStorage for retrieval on logout/refresh
-      const shiftDataToStore = {
+      localStorage.setItem('activeShift', JSON.stringify({
         id: activeShift.id,
-      };
-
-      // Only include location and qrId if they exist
-      if (activeShift.location) {
-        shiftDataToStore['location'] = activeShift.location;
-      }
-      
-      if (activeShift.qrId) {
-        shiftDataToStore['qrId'] = activeShift.qrId;
-      }
-      
-      localStorage.setItem('activeShift', JSON.stringify(shiftDataToStore));
+        location: activeShift.location,
+        qrId: activeShift.qrId
+      }));
       localStorage.setItem('shiftStartTime', activeShift.startTime.toISOString());
     } else {
-      // If there's no active shift, remove the stored data
       localStorage.removeItem('activeShift');
       localStorage.removeItem('shiftStartTime');
     }
   }, [activeShift]);
 
-  // Save elapsed time to localStorage when it changes
+  // Save shift elapsed time when it changes
   useEffect(() => {
     if (activeShift && elapsedTime > 0) {
       localStorage.setItem('shiftTimer', elapsedTime.toString());

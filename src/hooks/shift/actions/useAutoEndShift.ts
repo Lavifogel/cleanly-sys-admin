@@ -1,11 +1,10 @@
 
 import { useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  updateShiftEnd 
-} from "@/hooks/shift/useShiftDatabase";
+import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
 import { createShiftHistoryItem } from "@/hooks/shift/useShiftHistory";
 import { Shift, ShiftHistoryItem } from "@/hooks/shift/types";
+import { generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
 
 /**
  * Hook for automatically ending shifts
@@ -30,11 +29,21 @@ export function useAutoEndShift(
       
       console.log("Auto-ending shift:", activeShift.id);
       
-      // Update the shift in the database
+      // Get user ID for the shift
+      const userId = await generateTemporaryUserId();
+      
+      // Create a shift_end activity log
       try {
-        await updateShiftEnd(activeShift.id, endTime.toISOString(), status);
+        await createActivityLog({
+          user_id: userId,
+          qr_id: activeShift.qrId,
+          activity_type: 'shift_end',
+          start_time: endTime.toISOString(),
+          status: status,
+          related_id: activeShift.id
+        });
       } catch (error: any) {
-        console.error("Error auto-ending shift:", error);
+        console.error("Error creating shift_end log:", error);
         return false;
       }
       
