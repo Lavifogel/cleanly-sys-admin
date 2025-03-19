@@ -14,6 +14,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   
   // Pre-clean any existing camera before initializing
   useEffect(() => {
+    console.log("QRCodeScanner mounting, initializing camera...");
     // Force stop all camera streams when component mounts
     stopAllVideoStreams();
     scanProcessedRef.current = false;

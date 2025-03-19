@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 
 interface UseScannerInitializationProps {
   scannerRef: React.MutableRefObject<Html5Qrcode | null>;
@@ -56,11 +56,11 @@ export const useScannerInitialization = ({
     return {
       fps: 10, // Lower FPS for more stability
       qrbox: { width: 250, height: 250 },
-      formatsToSupport: ["QR_CODE"],
+      formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
       experimentalFeatures: {
         useBarCodeDetectorIfSupported: true
       },
-      verbose: false // Add the required verbose property
+      verbose: false
     };
   }, []);
   

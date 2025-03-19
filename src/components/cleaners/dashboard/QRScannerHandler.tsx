@@ -32,6 +32,7 @@ const QRScannerHandler = ({
       stopAllVideoStreams();
       processingQRScanRef.current = false;
     } else {
+      console.log(`Opening QR scanner for purpose: ${scannerPurpose}`);
       // First cleanup any existing streams before opening scanner
       stopAllVideoStreams();
       processingQRScanRef.current = false;
@@ -42,7 +43,7 @@ const QRScannerHandler = ({
       stopAllVideoStreams();
       console.log("QRScannerHandler useEffect cleanup, stopping video streams");
     };
-  }, [showQRScanner]);
+  }, [showQRScanner, scannerPurpose]);
   
   // Force cleanup on component unmount
   useEffect(() => {

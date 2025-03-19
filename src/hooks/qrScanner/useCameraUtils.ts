@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { Html5Qrcode, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeFullConfig, Html5QrcodeCameraScanConfig, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseCameraUtilsProps {
@@ -36,9 +36,7 @@ export const useCameraUtils = ({
         fps: config.fps || 10,
         qrbox: config.qrbox,
         aspectRatio: undefined,
-        disableFlip: false,
-        formatsToSupport: config.formatsToSupport,
-        experimentalFeatures: config.experimentalFeatures
+        disableFlip: false
       };
       
       // Try a very generic approach that should work on most devices

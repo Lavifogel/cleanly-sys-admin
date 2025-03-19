@@ -105,9 +105,7 @@ export const useCameraStart = ({
         fps: fullConfig.fps,
         qrbox: fullConfig.qrbox,
         aspectRatio: undefined,
-        disableFlip: false,
-        formatsToSupport: fullConfig.formatsToSupport,
-        experimentalFeatures: fullConfig.experimentalFeatures
+        disableFlip: false
       };
 
       // Set timeout to prevent infinite loading when camera permissions are denied
