@@ -20,6 +20,7 @@ interface DashboardTabsProps {
   handleEndShiftWithScan: () => void;
   handleEndShiftWithoutScan: () => void;
   handleStartCleaning: () => void;
+  handleEndCleaningWithScan: () => void;
   handleEndCleaningWithoutScan: () => void;
   handleAutoEndCleaning?: () => void;
 }
@@ -37,6 +38,7 @@ const DashboardTabs = ({
   handleEndShiftWithScan,
   handleEndShiftWithoutScan,
   handleStartCleaning,
+  handleEndCleaningWithScan,
   handleEndCleaningWithoutScan,
   handleAutoEndCleaning
 }: DashboardTabsProps) => {
@@ -72,7 +74,7 @@ const DashboardTabs = ({
           onEndShiftWithScan={handleEndShiftWithScan}
           onEndShiftWithoutScan={handleEndShiftWithoutScan}
           onStartCleaning={handleStartCleaning}
-          onSwitchToCleaningTab={switchToCleaningTab}
+          onSwitchToCleaningTab={switchToCleaningTab} // Pass the tab switching function
         />
       </TabsContent>
 
@@ -82,10 +84,11 @@ const DashboardTabs = ({
           cleaningElapsedTime={cleaningElapsedTime}
           cleaningsHistory={cleaningsHistory}
           handleStartCleaning={handleStartCleaning}
+          handleEndCleaningWithScan={handleEndCleaningWithScan}
           handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
           togglePauseCleaning={togglePauseCleaning}
           handleAutoEndCleaning={handleAutoEndCleaning || (() => {})}
-          activeShiftId={activeShift?.id}
+          activeShiftId={activeShift?.id} // Pass the active shift ID
         />
       </TabsContent>
 

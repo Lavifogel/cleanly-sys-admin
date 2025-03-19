@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, PauseCircle } from "lucide-react";
+import { MapPin, PauseCircle, Scan } from "lucide-react";
 import { formatTime } from "@/utils/timeUtils";
 import { useEffect } from "react";
 
@@ -11,6 +11,7 @@ interface ActiveCleaningCardProps {
   cleaningElapsedTime: number;
   isPaused: boolean;
   onPauseCleaning: () => void;
+  onEndCleaningWithScan: () => void;
   onEndCleaningWithoutScan: () => void;
   onAutoEndCleaning?: () => void;
 }
@@ -21,6 +22,7 @@ const ActiveCleaningCard = ({
   cleaningElapsedTime,
   isPaused,
   onPauseCleaning,
+  onEndCleaningWithScan,
   onEndCleaningWithoutScan,
   onAutoEndCleaning,
 }: ActiveCleaningCardProps) => {
@@ -65,10 +67,18 @@ const ActiveCleaningCard = ({
           </Button>
           <Button
             variant="destructive"
-            onClick={onEndCleaningWithoutScan}
+            onClick={onEndCleaningWithScan}
             className="w-full mt-4"
           >
-            Complete Cleaning
+            <Scan className="mr-2 h-4 w-4" />
+            Complete with Scan
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onEndCleaningWithoutScan}
+            className="w-full"
+          >
+            Complete without Scan
           </Button>
         </div>
       </CardContent>

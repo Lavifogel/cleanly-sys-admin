@@ -6,15 +6,12 @@ import {
   createCleaning 
 } from "@/hooks/shift/useCleaningDatabase";
 import { parseQrData, createMockQrData } from "@/hooks/shift/useQrDataParser";
-import { useToast } from "@/hooks/use-toast";
 
 export function useStartCleaning(
   activeShiftId: string | undefined,
   setActiveCleaning: (cleaning: Cleaning | null) => void,
   setCleaningElapsedTime: (time: number) => void
 ) {
-  const { toast } = useToast();
-
   // Start a new cleaning session with QR code data
   const startCleaning = async (qrData: string) => {
     if (!activeShiftId) {
@@ -23,8 +20,6 @@ export function useStartCleaning(
     }
     
     try {
-      console.log("Starting cleaning process with QR data:", qrData);
-      
       // Generate cleaning ID
       const cleaningId = uuidv4();
       const startTime = new Date();
@@ -32,8 +27,6 @@ export function useStartCleaning(
       // Parse QR code data
       const { areaId, areaName, isValid } = parseQrData(qrData);
       const locationFromQR = areaName || "Unknown Location";
-      
-      console.log("Parsed QR data:", { areaId, areaName, isValid });
       
       // If QR data isn't valid, create a mock QR data string
       const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);
@@ -71,27 +64,8 @@ export function useStartCleaning(
       });
       setCleaningElapsedTime(0);
       
-      // Show success toast
-      toast({
-        title: "Cleaning Started",
-        description: `Started cleaning at ${locationFromQR}`,
-      });
-      
-      console.log("Cleaning started successfully:", {
-        id: cleaningId,
-        location: locationFromQR,
-        startTime: startTime
-      });
-      
     } catch (error) {
       console.error("Failed to start cleaning:", error);
-      
-      // Show error toast
-      toast({
-        title: "Failed to Start Cleaning",
-        description: "Please try again or contact support if the issue persists.",
-        variant: "destructive",
-      });
     }
   };
 
