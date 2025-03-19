@@ -67,7 +67,10 @@ const ActiveCleaningCard = ({
           </Button>
           <Button
             variant="destructive"
-            onClick={onEndCleaningWithScan}
+            onClick={() => {
+              console.log("Complete with Scan button clicked");
+              onEndCleaningWithScan();
+            }}
             className="w-full mt-4"
           >
             <Scan className="mr-2 h-4 w-4" />

@@ -98,7 +98,7 @@ const QRScannerHandler = ({
     lastProcessedCodeRef.current = decodedText;
     
     // Pass the scan data to the parent handler
-    // Don't close scanner immediately - let the parent component handle it
+    console.log(`QRScannerHandler: Processing scan for purpose: ${scannerPurpose}`);
     onQRScan(decodedText);
   };
 
@@ -111,6 +111,22 @@ const QRScannerHandler = ({
     setTimeout(() => {
       closeScanner();
     }, 300);
+  };
+
+  // Display purpose-specific title
+  const getScannerTitle = () => {
+    switch (scannerPurpose) {
+      case 'startShift':
+        return 'Scan QR Code to Start Shift';
+      case 'endShift':
+        return 'Scan QR Code to End Shift';
+      case 'startCleaning':
+        return 'Scan QR Code to Start Cleaning';
+      case 'endCleaning':
+        return 'Scan QR Code to Complete Cleaning';
+      default:
+        return 'Scan QR Code';
+    }
   };
 
   return (
@@ -131,6 +147,7 @@ const QRScannerHandler = ({
       <QRCodeScanner 
         onScanSuccess={handleScanSuccess}
         onClose={handleCloseScanner}
+        title={getScannerTitle()}
       />
     </div>
   );

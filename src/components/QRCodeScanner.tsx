@@ -8,7 +8,15 @@ import QRScannerView from "@/components/qrScanner/QRScannerView";
 import { Button } from "./ui/button";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
-const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
+interface EnhancedQRCodeScannerProps extends QRCodeScannerProps {
+  title?: string;
+}
+
+const QRCodeScanner: React.FC<EnhancedQRCodeScannerProps> = ({ 
+  onScanSuccess, 
+  onClose,
+  title = "Scan QR Code"
+}) => {
   const scannerMountedRef = useRef(false);
   const cleanupTimeoutRef = useRef<number | null>(null);
   const scanProcessingRef = useRef(false);
@@ -95,7 +103,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
       <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
         <div className="w-full flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Scan QR Code</h3>
+          <h3 className="text-lg font-semibold">{title}</h3>
           <Button 
             variant="ghost" 
             size="icon" 

@@ -47,6 +47,7 @@ export function useQrScanHandlers({
       scanInProgressRef.current = true;
       
       try {
+        // This is the key call that needs to work - pass the QR data to the handler
         onEndCleaningScan(qrData);
       } catch (error) {
         console.error("Error processing end cleaning scan:", error);

@@ -89,13 +89,11 @@ export function useQRScannerHandlers({
       return;
     }
     
-    console.log(`QR scan detected for purpose: ${scannerPurpose}`);
+    console.log(`QR scan detected for purpose: ${scannerPurpose}, data: ${decodedText}`);
     processingQRCodeRef.current = true;
     lastProcessedCodeRef.current = decodedText;
     
     try {
-      console.log(`Processing QR scan for purpose: ${scannerPurpose}, data: ${decodedText}`);
-      
       switch (scannerPurpose) {
         case 'startShift':
           onStartShiftScan(decodedText);
@@ -114,7 +112,7 @@ export function useQRScannerHandlers({
           closeScanner(); // Close after processing
           break;
         case 'endCleaning':
-          console.log("Calling onEndCleaningScan with data:", decodedText);
+          console.log("Processing endCleaning QR scan with data:", decodedText);
           onEndCleaningScan(decodedText);
           closeScanner(); // Close after processing
           break;
