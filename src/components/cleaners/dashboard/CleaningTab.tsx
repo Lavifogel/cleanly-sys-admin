@@ -33,7 +33,7 @@ const CleaningTab = ({
   useEffect(() => {
     const MAX_CLEANING_DURATION = 18000; // 5 hours in seconds
     
-    if (activeCleaning && cleaningElapsedTime >= MAX_CLEANING_DURATION) {
+    if (activeCleaning && !activeCleaning.paused && cleaningElapsedTime >= MAX_CLEANING_DURATION) {
       console.log("Cleaning exceeded 5 hours, automatically ending it");
       handleAutoEndCleaning();
     }

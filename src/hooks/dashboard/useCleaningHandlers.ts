@@ -45,6 +45,10 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       });
       return;
     }
+    
+    // This function will be called when "Complete with Scan" button is clicked
+    // The actual opening of the scanner is done in useDashboardHandlers.ts
+    console.log("Requesting to end cleaning with scan");
   };
 
   const handleEndCleaningWithoutScan = () => {
