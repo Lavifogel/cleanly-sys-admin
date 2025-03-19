@@ -70,7 +70,7 @@ export const useScannerInitialization = ({
       qrbox: { width: 250, height: 250 },
       aspectRatio: 1.0,
       disableFlip: false,
-      formatsToSupport: [Html5Qrcode.FORMATS.QR_CODE],
+      formatsToSupport: ['QR_CODE'], // Changed from Html5Qrcode.FORMATS.QR_CODE to string literal
       rememberLastUsedCamera: true,
       showTorchButtonIfSupported: true,
     };
