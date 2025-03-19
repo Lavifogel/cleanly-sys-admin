@@ -36,8 +36,8 @@ export function useQRScannerHandlers({
       // Reset processing state after a delay
       setTimeout(() => {
         processingRef.current = false;
-      }, 300);
-    }, 200);
+      }, 200);
+    }, 100);
   };
   
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
@@ -61,6 +61,7 @@ export function useQRScannerHandlers({
     }
     
     processingRef.current = true;
+    console.log(`Processing QR scan for purpose: ${scannerPurpose}, data: ${decodedText}`);
     
     // Immediately stop all camera streams
     stopAllVideoStreams();
@@ -68,12 +69,10 @@ export function useQRScannerHandlers({
     // Hide scanner UI
     setShowQRScanner(false);
     
-    // Add a larger delay before processing the scan result
+    // Add a delay before processing the scan result
     // This ensures camera resources are fully released
     setTimeout(() => {
       try {
-        console.log(`QR scanned for purpose: ${scannerPurpose}, data: ${decodedText}`);
-        
         // Force stop camera streams again to ensure complete cleanup
         stopAllVideoStreams();
         
@@ -92,7 +91,11 @@ export function useQRScannerHandlers({
             }
             break;
           case 'endCleaning':
+            console.log("Calling endCleaning handler with data:", decodedText);
             onEndCleaningScan(decodedText);
+            break;
+          default:
+            console.log("Unknown scanner purpose:", scannerPurpose);
             break;
         }
       } catch (error) {
@@ -101,12 +104,12 @@ export function useQRScannerHandlers({
         // Final camera cleanup
         stopAllVideoStreams();
         
-        // Reset processing flag
+        // Reset processing flag with a delay
         setTimeout(() => {
           processingRef.current = false;
-        }, 500);
+        }, 300);
       }
-    }, 500);
+    }, 300);
   };
   
   return {
