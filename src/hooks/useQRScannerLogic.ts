@@ -56,6 +56,7 @@ export const useQRScannerLogic = (
   const isClosingRef = useRef(false);
   const mountTimestampRef = useRef(Date.now());
   const scanSuccessProcessedRef = useRef(false);
+  const startAttemptTimeoutRef = useRef<number | null>(null);
 
   // Initialize the scanner when component mounts with a slight delay to ensure DOM is ready
   useEffect(() => {
@@ -66,19 +67,23 @@ export const useQRScannerLogic = (
     mountTimestampRef.current = Date.now();
     scanSuccessProcessedRef.current = false;
     
-    const initTimer = setTimeout(() => {
+    // Use a longer delay to ensure DOM is fully ready before starting scanner
+    startAttemptTimeoutRef.current = window.setTimeout(() => {
       if (scannerRef.current) {
         console.log("Scanner reference already exists, starting scanner");
         if (!isScanning) {
           startScanner();
         }
       }
-    }, 800); // Increased delay to ensure DOM is fully ready
+    }, 1200);
     
     // Clean up when component unmounts
     return () => {
-      clearTimeout(initTimer);
+      if (startAttemptTimeoutRef.current) {
+        clearTimeout(startAttemptTimeoutRef.current);
+      }
       stopCamera();
+      stopAllVideoStreams();
     };
   }, []);
 
@@ -116,7 +121,7 @@ export const useQRScannerLogic = (
 
   // Handle successful scan with debounce to prevent multiple processing
   const handleSuccessWithDebounce = (decodedText: string) => {
-    // Prevent processing scans too soon after mounting
+    // Prevent processing scans too soon after mounting or duplicate processing
     const currentTime = Date.now();
     const timeSinceMount = currentTime - mountTimestampRef.current;
     
@@ -136,10 +141,10 @@ export const useQRScannerLogic = (
     // Stop all camera streams and pass the decoded text to the success handler
     stopAllVideoStreams();
     
-    // Add a delay to ensure complete camera cleanup
+    // Add a longer delay to ensure complete camera cleanup before calling success handler
     setTimeout(() => {
       onScanSuccess(decodedText);
-    }, 800);
+    }, 1000);
   };
 
   const handleManualSimulation = () => {

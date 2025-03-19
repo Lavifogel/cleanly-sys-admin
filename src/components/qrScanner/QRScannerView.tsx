@@ -25,10 +25,10 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
       // If dimensions are 0, try to force layout recalculation
       if (rect.width === 0 || rect.height === 0) {
         // Apply explicit dimensions to ensure the container is sizeable
-        containerRef.current.style.minWidth = "300px";
-        containerRef.current.style.minHeight = "300px";
+        containerRef.current.style.minWidth = "320px";
+        containerRef.current.style.minHeight = "320px";
         containerRef.current.style.width = "100%";
-        containerRef.current.style.height = "320px";
+        containerRef.current.style.height = "400px";
         
         // Force a layout recalculation
         setTimeout(() => {
@@ -45,13 +45,13 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
     <div 
       ref={containerRef}
       className="w-full max-w-md rounded-lg overflow-hidden relative bg-gray-900"
-      style={{ height: "320px", minHeight: "320px", minWidth: "320px" }} // Ensure fixed dimensions
+      style={{ height: "400px", minHeight: "400px", minWidth: "320px" }} // Increased dimensions for better visibility
     >
       {/* Scanner container with explicit size */}
       <div 
         id={scannerContainerId} 
         className="absolute inset-0 z-10 flex items-center justify-center"
-        style={{ minHeight: "300px", minWidth: "300px" }}
+        style={{ minHeight: "400px", minWidth: "320px" }}
       >
         {/* Inner element to ensure the scanner UI is visible and properly positioned */}
         <div className="relative w-full h-full">
