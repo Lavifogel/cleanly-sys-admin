@@ -87,6 +87,8 @@ export const useQRScannerLogic = (
     handleClose,
     handleTakePicture,
     handleFileSelect,
-    handleManualSimulation
+    handleManualSimulation,
+    startScanner, // Make sure to return startScanner
+    stopCamera // Also return stopCamera for explicit camera control
   };
 };

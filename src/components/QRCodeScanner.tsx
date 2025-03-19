@@ -17,7 +17,9 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     scannerState,
     scannerContainerId,
     handleClose,
-    handleManualSimulation
+    handleManualSimulation,
+    startScanner, // Now properly received from the hook
+    stopCamera
   } = useQRScannerLogic(
     // Wrap the success callback to ensure proper cleanup before callback
     (decodedText: string) => {
@@ -48,7 +50,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
   const { error, cameraActive } = scannerState;
   
-  // Component mount effect
+  // Component mount effect - explicitly start camera
   useEffect(() => {
     // Mark component as mounted
     scannerMountedRef.current = true;
@@ -57,9 +59,11 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Add a delay to ensure DOM is ready
     const timer = setTimeout(() => {
       if (scannerMountedRef.current) {
-        console.log("QR scanner mounted, camera active:", cameraActive);
+        console.log("QR scanner mounted, starting camera...");
+        // Explicitly start the scanner
+        startScanner();
       }
-    }, 500);
+    }, 300);
     
     return () => {
       clearTimeout(timer);
@@ -75,6 +79,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       }
       
       // Force stop all camera streams
+      stopCamera();
       stopAllVideoStreams();
       
       // Add a small delay before final cleanup to avoid race conditions
@@ -94,6 +99,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     scannerMountedRef.current = false;
     
     // First stop all camera streams
+    stopCamera();
     stopAllVideoStreams();
     
     // Slight delay to ensure cleanup completes before closing

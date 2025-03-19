@@ -30,9 +30,15 @@ const QRScannerHandler = ({
   useEffect(() => {
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
-      scannerMounted.current = true;
-      processingQRScanRef.current = false;
-      console.log("QR scanner opened");
+      // Make sure we're starting fresh
+      stopAllVideoStreams();
+      
+      // Give time for previous resources to clean up
+      setTimeout(() => {
+        scannerMounted.current = true;
+        processingQRScanRef.current = false;
+        console.log(`QR scanner opened for purpose: ${scannerPurpose}`);
+      }, 100);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
@@ -74,7 +80,7 @@ const QRScannerHandler = ({
         console.log("QR scanner handler unmounted, resources cleaned up");
       }
     };
-  }, [showQRScanner]);
+  }, [showQRScanner, scannerPurpose]);
 
   // Additional cleanup when component unmounts
   useEffect(() => {
@@ -97,7 +103,7 @@ const QRScannerHandler = ({
     }
     
     processingQRScanRef.current = true;
-    console.log("QR scan successful, data:", decodedText);
+    console.log(`QR scan successful for purpose ${scannerPurpose}, data:`, decodedText);
     
     // First stop all camera streams
     stopAllVideoStreams();
@@ -137,6 +143,11 @@ const QRScannerHandler = ({
             setTimeout(() => {
               closeScanner();
             }, 200);
+          } else {
+            // For non-cancellable scans, make sure we release camera resources
+            stopAllVideoStreams();
+            // Close immediately since user can't cancel anyway
+            closeScanner();
           }
         }}
       />

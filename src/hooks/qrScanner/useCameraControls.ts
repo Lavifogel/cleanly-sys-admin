@@ -57,6 +57,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     // Use a flag to ensure we only attempt to start the camera once per mount
     if (scannerRef.current && !isScanning && !hasAttemptedStart.current) {
       hasAttemptedStart.current = true;
+      console.log("Scheduling initial camera start");
       const startTimer = setTimeout(() => {
         console.log("Starting scanner after initialization");
         startScanner();
@@ -65,6 +66,12 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
       return () => clearTimeout(startTimer);
     }
   }, [scannerRef.current, isScanning, startScanner]);
+
+  // Reset the attempt flag when component is remounted
+  const resetStartAttempt = () => {
+    console.log("Resetting camera start attempt flag");
+    hasAttemptedStart.current = false;
+  };
 
   // Clean up on unmount
   useEffect(() => {
@@ -84,6 +91,7 @@ export const useCameraControls = ({ onScanSuccess }: UseCameraControlsProps) => 
     scannerContainerId,
     stopCamera,
     startScanner,
+    resetStartAttempt,
     setError
   };
 };
