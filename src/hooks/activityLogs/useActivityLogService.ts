@@ -1,8 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { 
   ActivityLog, 
-  ActivityLogRequest,
-  ActivityType
+  ActivityType,
+  CreateActivityLogParams,
+  ActivityLogRequest
 } from "@/types/activityLog";
 import { v4 as uuidv4 } from "uuid";
 

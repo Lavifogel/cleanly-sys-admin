@@ -36,6 +36,11 @@ export interface CreateActivityLogParams {
 }
 
 /**
+ * Request interface for activity logs - alias for backward compatibility
+ */
+export type ActivityLogRequest = CreateActivityLogParams;
+
+/**
  * Interface for updating an activity log
  */
 export interface UpdateActivityLogParams {
