@@ -53,10 +53,6 @@ export function useDashboardQRScanner(
             startCleaning(decodedText);
             setActiveTab("cleaning");
             break;
-          case "endCleaning":
-            console.log("Processing endCleaning scan");
-            prepareSummary(true, decodedText);
-            break;
           default:
             console.warn("Unknown scanner purpose:", scannerPurpose);
         }
@@ -89,12 +85,6 @@ export function useDashboardQRScanner(
     console.log("Opening scanner to start cleaning");
     openScanner("startCleaning");
   };
-
-  const handleEndCleaningWithScan = () => {
-    if (!activeCleaning) return;
-    console.log("Opening scanner to end cleaning");
-    openScanner("endCleaning");
-  };
   
   return {
     showQRScanner,
@@ -103,7 +93,6 @@ export function useDashboardQRScanner(
     handleQRScan,
     handleStartShift,
     handleEndShiftWithScan,
-    handleStartCleaning,
-    handleEndCleaningWithScan
+    handleStartCleaning
   };
 }

@@ -156,10 +156,6 @@ export function useQRScannerHandlers({
               setActiveTab('cleaning');
             }
             break;
-          case 'endCleaning':
-            console.log("Calling onEndCleaningScan with data:", decodedText);
-            onEndCleaningScan(decodedText);
-            break;
           default:
             console.warn("Unknown scanner purpose:", scannerPurpose);
         }

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
-export type ScannerPurpose = "startShift" | "endShift" | "startCleaning" | "endCleaning";
+export type ScannerPurpose = "startShift" | "endShift" | "startCleaning";
 
 export function useQRScanner() {
   const [showQRScanner, setShowQRScanner] = useState(false);

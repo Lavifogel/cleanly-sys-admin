@@ -47,19 +47,6 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
     console.log("Ready to start cleaning, waiting for QR scan");
   };
 
-  const handleEndCleaningWithScan = () => {
-    if (!activeCleaning) {
-      toast({
-        title: "Error",
-        description: "No active cleaning to end.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    console.log("Requesting to end cleaning with scan");
-  };
-
   const handleEndCleaningWithoutScan = () => {
     if (!activeCleaning) {
       toast({
@@ -110,7 +97,6 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
     togglePauseCleaning,
     prepareSummary,
     handleStartCleaning,
-    handleEndCleaningWithScan,
     handleEndCleaningWithoutScan,
     handleAutoEndCleaning,
     handleCompleteSummary,

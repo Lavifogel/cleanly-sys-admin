@@ -11,7 +11,6 @@ interface CleaningTabProps {
   cleaningElapsedTime: number;
   cleaningsHistory: CleaningHistoryItem[];
   handleStartCleaning: () => void;
-  handleEndCleaningWithScan: () => void;
   handleEndCleaningWithoutScan: () => void;
   togglePauseCleaning: () => void;
   handleAutoEndCleaning: () => void;
@@ -23,7 +22,6 @@ const CleaningTab = ({
   cleaningElapsedTime,
   cleaningsHistory,
   handleStartCleaning,
-  handleEndCleaningWithScan,
   handleEndCleaningWithoutScan,
   togglePauseCleaning,
   handleAutoEndCleaning,
@@ -64,7 +62,6 @@ const CleaningTab = ({
           cleaningElapsedTime={cleaningElapsedTime}
           isPaused={activeCleaning.paused}
           onPauseCleaning={togglePauseCleaning}
-          onEndCleaningWithScan={handleEndCleaningWithScan}
           onEndCleaningWithoutScan={handleEndCleaningWithoutScan}
           onAutoEndCleaning={handleAutoEndCleaning}
         />
