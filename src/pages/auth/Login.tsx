@@ -50,30 +50,30 @@ const Login = () => {
       const fullPhoneNumber = `${countryCode}${phoneNumber}`;
       console.log("Attempting login with:", fullPhoneNumber);
       
-      const userData = await login(fullPhoneNumber, password);
+      const loginResult = await login(fullPhoneNumber, password);
       
-      if (userData) {
+      if (loginResult) {
         toast({
           title: "Success",
           description: "Logged in successfully",
         });
         
         // Log the user data to see what we get back
-        console.log("User data after login:", userData);
+        console.log("User data after login:", loginResult);
         
         // Explicitly check role and navigate accordingly
-        if (userData.role === 'admin') {
+        if (loginResult.role === 'admin') {
           console.log("Redirecting admin to dashboard");
           navigate('/admin/dashboard', { replace: true });
-        } else if (userData.role === 'cleaner') {
+        } else if (loginResult.role === 'cleaner') {
           console.log("Redirecting cleaner to dashboard");
           navigate('/cleaners/dashboard', { replace: true });
         } else {
-          console.warn("Unknown role:", userData.role);
+          console.warn("Unknown role:", loginResult.role);
           navigate('/', { replace: true });
         }
       } else {
-        throw new Error("Invalid phone number or password");
+        throw new Error("Login failed - no user data returned");
       }
     } catch (error) {
       console.error("Login error:", error);

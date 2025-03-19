@@ -160,8 +160,10 @@ export const loginWithCredentials = async (phoneNumber: string, password: string
         
         user.password = password;
       } 
-      // Verify password matches - using exact equality as passwords are stored as plain text
-      else if (user.password !== password) {
+      // Verify password matches - important to ensure password values are compared properly
+      else if (String(user.password).trim() === String(password).trim()) {
+        console.log('Password match successful');
+      } else {
         console.error('Invalid password. Expected:', user.password, 'Received:', password);
         return { success: false, error: new Error("Invalid phone number or password") };
       }
