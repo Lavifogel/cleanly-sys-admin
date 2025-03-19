@@ -1,18 +1,18 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, ClipboardCheck, Timer, Loader2 } from "lucide-react";
 import { ShiftHistoryItem } from "@/hooks/shift/types";
 import { format } from "date-fns";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ShiftHistoryCardProps {
   shiftsHistory: ShiftHistoryItem[];
+  isLoading?: boolean;
 }
 
-const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
+const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCardProps) => {
   const { toast } = useToast();
   const [expandedShift, setExpandedShift] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,6 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
     
     setExpandedShift(shiftId);
     
-    // Check if we need to fetch cleanings data
     if (cleaningsData[shiftId]?.loaded) {
       return;
     }
@@ -58,7 +57,6 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
         throw error;
       }
       
-      // Success, store the data
       setCleaningsData({
         ...cleaningsData,
         [shiftId]: {
@@ -77,7 +75,6 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
     }
   };
 
-  // Display functions
   const formatStartTime = (shift: ShiftHistoryItem) => {
     const dateTime = `${shift.date} ${shift.startTime}`;
     const date = new Date(dateTime.replace(/(\d+)\/(\d+)\/(\d+)/, '$3-$2-$1'));
@@ -97,6 +94,33 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
     return locationMatch ? locationMatch[1] : "Unknown location";
   };
 
+  if (isLoading) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-xl">Shift History</CardTitle>
+          <CardDescription>
+            Recent shifts and related cleanings
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="border rounded-lg overflow-hidden">
+              <div className="p-4 space-y-2">
+                <Skeleton className="h-5 w-1/4" />
+                <Skeleton className="h-4 w-1/3" />
+                <div className="flex justify-between pt-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -114,7 +138,6 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
           <div className="space-y-4">
             {shiftsHistory.map((shift) => (
               <div key={shift.id} className="border rounded-lg overflow-hidden">
-                {/* Shift summary row (always visible) */}
                 <div 
                   className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => toggleShift(shift.id)}
@@ -150,7 +173,6 @@ const ShiftHistoryCard = ({ shiftsHistory }: ShiftHistoryCardProps) => {
                   </div>
                 </div>
                 
-                {/* Expanded view with cleanings */}
                 {expandedShift === shift.id && (
                   <div className="p-4 border-t">
                     <h4 className="text-sm font-medium mb-2">Cleanings during this shift</h4>
