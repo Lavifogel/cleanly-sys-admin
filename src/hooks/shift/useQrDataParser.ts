@@ -13,7 +13,7 @@ export function parseQrData(qrData: string) {
       console.log("Parsed JSON data:", qrDataObj);
       
       // If JSON parsed but doesn't have required fields, check inside the object
-      if (!qrDataObj.areaId && !qrDataObj.locationId) {
+      if (!qrDataObj.areaId && !qrDataObj.locationId && !qrDataObj.id) {
         // Check for data property that might contain nested object
         if (qrDataObj.data && typeof qrDataObj.data === 'object') {
           qrDataObj = qrDataObj.data;
@@ -63,7 +63,6 @@ export function parseQrData(qrData: string) {
       
       // If still no object, handle as plain text
       if (!qrDataObj) {
-        // Try to extract meaningful data from plain text
         // Trim any whitespace and remove common QR code prefixes
         const cleanedQrData = qrData.trim().replace(/^(http[s]?:\/\/|www\.|data:|SMSTO:|mailto:|tel:)/i, '');
         

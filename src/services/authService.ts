@@ -13,10 +13,10 @@ export const closeActiveCleaning = async () => {
     
     console.log("Found active cleaning to close on logout:", activeCleaning.id);
     
-    // Update the cleaning status in the database
+    // Update the cleaning status in the database via activity_logs
     const endTime = new Date().toISOString();
     const { error } = await supabase
-      .from('cleanings')
+      .from('activity_logs')
       .update({
         end_time: endTime,
         status: 'finished automatically',
@@ -54,10 +54,10 @@ export const closeActiveShift = async () => {
     
     console.log("Found active shift to close on logout:", activeShift.id);
     
-    // Update the shift status in the database
+    // Update the shift status in the database via activity_logs
     const endTime = new Date().toISOString();
     const { error } = await supabase
-      .from('shifts')
+      .from('activity_logs')
       .update({
         end_time: endTime,
         status: 'finished automatically'
@@ -103,37 +103,70 @@ export const loginWithCredentials = async (phoneNumber: string, password: string
       
       // Store admin info in localStorage
       localStorage.setItem('adminAuth', JSON.stringify(adminUser));
+      localStorage.setItem('auth', JSON.stringify({ userData: adminUser }));
       
       console.log("Admin login successful");
       return { success: true, user: adminUser, role: 'admin' };
     }
     
     // If not using hardcoded admin credentials, try to log in as cleaner
-    const { data: cleanerData, error: cleanerError } = await supabase
+    const { data: users, error } = await supabase
       .from('users')
       .select('*')
       .eq('phone', phoneNumber)
-      .eq('password', password)
-      .eq('role', 'cleaner')
-      .single();
-
-    if (cleanerError) {
-      console.error('Login error from database:', cleanerError);
+      .limit(1);
+    
+    if (error) {
+      console.error('Login error from database:', error);
       return { success: false, error: new Error("Invalid phone number or password") };
     }
-
-    if (cleanerData) {
-      console.log("Cleaner data retrieved:", cleanerData);
+    
+    if (users && users.length > 0) {
+      const user = users[0];
+      console.log("User data retrieved:", user);
+      
+      // Check if password is not set and needs to be updated
+      if (!user.password) {
+        console.log("User has no password, setting password:", password);
+        
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ password })
+          .eq('id', user.id);
+        
+        if (updateError) {
+          console.error('Error updating password:', updateError);
+          return { success: false, error: new Error("Failed to set up account") };
+        }
+        
+        user.password = password;
+      } 
+      // Verify password matches
+      else if (user.password !== password) {
+        console.error('Invalid password');
+        return { success: false, error: new Error("Invalid phone number or password") };
+      }
+      
+      // Prepare user data for localStorage
+      const userData = {
+        id: user.id,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        fullName: user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+        role: user.role,
+        email: user.email,
+        phone: user.phone
+      };
       
       // Store user info in localStorage
-      localStorage.setItem('cleanerAuth', JSON.stringify(cleanerData));
+      localStorage.setItem('auth', JSON.stringify({ userData }));
+      localStorage.setItem('tempUserId', user.id);
       
-      console.log('Cleaner authenticated successfully:', cleanerData);
-      return { success: true, user: cleanerData, role: 'cleaner' };
+      console.log('User authenticated successfully:', userData);
+      return { success: true, user: userData, role: user.role };
     }
 
-    // If we get here, neither admin nor cleaner login was successful
-    console.error('Login error: Invalid credentials');
+    console.error('Login error: No user found with phone number:', phoneNumber);
     return { success: false, error: new Error("Invalid phone number or password") };
   } catch (error) {
     console.error('Login error:', error);

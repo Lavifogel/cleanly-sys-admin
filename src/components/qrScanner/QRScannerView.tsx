@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Scan } from "lucide-react";
 import { QRScannerStates } from "@/types/qrScanner";
 
@@ -14,21 +14,48 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
 }) => {
   const { cameraActive, simulationActive, simulationProgress } = scannerState;
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerReady, setContainerReady] = useState(false);
   
   // Ensure the container is visible and has proper dimensions before initializing camera
   useEffect(() => {
     if (containerRef.current) {
       // Force a reflow to ensure the element is rendered with proper dimensions
-      const rect = containerRef.current.getBoundingClientRect();
-      console.log("QR scanner container dimensions:", rect.width, rect.height);
+      const checkDimensions = () => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (rect && (rect.width > 10 && rect.height > 10)) {
+          console.log("QR scanner container dimensions:", rect.width, rect.height);
+          setContainerReady(true);
+        } else {
+          console.log("QR scanner container not ready yet, waiting...");
+        }
+      };
       
+      // Check dimensions immediately
+      checkDimensions();
+      
+      // And also after a short delay to ensure DOM is fully rendered
+      const timer = setTimeout(checkDimensions, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  
+  // Apply dynamic sizing to ensure proper camera display
+  useEffect(() => {
+    if (containerRef.current) {
       // If dimensions are too small, try to force them to be larger
+      const rect = containerRef.current.getBoundingClientRect();
       if (rect.width < 300 || rect.height < 300) {
         containerRef.current.style.minWidth = "320px";
         containerRef.current.style.minHeight = "384px";
+        
+        // Force reflow
+        setTimeout(() => {
+          setContainerReady(true);
+        }, 100);
       }
     }
-  }, []);
+  }, [containerReady]);
   
   return (
     <div 

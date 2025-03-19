@@ -21,7 +21,7 @@ export function useStartCleaning(
         description: "You need to start a shift first.",
         variant: "destructive",
       });
-      return;
+      return null;
     }
 
     try {
@@ -30,9 +30,6 @@ export function useStartCleaning(
       
       // Start time
       const startTime = new Date();
-      
-      // Create a new cleaning ID
-      const newCleaningId = uuidv4();
       
       // If QR data isn't valid, create a mock QR data string
       const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);

@@ -124,24 +124,26 @@ const QRScannerHandler = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50">
-      {canClose && (
-        <div className="absolute top-4 right-4 z-50">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleCloseScanner} 
-            className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
-            aria-label="Close QR scanner"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-      )}
-      <QRCodeScanner 
-        onScanSuccess={handleScanSuccess}
-        onClose={handleCloseScanner}
-      />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      <div className="w-full max-w-md mx-4">
+        {canClose && (
+          <div className="absolute top-4 right-4 z-50">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleCloseScanner} 
+              className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
+              aria-label="Close QR scanner"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
+        <QRCodeScanner 
+          onScanSuccess={handleScanSuccess}
+          onClose={handleCloseScanner}
+        />
+      </div>
     </div>
   );
 };

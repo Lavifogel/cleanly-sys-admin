@@ -48,13 +48,26 @@ export function useAutoEndCleaning(
       setActiveCleaning(null);
       setCleaningElapsedTime(0);
       
+      toast({
+        title: "Cleaning Ended",
+        description: "Your cleaning activity has been automatically ended.",
+        duration: 3000,
+      });
+      
       console.log("Cleaning automatically ended");
       return true;
     } catch (error) {
       console.error("Error in autoEndCleaning:", error);
+      
+      toast({
+        title: "Error",
+        description: "Failed to end cleaning automatically. Please try again manually.",
+        variant: "destructive",
+      });
+      
       return false;
     }
-  }, [activeCleaning, activeShiftId, cleaningsHistory, setActiveCleaning, setCleaningElapsedTime, setCleaningsHistory]);
+  }, [activeCleaning, activeShiftId, cleaningsHistory, setActiveCleaning, setCleaningElapsedTime, setCleaningsHistory, toast]);
 
   return { autoEndCleaning };
 }

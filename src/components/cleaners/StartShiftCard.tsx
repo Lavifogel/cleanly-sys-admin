@@ -14,6 +14,8 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
   const { toast } = useToast();
   
   const handleStartShift = async () => {
+    if (isLoading) return;
+    
     setIsLoading(true);
     try {
       // Slight delay to ensure UI updates before opening scanner
@@ -25,7 +27,7 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
           duration: 3000,
         });
         setIsLoading(false);
-      }, 100);
+      }, 300);
     } catch (error: any) {
       console.error("Error starting shift:", error);
       toast({
