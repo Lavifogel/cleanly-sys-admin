@@ -28,6 +28,7 @@ export function useQRScannerHandlers({
   const scannerActiveTimestampRef = useRef<number>(0);
   const closingInProgressRef = useRef(false);
   const scanSuccessRef = useRef(false);
+  const scannerOpeningRef = useRef(false);
   
   // Clear any pending timers on unmount
   useEffect(() => {
@@ -49,12 +50,12 @@ export function useQRScannerHandlers({
     // Mark closing as in progress
     closingInProgressRef.current = true;
     
-    // Prevent closing the scanner if it's been open for less than 2 seconds
+    // Prevent closing the scanner if it's been open for less than 3 seconds
     // This prevents the rapid open/close cycle
     const currentTime = Date.now();
     const timeSinceOpen = currentTime - scannerActiveTimestampRef.current;
     
-    if (timeSinceOpen < 2000 && !scanSuccessRef.current) {
+    if (timeSinceOpen < 3000 && !scanSuccessRef.current) {
       console.log(`[useQRScannerHandlers] Preventing early scanner closure, open for only ${timeSinceOpen}ms`);
       closingInProgressRef.current = false;
       return;
@@ -85,17 +86,21 @@ export function useQRScannerHandlers({
           attemptCountRef.current = 0;
           closingInProgressRef.current = false;
           scanSuccessRef.current = false;
-        }, 1000);
-      }, 500);
-    }, 300);
+          scannerOpeningRef.current = false;
+        }, 1500);
+      }, 800);
+    }, 800);
   }, [scannerPurpose]);
   
   const handleQRScannerStart = useCallback((purpose: ScannerPurpose) => {
-    // Don't start a new scanner if one is already active
-    if (showQRScanner) {
-      console.log(`[useQRScannerHandlers] Scanner already active (${scannerPurpose}), not starting new one (${purpose})`);
+    // Don't start a new scanner if one is already active or opening
+    if (showQRScanner || scannerOpeningRef.current) {
+      console.log(`[useQRScannerHandlers] Scanner already active/opening (${scannerPurpose}), not starting new one (${purpose})`);
       return;
     }
+    
+    // Mark as opening to prevent multiple start attempts
+    scannerOpeningRef.current = true;
     
     // Reset processing state
     processingRef.current = false;
@@ -112,7 +117,7 @@ export function useQRScannerHandlers({
     stopAllVideoStreams();
     
     // Add longer delay before showing scanner to ensure previous resources are released
-    const delay = purpose === "endCleaning" || purpose === "endShift" ? 1200 : 800;
+    const delay = purpose === "endCleaning" || purpose === "endShift" ? 1500 : 1000;
     
     timerRef.current = window.setTimeout(() => {
       // Additional cleanup right before opening
@@ -123,7 +128,12 @@ export function useQRScannerHandlers({
         scannerActiveTimestampRef.current = Date.now();
         setShowQRScanner(true);
         console.log(`[useQRScannerHandlers] QR scanner opened for purpose: ${purpose}`);
-      }, 500);
+        
+        // Reset opening flag with a delay, this gives scanner time to fully initialize
+        setTimeout(() => {
+          scannerOpeningRef.current = false;
+        }, 2000);
+      }, 800);
     }, delay);
   }, [showQRScanner, scannerPurpose]);
   
@@ -134,12 +144,12 @@ export function useQRScannerHandlers({
       return;
     }
     
-    // Prevent processing if scanner has been open for less than 1 second
+    // Prevent processing if scanner has been open for less than 2 seconds
     // This helps prevent false triggers right after opening
     const currentTime = Date.now();
     const scannerOpenDuration = currentTime - scannerActiveTimestampRef.current;
     
-    if (scannerOpenDuration < 1000) {
+    if (scannerOpenDuration < 2000) {
       console.log(`[useQRScannerHandlers] Ignoring scan, scanner only open for ${scannerOpenDuration}ms`);
       return;
     }
@@ -158,7 +168,7 @@ export function useQRScannerHandlers({
     
     // Add a longer delay before processing the scan result
     // This ensures camera resources are fully released
-    const processingDelay = 1200;
+    const processingDelay = 1500;
     
     timerRef.current = window.setTimeout(() => {
       try {
@@ -201,7 +211,8 @@ export function useQRScannerHandlers({
           processingRef.current = false;
           closingInProgressRef.current = false;
           attemptCountRef.current = 0;
-        }, 1000);
+          scannerOpeningRef.current = false;
+        }, 1500);
       }
     }, processingDelay);
   }, [scannerPurpose, onStartShiftScan, onEndShiftScan, onStartCleaningScan, onEndCleaningScan, setActiveTab]);

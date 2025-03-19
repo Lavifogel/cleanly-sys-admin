@@ -57,8 +57,9 @@ export const useQRScannerLogic = (
   const mountTimestampRef = useRef(Date.now());
   const scanSuccessProcessedRef = useRef(false);
   const startAttemptTimeoutRef = useRef<number | null>(null);
+  const cameraInitializedRef = useRef(false);
 
-  // Initialize the scanner when component mounts with a slight delay to ensure DOM is ready
+  // Initialize the scanner when component mounts with a delay to ensure DOM is ready
   useEffect(() => {
     // Ensure no existing camera streams are running when mounting
     stopAllVideoStreams();
@@ -66,16 +67,21 @@ export const useQRScannerLogic = (
     // Record mount timestamp
     mountTimestampRef.current = Date.now();
     scanSuccessProcessedRef.current = false;
+    cameraInitializedRef.current = false;
     
     // Use a longer delay to ensure DOM is fully ready before starting scanner
     startAttemptTimeoutRef.current = window.setTimeout(() => {
       if (scannerRef.current) {
         console.log("Scanner reference already exists, starting scanner");
         if (!isScanning) {
-          startScanner();
+          startScanner().then(() => {
+            cameraInitializedRef.current = true;
+          }).catch(error => {
+            console.error("Error starting scanner:", error);
+          });
         }
       }
-    }, 1200);
+    }, 1500);
     
     // Clean up when component unmounts
     return () => {
@@ -94,12 +100,25 @@ export const useQRScannerLogic = (
       return;
     }
     
-    // Prevent closing too soon after mounting (minimum 2 seconds)
+    // Prevent closing too soon after mounting (minimum 3 seconds)
     const currentTime = Date.now();
     const timeSinceMount = currentTime - mountTimestampRef.current;
     
-    if (timeSinceMount < 2000) {
+    if (timeSinceMount < 3000) {
       console.log(`Scanner mounted too recently (${timeSinceMount}ms), preventing early close`);
+      return;
+    }
+    
+    // Only allow closing if camera was actually initialized
+    if (!cameraInitializedRef.current && !scanSuccessProcessedRef.current) {
+      console.log("Camera not fully initialized yet, delaying close");
+      // Try again in a bit if not yet processed a scan
+      setTimeout(() => {
+        // Only try again if we haven't processed a scan yet
+        if (!scanSuccessProcessedRef.current) {
+          handleClose();
+        }
+      }, 1000);
       return;
     }
     
@@ -115,8 +134,8 @@ export const useQRScannerLogic = (
       setTimeout(() => {
         isClosingRef.current = false;
         onClose();
-      }, 500);
-    }, 500);
+      }, 800);
+    }, 800);
   };
 
   // Handle successful scan with debounce to prevent multiple processing
@@ -136,7 +155,9 @@ export const useQRScannerLogic = (
       return;
     }
     
+    // Mark scan as processed immediately to prevent duplicates
     scanSuccessProcessedRef.current = true;
+    cameraInitializedRef.current = true;
     
     // Stop all camera streams and pass the decoded text to the success handler
     stopAllVideoStreams();
@@ -144,7 +165,7 @@ export const useQRScannerLogic = (
     // Add a longer delay to ensure complete camera cleanup before calling success handler
     setTimeout(() => {
       onScanSuccess(decodedText);
-    }, 1000);
+    }, 1200);
   };
 
   const handleManualSimulation = () => {
