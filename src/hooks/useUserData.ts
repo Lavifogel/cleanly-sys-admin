@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { User } from "@/types";
+import { User } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { generateTemporaryUserId } from "@/hooks/shift/useShiftDatabase";
 import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";

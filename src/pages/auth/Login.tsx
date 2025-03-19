@@ -17,7 +17,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { loginWithCredentials, isAuthenticated, userRole } = useUserData();
+  const { login, isAuthenticated, userRole } = useUserData();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,16 +37,16 @@ const Login = () => {
       const fullPhoneNumber = `${countryCode}${phoneNumber}`;
       console.log("Attempting login with:", fullPhoneNumber);
       
-      const { success, error } = await loginWithCredentials(fullPhoneNumber, password);
+      const userData = await login(fullPhoneNumber, password);
       
-      if (success) {
+      if (userData) {
         toast({
           title: "Success",
           description: "Logged in successfully",
         });
-        // Navigation is handled in loginWithCredentials
+        // Navigation is handled in login
       } else {
-        throw new Error(error instanceof Error ? error.message : "Invalid phone number or password");
+        throw new Error("Invalid phone number or password");
       }
     } catch (error) {
       toast({

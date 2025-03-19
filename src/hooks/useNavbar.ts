@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUserData } from '@/hooks/useUserData';
@@ -8,7 +7,7 @@ export const useNavbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { userRole, userName, session, isAuthenticated } = useUserData();
+  const { userRole, userName, isAuthenticated } = useUserData();
 
   // Check if current page is login or index page
   const isLoginPage = location.pathname === '/login';
@@ -51,7 +50,6 @@ export const useNavbar = () => {
     userName,
     location,
     navigate,
-    session,
     isLoginPage,
     isIndexPage,
     isAdminPage,

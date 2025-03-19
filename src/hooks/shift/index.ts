@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useShiftState } from "./useShiftState";
 import { useShiftActions } from "./useShiftActions";
-import { useShiftTimer } from "@/hooks/useShiftTimer";
+import { useShiftTimer } from "./useShiftTimer"; // Fixed import path
 import { getActiveShiftForUser, getShiftHistoryForUser } from "@/hooks/activityLogs/useActivityLogService";
 
 export function useShift() {
