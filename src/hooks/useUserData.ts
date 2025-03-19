@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { closeActiveCleaning, closeActiveShift, loginWithCredentials } from '@/services/authService';
 import { checkAuthFromStorage, clearAuthData } from '@/utils/authUtils';
+import { createActivityLog } from '@/hooks/activityLogs/useActivityLogService';
 
 export const useUserData = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -66,6 +68,19 @@ export const useUserData = () => {
         setUserName(fullName);
         setIsAuthenticated(true);
         
+        // Log login activity
+        try {
+          await createActivityLog({
+            user_id: user.id,
+            activity_type: 'login',
+            start_time: new Date().toISOString(),
+            status: 'completed'
+          });
+          console.log("Login activity logged");
+        } catch (logError) {
+          console.error("Failed to log login activity:", logError);
+        }
+        
         // Redirect to dashboard
         const dashboardPath = role === 'admin' ? '/admin/dashboard' : '/cleaners/dashboard';
         navigate(dashboardPath, { replace: true });
@@ -105,6 +120,9 @@ export const useUserData = () => {
     setIsLoggingOut(true);
     
     try {
+      // Get user data from storage before clearing it
+      const { userData } = checkAuthFromStorage();
+      
       // If user is a cleaner, check for active cleaning
       if (userRole === 'cleaner') {
         try {
@@ -113,6 +131,21 @@ export const useUserData = () => {
           console.log("Cleaning closed on logout:", cleaningClosed);
         } catch (error) {
           console.error("Error closing active cleaning on logout:", error);
+        }
+      }
+      
+      // Log logout activity if we have user data
+      if (userData && userData.id) {
+        try {
+          await createActivityLog({
+            user_id: userData.id,
+            activity_type: 'logout',
+            start_time: new Date().toISOString(),
+            status: 'completed'
+          });
+          console.log("Logout activity logged");
+        } catch (logError) {
+          console.error("Failed to log logout activity:", logError);
         }
       }
       

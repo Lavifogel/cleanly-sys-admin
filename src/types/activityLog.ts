@@ -1,8 +1,7 @@
-
 /**
  * Activity types supported in the unified activity_logs table
  */
-export type ActivityType = 'shift_start' | 'shift_end' | 'cleaning_start' | 'cleaning_end';
+export type ActivityType = 'shift_start' | 'shift_end' | 'cleaning_start' | 'cleaning_end' | 'login' | 'logout';
 
 /**
  * Represents an activity log entry in the database
