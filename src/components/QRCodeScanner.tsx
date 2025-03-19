@@ -12,6 +12,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   const scannerMountedRef = useRef(false);
   const cleanupTimeoutRef = useRef<number | null>(null);
   const scanProcessingRef = useRef(false);
+  const mountTimeRef = useRef(Date.now());
   
   const {
     scannerState,
@@ -36,7 +37,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       // Call the original success callback with a slight delay
       setTimeout(() => {
         onScanSuccess(decodedText);
-      }, 500);
+      }, 700);
     },
     onClose
   );
@@ -48,6 +49,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Mark component as mounted
     scannerMountedRef.current = true;
     scanProcessingRef.current = false;
+    mountTimeRef.current = Date.now();
     
     // Add a delay to ensure DOM is ready
     const timer = setTimeout(() => {
@@ -77,10 +79,19 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     };
   }, []);
 
+  // Prevent scanner from being closed too soon after opening
+  const canClose = Date.now() - mountTimeRef.current > 2000;
+
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {
     // Prevent duplicate close attempts
     if (!scannerMountedRef.current) return;
+    
+    // Don't allow closing the scanner too soon after opening
+    if (!canClose) {
+      console.log("Cannot close scanner yet, too soon after opening");
+      return;
+    }
     
     // Mark as unmounting to prevent further state updates
     scannerMountedRef.current = false;
@@ -101,15 +112,17 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
         <div className="w-full flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Scan QR Code</h3>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={safeHandleClose}
-            className="ml-auto"
-            aria-label="Close QR scanner"
-          >
-            <X className="h-5 w-5" />
-          </Button>
+          {canClose && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={safeHandleClose}
+              className="ml-auto"
+              aria-label="Close QR scanner"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
         </div>
         
         <p className="text-sm text-muted-foreground mb-4">

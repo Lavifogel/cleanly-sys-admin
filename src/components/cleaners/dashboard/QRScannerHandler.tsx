@@ -23,9 +23,10 @@ const QRScannerHandler = ({
 }: QRScannerHandlerProps) => {
   const scannerMounted = useRef(false);
   const prevShowQRScannerRef = useRef(showQRScanner);
-  const closeTimeoutRef = useRef<number | null>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const processingQRRef = useRef(false);
   const lastProcessedCodeRef = useRef<string | null>(null);
+  const mountTimeRef = useRef(0);
   
   // Effect to manage scanner visibility changes
   useEffect(() => {
@@ -34,6 +35,7 @@ const QRScannerHandler = ({
       scannerMounted.current = true;
       processingQRRef.current = false;
       lastProcessedCodeRef.current = null;
+      mountTimeRef.current = Date.now();
       console.log("QR scanner opened for purpose:", scannerPurpose);
     } 
     // Handle when scanner closes
@@ -47,12 +49,12 @@ const QRScannerHandler = ({
         clearTimeout(closeTimeoutRef.current);
       }
       
-      closeTimeoutRef.current = window.setTimeout(() => {
+      closeTimeoutRef.current = setTimeout(() => {
         scannerMounted.current = false;
         processingQRRef.current = false;
         lastProcessedCodeRef.current = null;
         closeTimeoutRef.current = null;
-      }, 1000);
+      }, 2000);
     }
     
     // Update previous state reference
@@ -74,10 +76,11 @@ const QRScannerHandler = ({
     };
   }, [showQRScanner, scannerPurpose]);
 
+  // Early exit if scanner should not be shown
   if (!showQRScanner) return null;
 
-  // Always allow closing the scanner for better UX
-  const canClose = true;
+  // Prevent scanner from being closed too soon after opening
+  const canClose = Date.now() - mountTimeRef.current > 2000;
 
   const handleScanSuccess = (decodedText: string) => {
     // Prevent duplicate processing
@@ -96,38 +99,32 @@ const QRScannerHandler = ({
     lastProcessedCodeRef.current = decodedText;
     console.log("QR scan successful with purpose:", scannerPurpose, "data:", decodedText);
     
+    // Special handling for cleaning-related scans
+    const isCleaning = scannerPurpose === 'startCleaning' || scannerPurpose === 'endCleaning';
+    const processingDelay = isCleaning ? 800 : 500;
+    
     // First stop all camera streams
     stopAllVideoStreams();
     
-    // Special handling for endCleaning
-    if (scannerPurpose === 'endCleaning') {
-      console.log("Processing endCleaning scan");
-      
-      // Force a longer delay for endCleaning to ensure complete UI updates before processing
-      setTimeout(() => {
-        try {
-          onQRScan(decodedText);
-        } catch (error) {
-          console.error("Error processing endCleaning scan:", error);
-          processingQRRef.current = false;
-        }
-      }, 1000);
-      
-      return;
-    }
-    
-    // Force a delay before processing the scan result for other scan types
+    // Force a delay before processing the scan result
     setTimeout(() => {
       try {
+        console.log(`Processing ${scannerPurpose} scan result:`, decodedText);
         onQRScan(decodedText);
       } catch (error) {
-        console.error("Error processing scan:", error);
+        console.error(`Error processing ${scannerPurpose} scan:`, error);
         processingQRRef.current = false;
       }
-    }, 800);
+    }, processingDelay);
   };
 
   const handleCloseScanner = () => {
+    // Don't allow closing the scanner too soon after opening
+    if (!canClose) {
+      console.log("Cannot close scanner yet, too soon after opening");
+      return;
+    }
+    
     // Stop all camera streams first
     stopAllVideoStreams();
     

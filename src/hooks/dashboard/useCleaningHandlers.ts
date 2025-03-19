@@ -34,6 +34,17 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       });
       return;
     }
+    
+    if (activeCleaning) {
+      toast({
+        title: "Error",
+        description: "You already have an active cleaning session.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Ready to start cleaning, waiting for QR scan");
   };
 
   const handleEndCleaningWithScan = () => {
@@ -46,8 +57,6 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       return;
     }
     
-    // This function will be called when "Complete with Scan" button is clicked
-    // The actual opening of the scanner is done in useDashboardHandlers.ts
     console.log("Requesting to end cleaning with scan");
   };
 
