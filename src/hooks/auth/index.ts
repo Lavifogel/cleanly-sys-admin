@@ -1,4 +1,3 @@
-
 import { useAuth } from "./useAuth";
 import { useLogout } from "./useLogout";
 import { useUserProfile } from "./useUserProfile";
@@ -20,13 +19,13 @@ export function useUserData() {
     status: auth.status,
     isAuthenticated: auth.isAuthenticated,
     login: auth.login,
+    logout: auth.logout, // Use the logout function from useAuth instead
     
-    // Logout state
+    // Logout state (keep for compatibility)
     isLoggingOut: logout.isLoggingOut,
     showLogoutConfirmation: logout.showLogoutConfirmation,
     hasActiveShift: logout.hasActiveShift,
-    logout: logout.logout,
-    performLogout: logout.performLogout,
+    performLogout: auth.logout, // Use auth.logout instead
     closeLogoutConfirmation: logout.closeLogoutConfirmation,
     
     // User profile state

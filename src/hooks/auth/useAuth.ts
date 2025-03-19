@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
-import { loginWithCredentials } from "@/services/authService";
+import { loginWithCredentials, closeActiveShift, closeActiveCleaning } from "@/services/authService";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -78,10 +78,54 @@ export function useAuth() {
     }
   }, []);
 
+  // Logout function
+  const logout = useCallback(async () => {
+    try {
+      console.log("Logging out user");
+      
+      // Close active sessions in database
+      await closeActiveShift();
+      await closeActiveCleaning();
+      
+      // Clear authentication data
+      localStorage.removeItem('auth');
+      localStorage.removeItem('activeShift');
+      localStorage.removeItem('shiftTimer');
+      localStorage.removeItem('shiftStartTime');
+      localStorage.removeItem('activeCleaning');
+      localStorage.removeItem('cleaningTimer');
+      localStorage.removeItem('cleaningStartTime');
+      localStorage.removeItem('cleaningPaused');
+      
+      // Update state
+      setUser(null);
+      setStatus("unauthenticated");
+      
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      
+      // Navigate to login page
+      navigate("/login");
+      
+      return true;
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [navigate, toast]);
+
   return {
     user,
     status,
     isAuthenticated: status === "authenticated",
-    login
+    login,
+    logout
   };
 }
