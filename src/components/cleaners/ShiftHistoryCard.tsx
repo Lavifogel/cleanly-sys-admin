@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, ClipboardCheck, Timer, Loader2 } from "lucide-react";
@@ -36,7 +35,7 @@ const ShiftHistoryCard = ({ shiftsHistory, isLoading = false }: ShiftHistoryCard
           end_time,
           status,
           notes,
-          qr_codes(area_name),
+          qr_codes!start_qr_id(area_name),
           images(id, image_url)
         `)
         .eq('shift_id', shift.id)
