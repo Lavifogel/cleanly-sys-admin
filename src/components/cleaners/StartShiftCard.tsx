@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Scan, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface StartShiftCardProps {
   onStartShift: () => void;
@@ -16,30 +17,52 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
   const handleStartShift = async () => {
     setIsLoading(true);
     try {
-      // Clear any existing video streams before opening scanner
+      // First, ensure all existing camera streams are completely stopped
+      stopAllVideoStreams();
+      
+      // A short delay to ensure resources are released
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Check if camera permission can be obtained
       if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
-        const mediaDevices = navigator.mediaDevices as MediaDevices;
-        await mediaDevices.getUserMedia({ video: true })
-          .then(stream => {
-            stream.getTracks().forEach(track => track.stop());
-            console.log("Camera access granted before starting shift");
-          })
-          .catch(err => {
-            console.warn("Could not access camera before start shift:", err);
+        try {
+          // Request camera permission before opening scanner
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          
+          // If successful, stop the test stream to free the camera for the scanner
+          stream.getTracks().forEach(track => track.stop());
+          
+          console.log("Camera access granted before starting shift");
+          
+          toast({
+            title: "Opening Scanner",
+            description: "Camera is initializing...",
+            duration: 3000,
           });
-      }
-      
-      toast({
-        title: "Opening Scanner",
-        description: "Camera is initializing...",
-        duration: 3000,
-      });
-      
-      // Slight delay to ensure UI updates before opening scanner
-      setTimeout(() => {
-        onStartShift();
+          
+          // Slight delay before opening the scanner UI
+          setTimeout(() => {
+            onStartShift();
+            setIsLoading(false);
+          }, 400);
+        } catch (err) {
+          console.error("Camera permission denied:", err);
+          toast({
+            title: "Camera Access Denied",
+            description: "Please allow camera access to scan QR codes",
+            variant: "destructive",
+            duration: 5000,
+          });
+          setIsLoading(false);
+        }
+      } else {
+        toast({
+          title: "Camera Not Available",
+          description: "Camera access is not available on this device or browser",
+          variant: "destructive",
+        });
         setIsLoading(false);
-      }, 300);
+      }
     } catch (error: any) {
       console.error("Error starting shift:", error);
       toast({
