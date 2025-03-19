@@ -20,8 +20,6 @@ export function useStartCleaning(
     }
     
     try {
-      console.log("Starting cleaning process with QR data:", qrData);
-      
       // Generate cleaning ID
       const cleaningId = uuidv4();
       const startTime = new Date();
@@ -29,8 +27,6 @@ export function useStartCleaning(
       // Parse QR code data
       const { areaId, areaName, isValid } = parseQrData(qrData);
       const locationFromQR = areaName || "Unknown Location";
-      
-      console.log("Parsed QR data:", { areaId, areaName, isValid });
       
       // If QR data isn't valid, create a mock QR data string
       const qrDataToUse = isValid ? qrData : createMockQrData(areaId, areaName);
@@ -53,7 +49,7 @@ export function useStartCleaning(
           qrId,
           locationFromQR
         );
-        console.log("Cleaning stored successfully in database");
+        console.log("Cleaning stored successfully");
       } catch (error: any) {
         console.error("Error storing cleaning:", error);
       }
@@ -67,7 +63,6 @@ export function useStartCleaning(
         paused: false,
       });
       setCleaningElapsedTime(0);
-      console.log("Cleaning started successfully with ID:", cleaningId);
       
     } catch (error) {
       console.error("Failed to start cleaning:", error);

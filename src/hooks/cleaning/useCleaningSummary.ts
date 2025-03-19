@@ -40,8 +40,6 @@ export function useCleaningSummary(
       });
       return;
     }
-
-    console.log(`Preparing cleaning summary, withScan: ${withScan}, qrData: ${qrData || 'none'}`);
     
     // Reset summary notes and images when opening the summary form
     setSummaryNotes("");

@@ -2,7 +2,6 @@
 export interface QRCodeScannerProps {
   onScanSuccess: (decodedText: string) => void;
   onClose: () => void;
-  title?: string;
 }
 
 export interface QRScannerStates {

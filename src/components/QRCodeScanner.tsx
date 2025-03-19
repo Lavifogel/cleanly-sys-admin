@@ -8,15 +8,7 @@ import QRScannerView from "@/components/qrScanner/QRScannerView";
 import { Button } from "./ui/button";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
-interface EnhancedQRCodeScannerProps extends QRCodeScannerProps {
-  title?: string;
-}
-
-const QRCodeScanner: React.FC<EnhancedQRCodeScannerProps> = ({ 
-  onScanSuccess, 
-  onClose,
-  title = "Scan QR Code"
-}) => {
+const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const scannerMountedRef = useRef(false);
   const cleanupTimeoutRef = useRef<number | null>(null);
   const scanProcessingRef = useRef(false);
@@ -27,26 +19,24 @@ const QRCodeScanner: React.FC<EnhancedQRCodeScannerProps> = ({
     handleClose,
     handleManualSimulation
   } = useQRScannerLogic(
-    // Handle successful scan
+    // Wrap the success callback to ensure proper cleanup before callback
     (decodedText: string) => {
-      console.log("QRCodeScanner: Scan successful, data:", decodedText);
-      
       // Prevent duplicate scan processing
       if (scanProcessingRef.current) {
-        console.log("QRCodeScanner: Scan already being processed, ignoring duplicate");
+        console.log("Scan already being processed, ignoring duplicate");
         return;
       }
       
       scanProcessingRef.current = true;
+      console.log("QR scan successful, data:", decodedText);
       
-      // Pass the data to the success callback without stopping the camera
-      // The parent component is responsible for closing the scanner
-      onScanSuccess(decodedText);
+      // Stop all video streams before processing result
+      stopAllVideoStreams();
       
-      // Reset the processing flag after a delay
+      // Call the original success callback with a slight delay
       setTimeout(() => {
-        scanProcessingRef.current = false;
-      }, 2000);
+        onScanSuccess(decodedText);
+      }, 500);
     },
     onClose
   );
@@ -55,13 +45,21 @@ const QRCodeScanner: React.FC<EnhancedQRCodeScannerProps> = ({
   
   // Component mount effect
   useEffect(() => {
-    console.log("QRCodeScanner: Component mounted");
     // Mark component as mounted
     scannerMountedRef.current = true;
     scanProcessingRef.current = false;
     
+    // Add a delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (scannerMountedRef.current) {
+        console.log("QR scanner mounted, camera active:", cameraActive);
+      }
+    }, 500);
+    
     return () => {
-      console.log("QRCodeScanner: Component unmounting, cleaning up resources");
+      clearTimeout(timer);
+      
+      console.log("QRCodeScanner component unmounting, cleaning up resources");
       // Set mounted ref to false to prevent any subsequent state updates
       scannerMountedRef.current = false;
       
@@ -81,7 +79,6 @@ const QRCodeScanner: React.FC<EnhancedQRCodeScannerProps> = ({
 
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {
-    console.log("QRCodeScanner: Manually closing scanner");
     // Prevent duplicate close attempts
     if (!scannerMountedRef.current) return;
     
@@ -103,7 +100,7 @@ const QRCodeScanner: React.FC<EnhancedQRCodeScannerProps> = ({
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
       <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
         <div className="w-full flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-lg font-semibold">Scan QR Code</h3>
           <Button 
             variant="ghost" 
             size="icon" 

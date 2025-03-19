@@ -26,8 +26,6 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
   } = useCleaning(activeShiftId);
 
   const handleStartCleaning = () => {
-    console.log("Requesting to start cleaning");
-    
     if (!activeShiftId) {
       toast({
         title: "Error",
@@ -36,14 +34,9 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       });
       return;
     }
-    
-    // The actual opening of the scanner is done in useDashboardHandlers.ts
-    console.log("Start cleaning prerequisites met, scanner will open");
   };
 
   const handleEndCleaningWithScan = () => {
-    console.log("Requesting to end cleaning with scan");
-    
     if (!activeCleaning) {
       toast({
         title: "Error",
@@ -53,12 +46,12 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
       return;
     }
     
-    console.log("End cleaning prerequisites met, scanner will open with purpose: endCleaning");
+    // This function will be called when "Complete with Scan" button is clicked
+    // The actual opening of the scanner is done in useDashboardHandlers.ts
+    console.log("Requesting to end cleaning with scan");
   };
 
   const handleEndCleaningWithoutScan = () => {
-    console.log("Requesting to end cleaning without scan");
-    
     if (!activeCleaning) {
       toast({
         title: "Error",
@@ -73,22 +66,15 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
   };
 
   const handleAutoEndCleaning = () => {
-    console.log("Auto-ending cleaning due to timeout");
-    
     if (!activeCleaning) return;
     autoEndCleaning();
   };
 
   const handleCompleteSummary = async (setActiveTab: (tab: string) => void) => {
     try {
-      console.log("Attempting to complete cleaning summary");
-      
       if (await completeSummary()) {
-        console.log("Cleaning summary completed successfully, switching to home tab");
         setActiveTab('home');
-        return true;
       }
-      return false;
     } catch (error) {
       console.error("Error completing summary:", error);
       toast({
@@ -96,7 +82,6 @@ export function useCleaningHandlers(activeShiftId: string | undefined) {
         description: "Failed to complete the cleaning summary. Please try again.",
         variant: "destructive",
       });
-      return false;
     }
   };
 

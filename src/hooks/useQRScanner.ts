@@ -12,30 +12,26 @@ export function useQRScanner() {
   // Effect to release camera resources when QR scanner is closed
   useEffect(() => {
     if (!showQRScanner) {
-      console.log("useQRScanner: Scanner closed, ensuring camera resources are released");
       // When the scanner is closed, ensure camera is released
       stopAllVideoStreams();
+      console.log("Camera resources released from useQRScanner hook");
       
       // Reset processing state after a delay
       setTimeout(() => {
         isProcessingScan.current = false;
-        console.log("useQRScanner: Reset processing state after scanner closed");
       }, 1000);
-    } else {
-      console.log(`useQRScanner: QR Scanner opened with purpose: ${scannerPurpose}`);
     }
-  }, [showQRScanner, scannerPurpose]);
+  }, [showQRScanner]);
 
   // Also clean up on component unmount
   useEffect(() => {
     return () => {
-      console.log("useQRScanner: Component unmounting, releasing camera resources");
       stopAllVideoStreams();
+      console.log("Camera resources released on component unmount");
     };
   }, []);
 
   const openScanner = (purpose: ScannerPurpose) => {
-    console.log(`useQRScanner: Opening scanner with purpose: ${purpose}`);
     // Reset processing state when opening scanner
     isProcessingScan.current = false;
     setScannerPurpose(purpose);
@@ -43,7 +39,6 @@ export function useQRScanner() {
   };
 
   const closeScanner = () => {
-    console.log("useQRScanner: Closing scanner");
     stopAllVideoStreams();
     setShowQRScanner(false);
   };

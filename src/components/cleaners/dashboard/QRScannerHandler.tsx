@@ -31,16 +31,16 @@ const QRScannerHandler = ({
   useEffect(() => {
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
-      console.log("QRScannerHandler: Scanner opening for purpose:", scannerPurpose);
       scannerMounted.current = true;
       processingQRRef.current = false;
       lastProcessedCodeRef.current = null;
+      console.log("QR scanner opened for purpose:", scannerPurpose);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
       // Ensure camera is released when QR scanner is closed
       stopAllVideoStreams();
-      console.log("QRScannerHandler: Scanner closed, releasing camera");
+      console.log("QR scanner closed, camera resources released");
       
       // Add a delay before setting scannerMounted to false to avoid conflicts
       if (closeTimeoutRef.current) {
@@ -69,7 +69,7 @@ const QRScannerHandler = ({
         stopAllVideoStreams();
         scannerMounted.current = false;
         processingQRRef.current = false;
-        console.log("QRScannerHandler unmounted, resources cleaned up");
+        console.log("QR scanner handler unmounted, resources cleaned up");
       }
     };
   }, [showQRScanner, scannerPurpose]);
@@ -80,30 +80,54 @@ const QRScannerHandler = ({
   const canClose = true;
 
   const handleScanSuccess = (decodedText: string) => {
-    console.log("QRScannerHandler: QR code scanned:", decodedText);
-    
     // Prevent duplicate processing
     if (processingQRRef.current) {
-      console.log("QRScannerHandler: Already processing a QR code, ignoring");
+      console.log("Already processing a QR code, ignoring duplicate scan");
       return;
     }
     
     // Check if this is the same code we just processed
     if (lastProcessedCodeRef.current === decodedText) {
-      console.log("QRScannerHandler: Same QR code scanned again, ignoring");
+      console.log("Same QR code scanned again, ignoring");
       return;
     }
     
     processingQRRef.current = true;
     lastProcessedCodeRef.current = decodedText;
+    console.log("QR scan successful with purpose:", scannerPurpose, "data:", decodedText);
     
-    // Pass the scan data to the parent handler
-    console.log(`QRScannerHandler: Processing scan for purpose: ${scannerPurpose}`);
-    onQRScan(decodedText);
+    // First stop all camera streams
+    stopAllVideoStreams();
+    
+    // Special handling for endCleaning
+    if (scannerPurpose === 'endCleaning') {
+      console.log("Processing endCleaning scan");
+      
+      // Force a longer delay for endCleaning to ensure complete UI updates before processing
+      setTimeout(() => {
+        try {
+          onQRScan(decodedText);
+        } catch (error) {
+          console.error("Error processing endCleaning scan:", error);
+          processingQRRef.current = false;
+        }
+      }, 1000);
+      
+      return;
+    }
+    
+    // Force a delay before processing the scan result for other scan types
+    setTimeout(() => {
+      try {
+        onQRScan(decodedText);
+      } catch (error) {
+        console.error("Error processing scan:", error);
+        processingQRRef.current = false;
+      }
+    }, 800);
   };
 
   const handleCloseScanner = () => {
-    console.log("QRScannerHandler: Manually closing scanner");
     // Stop all camera streams first
     stopAllVideoStreams();
     
@@ -111,22 +135,6 @@ const QRScannerHandler = ({
     setTimeout(() => {
       closeScanner();
     }, 300);
-  };
-
-  // Display purpose-specific title
-  const getScannerTitle = () => {
-    switch (scannerPurpose) {
-      case 'startShift':
-        return 'Scan QR Code to Start Shift';
-      case 'endShift':
-        return 'Scan QR Code to End Shift';
-      case 'startCleaning':
-        return 'Scan QR Code to Start Cleaning';
-      case 'endCleaning':
-        return 'Scan QR Code to Complete Cleaning';
-      default:
-        return 'Scan QR Code';
-    }
   };
 
   return (
@@ -147,7 +155,6 @@ const QRScannerHandler = ({
       <QRCodeScanner 
         onScanSuccess={handleScanSuccess}
         onClose={handleCloseScanner}
-        title={getScannerTitle()}
       />
     </div>
   );

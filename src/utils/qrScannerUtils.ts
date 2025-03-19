@@ -3,15 +3,13 @@ export const stopCameraStream = (videoElement: HTMLVideoElement | null) => {
   if (!videoElement) return;
   
   try {
-    console.log("Stopping camera stream for single video element");
-    
     // Stop all tracks
     if (videoElement.srcObject) {
       const stream = videoElement.srcObject as MediaStream;
       if (stream) {
         stream.getTracks().forEach(track => {
           track.stop();
-          console.log("Track stopped:", track.kind, track.id);
+          console.log("Track stopped:", track.kind);
         });
       }
       videoElement.srcObject = null;
@@ -44,17 +42,13 @@ export const stopAllVideoStreams = () => {
   try {
     // First collect all video elements
     const videoElements = document.querySelectorAll('video');
-    console.log(`Found ${videoElements.length} video elements to stop`);
     
     // First detach media streams from all videos before removing them
-    videoElements.forEach((video, index) => {
+    videoElements.forEach(video => {
       if (video.srcObject) {
         const stream = video.srcObject as MediaStream;
         if (stream) {
-          const tracks = stream.getTracks();
-          console.log(`Video ${index}: Found ${tracks.length} tracks to stop`);
-          
-          tracks.forEach(track => {
+          stream.getTracks().forEach(track => {
             try {
               track.stop();
               console.log(`Stopped ${track.kind} track with ID: ${track.id}`);
@@ -73,6 +67,23 @@ export const stopAllVideoStreams = () => {
         console.log("Error pausing video:", e);
       }
     });
+    
+    // Ensure MediaDevices API is released
+    try {
+      navigator.mediaDevices.getUserMedia({ audio: false, video: false })
+        .then(stream => {
+          if (stream) {
+            stream.getTracks().forEach(track => {
+              track.stop();
+            });
+          }
+        })
+        .catch(() => {
+          // This is expected to fail with video: false, but helps reset permissions
+        });
+    } catch (error) {
+      // Ignore any errors in this cleanup
+    }
     
     // Then attempt to safely remove video elements in a separate pass after a short delay
     setTimeout(() => {
@@ -134,8 +145,6 @@ export const stopAllVideoStreams = () => {
       } catch (e) {
         console.log("Error removing scanner containers:", e);
       }
-      
-      console.log("All video streams stopped and elements cleaned up");
     }, 200);
   } catch (e) {
     console.log("Error in stopAllVideoStreams:", e);
@@ -154,6 +163,5 @@ export const isCameraInUse = (): boolean => {
     }
   });
   
-  console.log(`Camera in use: ${inUse}`);
   return inUse;
 };

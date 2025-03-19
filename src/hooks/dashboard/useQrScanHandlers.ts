@@ -46,19 +46,30 @@ export function useQrScanHandlers({
       
       scanInProgressRef.current = true;
       
-      try {
-        // This is the key call that needs to work - pass the QR data to the handler
-        onEndCleaningScan(qrData);
-      } catch (error) {
-        console.error("Error processing end cleaning scan:", error);
-      } finally {
+      // Make sure camera is fully stopped before proceeding
+      stopAllVideoStreams();
+      
+      // Clear any existing cleanup timeout
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+        cleanupTimeoutRef.current = null;
+      }
+      
+      // Add a delay to ensure UI updates before processing
+      setTimeout(() => {
+        try {
+          onEndCleaningScan(qrData);
+        } catch (error) {
+          console.error("Error processing end cleaning scan:", error);
+        }
+        
         // Reset scan in progress after a delay
         cleanupTimeoutRef.current = setTimeout(() => {
           scanInProgressRef.current = false;
           cleanupTimeoutRef.current = null;
           console.log("End cleaning scan process complete, ready for new scans");
         }, 3000);
-      }
+      }, 500);
     },
     setActiveTab
   });
