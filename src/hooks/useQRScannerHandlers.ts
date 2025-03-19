@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
 import { ScannerPurpose } from "@/hooks/useQRScanner";
@@ -24,15 +24,36 @@ export function useQRScannerHandlers({
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
   const processingQRCodeRef = useRef(false);
   
+  // Effect to ensure camera resources are released when scanner is closed
+  useEffect(() => {
+    if (!showQRScanner && processingQRCodeRef.current) {
+      // Add a small delay before allowing new scans to prevent multiple triggers
+      const timer = setTimeout(() => {
+        processingQRCodeRef.current = false;
+        console.log("Reset processing state after scanner closed");
+      }, 2000); // Longer timeout to ensure complete cleanup
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showQRScanner]);
+  
   const closeScanner = () => {
+    console.log("Closing scanner from useQRScannerHandlers");
     setShowQRScanner(false);
+    
+    // Explicitly release camera resources
     stopAllVideoStreams();
-    setTimeout(() => {
-      processingQRCodeRef.current = false;
-    }, 1000);
   };
   
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
+    // Prevent starting a new scan if we're still processing
+    if (processingQRCodeRef.current) {
+      console.log("Still processing previous scan, preventing new scan");
+      return;
+    }
+    
+    // Reset processing flag before starting
+    processingQRCodeRef.current = false;
     setScannerPurpose(purpose);
     setShowQRScanner(true);
   };
@@ -44,34 +65,45 @@ export function useQRScannerHandlers({
       return;
     }
     
+    console.log(`QR scan detected for purpose: ${scannerPurpose}`);
     processingQRCodeRef.current = true;
     
     try {
-      console.log(`QR scanned for purpose: ${scannerPurpose}, data: ${decodedText}`);
+      console.log(`Processing QR scan for purpose: ${scannerPurpose}, data: ${decodedText}`);
       
-      switch (scannerPurpose) {
-        case 'startShift':
-          onStartShiftScan(decodedText);
-          break;
-        case 'endShift':
-          onEndShiftScan(decodedText);
-          break;
-        case 'startCleaning':
-          onStartCleaningScan(decodedText);
-          // Switch to cleaning tab after starting a cleaning
-          if (setActiveTab) {
-            setActiveTab('cleaning');
-          }
-          break;
-        case 'endCleaning':
-          onEndCleaningScan(decodedText);
-          break;
-      }
+      // First close the scanner to release camera resources
+      closeScanner();
+      
+      // Use setTimeout to ensure UI updates before processing the scan
+      setTimeout(() => {
+        switch (scannerPurpose) {
+          case 'startShift':
+            onStartShiftScan(decodedText);
+            break;
+          case 'endShift':
+            onEndShiftScan(decodedText);
+            break;
+          case 'startCleaning':
+            onStartCleaningScan(decodedText);
+            // Switch to cleaning tab after starting a cleaning
+            if (setActiveTab) {
+              setActiveTab('cleaning');
+            }
+            break;
+          case 'endCleaning':
+            console.log("Calling onEndCleaningScan with data:", decodedText);
+            onEndCleaningScan(decodedText);
+            break;
+          default:
+            console.warn("Unknown scanner purpose:", scannerPurpose);
+        }
+      }, 500);
     } catch (error) {
       console.error("Error processing QR scan:", error);
-    } finally {
-      // Close scanner AFTER processing the scan
-      closeScanner();
+      // Reset processing state after error
+      setTimeout(() => {
+        processingQRCodeRef.current = false;
+      }, 2000);
     }
   };
   

@@ -37,21 +37,19 @@ const QRScannerHandler = ({
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
       // Ensure camera is released when QR scanner is closed
-      if (scannerMounted.current) {
-        stopAllVideoStreams();
-        console.log("QR scanner closed, camera resources released");
-        
-        // Add a delay before setting scannerMounted to false to avoid conflicts
-        if (closeTimeoutRef.current) {
-          clearTimeout(closeTimeoutRef.current);
-        }
-        
-        closeTimeoutRef.current = window.setTimeout(() => {
-          scannerMounted.current = false;
-          processingQRRef.current = false;
-          closeTimeoutRef.current = null;
-        }, 500);
+      stopAllVideoStreams();
+      console.log("QR scanner closed, camera resources released");
+      
+      // Add a delay before setting scannerMounted to false to avoid conflicts
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
       }
+      
+      closeTimeoutRef.current = window.setTimeout(() => {
+        scannerMounted.current = false;
+        processingQRRef.current = false;
+        closeTimeoutRef.current = null;
+      }, 1000);
     }
     
     // Update previous state reference
@@ -78,6 +76,24 @@ const QRScannerHandler = ({
   // If 'startShift' and no active shift, show a close button
   const canClose = scannerPurpose === 'startShift' && !activeShift;
 
+  const handleScanSuccess = (decodedText: string) => {
+    if (processingQRRef.current) {
+      console.log("Already processing a QR code, ignoring duplicate scan");
+      return;
+    }
+    
+    processingQRRef.current = true;
+    console.log("QR scan successful with purpose:", scannerPurpose, "data:", decodedText);
+    
+    // First stop all camera streams
+    stopAllVideoStreams();
+    
+    // Force a delay before processing the scan result
+    setTimeout(() => {
+      onQRScan(decodedText);
+    }, 500);
+  };
+
   return (
     <div className="fixed inset-0 z-50">
       {canClose && (
@@ -88,23 +104,7 @@ const QRScannerHandler = ({
         </div>
       )}
       <QRCodeScanner 
-        onScanSuccess={(decodedText) => {
-          if (processingQRRef.current) {
-            console.log("Already processing a QR code, ignoring duplicate scan");
-            return;
-          }
-          
-          processingQRRef.current = true;
-          console.log("QR scan successful, data:", decodedText);
-          
-          // First stop all camera streams
-          stopAllVideoStreams();
-          
-          // Allow a moment for cleanup before processing result
-          setTimeout(() => {
-            onQRScan(decodedText);
-          }, 300);
-        }}
+        onScanSuccess={handleScanSuccess}
         onClose={() => {
           // Only allow closing if it's the initial scanner
           if (canClose) {
@@ -113,7 +113,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 300);
+            }, 500);
           }
         }}
       />

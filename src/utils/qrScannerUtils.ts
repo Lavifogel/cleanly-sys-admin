@@ -51,6 +51,7 @@ export const stopAllVideoStreams = () => {
           stream.getTracks().forEach(track => {
             try {
               track.stop();
+              console.log(`Stopped ${track.kind} track with ID: ${track.id}`);
             } catch (e) {
               console.log("Error stopping track:", e);
             }
@@ -67,25 +68,24 @@ export const stopAllVideoStreams = () => {
       }
     });
     
-    // Safely stop any MediaStream that might be active
+    // Ensure MediaDevices API is released
     try {
-      if (navigator.mediaDevices) {
-        navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-          .then(stream => {
+      navigator.mediaDevices.getUserMedia({ audio: false, video: false })
+        .then(stream => {
+          if (stream) {
             stream.getTracks().forEach(track => {
               track.stop();
             });
-          })
-          .catch(() => {
-            // Ignore errors, as they might just mean no camera is available
-          });
-      }
+          }
+        })
+        .catch(() => {
+          // This is expected to fail with video: false, but helps reset permissions
+        });
     } catch (error) {
       // Ignore any errors in this cleanup
     }
     
     // Then attempt to safely remove video elements in a separate pass after a short delay
-    // This avoids issues with modifying the DOM while iterating
     setTimeout(() => {
       videoElements.forEach(video => {
         // Only remove if actually in the DOM
@@ -113,7 +113,23 @@ export const stopAllVideoStreams = () => {
       } catch (e) {
         console.log("Error removing scanner UI elements:", e);
       }
-    }, 100);
+      
+      // Remove any orphaned scanner containers
+      try {
+        const scannerContainers = document.querySelectorAll('[id^="html5-qrcode-"]');
+        scannerContainers.forEach(container => {
+          if (container.parentNode && document.contains(container)) {
+            try {
+              container.parentNode.removeChild(container);
+            } catch (e) {
+              console.log("Error removing scanner container:", e);
+            }
+          }
+        });
+      } catch (e) {
+        console.log("Error removing scanner containers:", e);
+      }
+    }, 200);
   } catch (e) {
     console.log("Error in stopAllVideoStreams:", e);
   }
