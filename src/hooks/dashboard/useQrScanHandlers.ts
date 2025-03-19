@@ -1,4 +1,3 @@
-
 import { ScannerPurpose } from "@/hooks/useQRScanner";
 import { useQRScannerHandlers } from "@/hooks/useQRScannerHandlers";
 import { useEffect, useRef, useState } from "react";
@@ -64,52 +63,7 @@ export function useQrScanHandlers({
         }, 3000);
       }, 700);
     },
-    onEndCleaningScan: (qrData: string) => {
-      console.log("Ending cleaning with QR data:", qrData);
-      
-      // Prevent multiple rapid scans
-      const now = Date.now();
-      if (now - lastScanTime < 3000) {
-        console.log("Ignoring scan - too soon after previous scan");
-        return;
-      }
-      setLastScanTime(now);
-      
-      if (scanInProgressRef.current) {
-        console.log("Scan already in progress, ignoring duplicate");
-        return;
-      }
-      
-      scanInProgressRef.current = true;
-      scanPurposeRef.current = "endCleaning";
-      
-      // Make sure camera is fully stopped before proceeding
-      stopAllVideoStreams();
-      
-      // Clear any existing cleanup timeout
-      if (cleanupTimeoutRef.current) {
-        clearTimeout(cleanupTimeoutRef.current);
-        cleanupTimeoutRef.current = null;
-      }
-      
-      // Add a delay to ensure UI updates before processing
-      setTimeout(() => {
-        try {
-          console.log("Calling onEndCleaningScan with data:", qrData);
-          onEndCleaningScan(qrData);
-        } catch (error) {
-          console.error("Error processing end cleaning scan:", error);
-        }
-        
-        // Reset scan in progress after a delay
-        cleanupTimeoutRef.current = setTimeout(() => {
-          scanInProgressRef.current = false;
-          scanPurposeRef.current = null;
-          cleanupTimeoutRef.current = null;
-          console.log("End cleaning scan process complete, ready for new scans");
-        }, 3000);
-      }, 700);
-    },
+    onEndCleaningScan,
     setActiveTab
   });
 

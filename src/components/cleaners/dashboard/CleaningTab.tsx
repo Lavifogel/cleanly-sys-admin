@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
 import CleaningHistoryCard from "@/components/cleaners/CleaningHistoryCard";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
-import { PlayIcon, QrCode } from "lucide-react";
+import { QrCode } from "lucide-react";
 
 interface CleaningTabProps {
   activeCleaning: Cleaning | null;

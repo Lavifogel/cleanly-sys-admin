@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { ScannerPurpose } from "@/hooks/useQRScanner";
@@ -28,9 +27,7 @@ const QRScannerHandler = ({
   const lastProcessedCodeRef = useRef<string | null>(null);
   const mountTimeRef = useRef(0);
   
-  // Effect to manage scanner visibility changes
   useEffect(() => {
-    // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
       scannerMounted.current = true;
       processingQRRef.current = false;
@@ -38,13 +35,10 @@ const QRScannerHandler = ({
       mountTimeRef.current = Date.now();
       console.log("QR scanner opened for purpose:", scannerPurpose);
     } 
-    // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
-      // Ensure camera is released when QR scanner is closed
       stopAllVideoStreams();
       console.log("QR scanner closed, camera resources released");
       
-      // Add a delay before setting scannerMounted to false to avoid conflicts
       if (closeTimeoutRef.current) {
         clearTimeout(closeTimeoutRef.current);
       }
@@ -57,10 +51,8 @@ const QRScannerHandler = ({
       }, 2000);
     }
     
-    // Update previous state reference
     prevShowQRScannerRef.current = showQRScanner;
     
-    // Clean up on component unmount
     return () => {
       if (closeTimeoutRef.current) {
         clearTimeout(closeTimeoutRef.current);
@@ -76,20 +68,16 @@ const QRScannerHandler = ({
     };
   }, [showQRScanner, scannerPurpose]);
 
-  // Early exit if scanner should not be shown
   if (!showQRScanner) return null;
 
-  // Prevent scanner from being closed too soon after opening
   const canClose = Date.now() - mountTimeRef.current > 2000;
 
   const handleScanSuccess = (decodedText: string) => {
-    // Prevent duplicate processing
     if (processingQRRef.current) {
       console.log("Already processing a QR code, ignoring duplicate scan");
       return;
     }
     
-    // Check if this is the same code we just processed
     if (lastProcessedCodeRef.current === decodedText) {
       console.log("Same QR code scanned again, ignoring");
       return;
@@ -99,14 +87,11 @@ const QRScannerHandler = ({
     lastProcessedCodeRef.current = decodedText;
     console.log("QR scan successful with purpose:", scannerPurpose, "data:", decodedText);
     
-    // Special handling for cleaning-related scans
-    const isCleaning = scannerPurpose === 'startCleaning' || scannerPurpose === 'endCleaning';
+    const isCleaning = scannerPurpose === 'startCleaning';
     const processingDelay = isCleaning ? 800 : 500;
     
-    // First stop all camera streams
     stopAllVideoStreams();
     
-    // Force a delay before processing the scan result
     setTimeout(() => {
       try {
         console.log(`Processing ${scannerPurpose} scan result:`, decodedText);
@@ -119,16 +104,13 @@ const QRScannerHandler = ({
   };
 
   const handleCloseScanner = () => {
-    // Don't allow closing the scanner too soon after opening
     if (!canClose) {
       console.log("Cannot close scanner yet, too soon after opening");
       return;
     }
     
-    // Stop all camera streams first
     stopAllVideoStreams();
     
-    // Add a slight delay to ensure cleanup completes before triggering the close action
     setTimeout(() => {
       closeScanner();
     }, 300);
