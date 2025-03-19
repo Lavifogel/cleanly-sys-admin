@@ -42,21 +42,24 @@ export const stopAllVideoStreams = () => {
   try {
     // First collect all video elements
     const videoElements = document.querySelectorAll('video');
+    console.log(`Found ${videoElements.length} video elements to clean up`);
     
     // First detach media streams from all videos before removing them
-    videoElements.forEach(video => {
+    videoElements.forEach((video, index) => {
       if (video.srcObject) {
         const stream = video.srcObject as MediaStream;
         if (stream) {
           stream.getTracks().forEach(track => {
             try {
               track.stop();
+              console.log(`Stopped track ${track.kind} from video element ${index}`);
             } catch (e) {
               console.log("Error stopping track:", e);
             }
           });
         }
         video.srcObject = null;
+        console.log(`Cleared srcObject from video element ${index}`);
       }
       
       // Then pause the video element
@@ -98,14 +101,24 @@ export const stopAllVideoStreams = () => {
       // Ignore any errors
     }
     
+    // Try to find and stop any HTML5QrCode instances
+    try {
+      // Look for scanner elements
+      const scannerElements = document.querySelectorAll('[id*="qr-scanner"], [id*="qrcode-scanner"]');
+      console.log(`Found ${scannerElements.length} scanner elements to clean up`);
+    } catch (e) {
+      console.log("Error finding scanner elements:", e);
+    }
+    
     // Then attempt to safely remove video elements in a separate pass after a short delay
     // This avoids issues with modifying the DOM while iterating
     setTimeout(() => {
-      videoElements.forEach(video => {
+      videoElements.forEach((video, index) => {
         // Only remove if actually in the DOM
         if (video.parentNode && document.contains(video)) {
           try {
             video.parentNode.removeChild(video);
+            console.log(`Removed video element ${index} from DOM`);
           } catch (e) {
             console.log("Error removing video element:", e);
           }
@@ -114,11 +127,13 @@ export const stopAllVideoStreams = () => {
       
       // Remove any HTML5QrCode scanner UI elements that might be orphaned
       try {
-        const scannerElements = document.querySelectorAll('.html5-qrcode-element');
-        scannerElements.forEach(element => {
+        const scannerElements = document.querySelectorAll('.html5-qrcode-element, [id*="html5-qrcode-"], [id*="qr-scanner"]');
+        console.log(`Found ${scannerElements.length} scanner UI elements to clean up`);
+        scannerElements.forEach((element, index) => {
           if (element.parentNode && document.contains(element)) {
             try {
               element.parentNode.removeChild(element);
+              console.log(`Removed scanner UI element ${index} from DOM`);
             } catch (e) {
               console.log("Error removing scanner UI element:", e);
             }
@@ -133,7 +148,8 @@ export const stopAllVideoStreams = () => {
         try {
           // Last-resort cleanup of any video-related DOM elements
           const videoRelatedElements = document.querySelectorAll('video, .html5-qrcode-element, [id*="qr-scanner"]');
-          videoRelatedElements.forEach(element => {
+          console.log(`Final cleanup: Found ${videoRelatedElements.length} video-related elements`);
+          videoRelatedElements.forEach((element, index) => {
             if (element.parentNode && document.contains(element)) {
               try {
                 if (element instanceof HTMLVideoElement && element.srcObject) {
@@ -143,10 +159,12 @@ export const stopAllVideoStreams = () => {
                   }
                   element.srcObject = null;
                   element.pause();
+                  console.log(`Final cleanup for video element ${index}`);
                 }
                 // Don't remove the container elements, just clean them
                 if (!element.id?.includes('container')) {
                   element.parentNode.removeChild(element);
+                  console.log(`Removed element ${index} in final cleanup`);
                 }
               } catch (e) {
                 console.log("Error in final element cleanup:", e);

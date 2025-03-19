@@ -88,7 +88,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {
     // Prevent duplicate close attempts
-    if (!scannerMountedRef.current) return;
+    if (!scannerMountedRef.current) {
+      console.log("Scanner not mounted, skipping close attempt");
+      return;
+    }
+    
+    console.log("Safe handle close triggered, stopping all streams first");
     
     // Mark as unmounting to prevent further state updates
     scannerMountedRef.current = false;
@@ -98,6 +103,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     
     // Slight delay to ensure cleanup completes before closing
     cleanupTimeoutRef.current = window.setTimeout(() => {
+      console.log("Cleanup timeout complete, calling handleClose");
       handleClose();
       cleanupTimeoutRef.current = null;
     }, 400); // Increased delay for better cleanup
@@ -114,6 +120,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
             onClick={safeHandleClose}
             className="ml-auto hover:bg-destructive/10"
             aria-label="Close"
+            data-testid="close-qr-scanner"
           >
             <X className="h-5 w-5" />
           </Button>

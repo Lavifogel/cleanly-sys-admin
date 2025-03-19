@@ -86,8 +86,9 @@ const QRScannerHandler = ({
 
   if (!showQRScanner) return null;
 
-  // If 'startShift' and no active shift, show a close button
-  const canClose = scannerPurpose === 'startShift' && !activeShift;
+  // Any scanner can be closed now - there's a dedicated X button in the QRCodeScanner component
+  // that handles the close operation correctly
+  const canClose = true;
 
   const handleScanSuccess = (decodedText: string) => {
     // Prevent duplicate scan handling
@@ -114,6 +115,9 @@ const QRScannerHandler = ({
     stopAllVideoStreams();
     console.log("Close button clicked, stopping camera streams");
     
+    // Log to help identify if this close handler is being called
+    console.log("QRScannerHandler: handleClose called, scannerPurpose:", scannerPurpose);
+    
     // Then close the scanner with a delay to ensure proper cleanup
     setTimeout(() => {
       closeScanner();
@@ -129,6 +133,7 @@ const QRScannerHandler = ({
             size="icon" 
             onClick={handleClose} 
             className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
+            data-testid="handler-close-button"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -137,22 +142,13 @@ const QRScannerHandler = ({
       <QRCodeScanner 
         onScanSuccess={handleScanSuccess}
         onClose={() => {
-          // Only allow closing if it's the initial scanner
-          if (canClose) {
-            // Ensure camera is stopped before closing
-            stopAllVideoStreams();
-            // Allow a moment for cleanup before closing
-            setTimeout(() => {
-              closeScanner();
-            }, 300);
-          } else {
-            // For non-closable scanners, we still need to stop the camera
-            // This is a fallback in case the X button is clicked
-            stopAllVideoStreams();
-            setTimeout(() => {
-              closeScanner();
-            }, 300);
-          }
+          console.log("QRCodeScanner onClose callback triggered");
+          // Ensure camera is stopped before closing
+          stopAllVideoStreams();
+          // Allow a moment for cleanup before closing
+          setTimeout(() => {
+            closeScanner();
+          }, 300);
         }}
       />
     </div>
