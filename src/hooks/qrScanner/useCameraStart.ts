@@ -113,6 +113,25 @@ export const useCameraStart = ({
     }
   }, [setError]);
 
+  // Force stop any active scan before trying to start a new one
+  const forceStopExistingScan = useCallback(async (): Promise<void> => {
+    if (scannerRef.current) {
+      try {
+        // First try to stop via the scanner API
+        await scannerRef.current.stop();
+        console.log("Successfully stopped existing scanner");
+      } catch (error) {
+        console.log("Error stopping scanner, trying force cleanup:", error);
+      }
+    }
+    
+    // Regardless of success/failure above, force stop all video streams
+    stopAllVideoStreams();
+    
+    // Wait a moment to ensure cleanup is complete
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }, [scannerRef]);
+
   // Memoize the startScanner function
   const startScanner = useCallback(async () => {
     // Prevent multiple simultaneous start attempts
@@ -125,6 +144,16 @@ export const useCameraStart = ({
     startingRef.current = true;
     
     try {
+      // Force stop any existing scanner first to avoid "scan is ongoing" errors
+      await forceStopExistingScan();
+      
+      if (!mountedRef.current) {
+        console.log("Component unmounted during cleanup, aborting");
+        resetStartingState();
+        startingRef.current = false;
+        return;
+      }
+
       // First ensure we have camera permissions
       const permissionsGranted = await ensureCameraPermissions();
       if (!permissionsGranted) {
@@ -175,6 +204,18 @@ export const useCameraStart = ({
         }
         
         console.log("Starting camera with environment facing mode...");
+        
+        // Ensure we're not already scanning before starting
+        if (isScanning) {
+          console.log("Already scanning, stopping current scan before starting new one");
+          await forceStopExistingScan();
+          if (!mountedRef.current) {
+            resetStartingState();
+            startingRef.current = false;
+            return;
+          }
+        }
+        
         await scannerRef.current.start(
           { facingMode: "environment" },
           config,
@@ -208,6 +249,23 @@ export const useCameraStart = ({
         clearTimeout(timeoutId);
       } catch (err: any) {
         console.error("Error starting environment camera:", err);
+        
+        // If we get the "scan is ongoing" error, try to force stop and restart
+        if (err.toString().includes("scan is ongoing")) {
+          console.log("Detected 'scan is ongoing' error, force stopping and retrying...");
+          await forceStopExistingScan();
+          
+          // Only retry if component is still mounted
+          if (mountedRef.current && currentAttempt <= 2) {
+            console.log("Retrying camera start after force stop...");
+            clearTimeout(timeoutId);
+            resetStartingState();
+            startingRef.current = false;
+            // Small delay before retry
+            setTimeout(() => startScanner(), 500);
+            return;
+          }
+        }
         
         // Try fallback camera if initial attempt fails
         if (currentAttempt <= 2 && mountedRef.current) {
@@ -253,7 +311,9 @@ export const useCameraStart = ({
     resetStartingState,
     isStarting,
     tryFallbackCamera,
-    ensureCameraPermissions
+    ensureCameraPermissions,
+    forceStopExistingScan,
+    isScanning
   ]);
 
   // Set up camera retry logic

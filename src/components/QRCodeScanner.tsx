@@ -1,18 +1,20 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { X, RefreshCw } from "lucide-react";
 import { QRCodeScannerProps } from "@/types/qrScanner";
 import { useQRScannerLogic } from "@/hooks/useQRScannerLogic";
 import QRScannerView from "@/components/qrScanner/QRScannerView";
 import { Button } from "./ui/button";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { useToast } from "@/hooks/use-toast";
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const scannerMountedRef = useRef(false);
   const scanProcessedRef = useRef(false);
   const initAttemptRef = useRef(0);
   const [containerReady, setContainerReady] = useState(false);
+  const { toast } = useToast();
   
   const {
     scannerState,
@@ -90,11 +92,16 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         const newContainer = document.createElement('div');
         newContainer.id = scannerContainerId;
         newContainer.className = 'absolute inset-0 z-10 flex items-center justify-center';
+        newContainer.style.minHeight = '300px';
+        newContainer.style.minWidth = '300px';
         document.body.appendChild(newContainer);
         console.log("[QRCodeScanner] Created container for scanner:", scannerContainerId);
         return false;
       } else {
         console.log("[QRCodeScanner] Scanner container already exists:", scannerContainerId);
+        // Ensure container has proper dimensions
+        container.style.minHeight = '300px';
+        container.style.minWidth = '300px';
         return true;
       }
     };
@@ -152,6 +159,27 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     }, 500);
   };
 
+  // Handle manual retry when camera fails
+  const handleRetry = () => {
+    toast({
+      title: "Retrying camera initialization",
+      description: "Attempting to restart the camera...",
+      duration: 3000,
+    });
+    
+    // Force stop all streams first
+    stopAllVideoStreams();
+    
+    // Small delay before retry
+    setTimeout(() => {
+      if (scannerMountedRef.current) {
+        console.log("[QRCodeScanner] Manual camera retry initiated");
+        initAttemptRef.current = 0; // Reset attempt counter
+        startScanner();
+      }
+    }, 800);
+  };
+
   return (
     <Card className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm">
       <CardContent className="flex flex-1 flex-col items-center justify-center p-6">
@@ -177,8 +205,19 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         />
         
         {error && (
-          <div className="mt-4 text-destructive text-center text-sm">
-            {error}
+          <div className="mt-4 flex flex-col items-center">
+            <div className="text-destructive text-center text-sm mb-2">
+              {error}
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRetry}
+              className="flex items-center"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Retry Camera
+            </Button>
           </div>
         )}
 

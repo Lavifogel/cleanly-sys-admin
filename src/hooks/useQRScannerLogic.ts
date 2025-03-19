@@ -4,6 +4,7 @@ import { QRScannerStates } from "@/types/qrScanner";
 import { useCameraControls } from "./qrScanner/useCameraControls";
 import { useSimulation } from "./qrScanner/useSimulation";
 import { useFileInput } from "./qrScanner/useFileInput";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export const useQRScannerLogic = (
   onScanSuccess: (decodedText: string) => void,
@@ -51,15 +52,50 @@ export const useQRScannerLogic = (
     simulationProgress
   };
 
+  // Initialize the scanner when component mounts with a slight delay to ensure DOM is ready
+  useEffect(() => {
+    // Ensure no existing camera streams are running when mounting
+    stopAllVideoStreams();
+    
+    const initTimer = setTimeout(() => {
+      if (scannerRef.current) {
+        console.log("Scanner reference already exists, starting scanner");
+        if (!isScanning) {
+          startScanner();
+        }
+      }
+    }, 500);
+    
+    // Clean up when component unmounts
+    return () => {
+      clearTimeout(initTimer);
+      stopCamera();
+    };
+  }, []);
+
   const handleClose = () => {
-    stopCamera(); // Ensure camera is stopped before closing
-    resetSimulation(); // Reset any active simulation
-    onClose();
+    stopAllVideoStreams();  // Force stop all streams first
+    
+    // Add a delay to ensure complete cleanup before calling stopCamera
+    setTimeout(async () => {
+      await stopCamera(); // Ensure camera is stopped before closing
+      resetSimulation(); // Reset any active simulation
+      onClose();
+    }, 300);
   };
 
   const handleManualSimulation = () => {
-    // This is for demonstration only - simulates a successful scan
-    startSimulation();
+    // Stop camera before starting simulation
+    stopCamera().then(() => {
+      // This is for demonstration only - simulates a successful scan
+      startSimulation();
+    }).catch(err => {
+      console.error("Error stopping camera before simulation:", err);
+      // Force stop all video streams as a fallback
+      stopAllVideoStreams();
+      // Still start simulation even if there was an error stopping camera
+      startSimulation();
+    });
   };
 
   return {

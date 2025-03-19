@@ -12,7 +12,7 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   scannerContainerId, 
   scannerState 
 }) => {
-  const { cameraActive, simulationActive, simulationProgress } = scannerState;
+  const { cameraActive, simulationActive, simulationProgress, error } = scannerState;
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Ensure the container is visible and has proper dimensions before initializing camera
@@ -27,6 +27,8 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
         // Apply explicit dimensions to ensure the container is sizeable
         containerRef.current.style.minWidth = "300px";
         containerRef.current.style.minHeight = "300px";
+        containerRef.current.style.width = "100%";
+        containerRef.current.style.height = "320px";
         
         // Force a layout recalculation
         setTimeout(() => {
@@ -42,8 +44,8 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="w-full max-w-md h-80 rounded-lg overflow-hidden relative bg-gray-900"
-      style={{ minHeight: "320px", minWidth: "320px" }} // Ensure minimum dimensions
+      className="w-full max-w-md rounded-lg overflow-hidden relative bg-gray-900"
+      style={{ height: "320px", minHeight: "320px", minWidth: "320px" }} // Ensure fixed dimensions
     >
       {/* Scanner container with explicit size */}
       <div 
@@ -59,8 +61,18 @@ const QRScannerView: React.FC<QRScannerViewProps> = ({
       
       {!cameraActive && !simulationActive && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/80">
-          <p className="text-white text-sm">Initializing camera...</p>
+          <p className="text-white text-sm mb-2">Initializing camera...</p>
           <div className="mt-2 animate-spin rounded-full h-6 w-6 border-t-2 border-white"></div>
+        </div>
+      )}
+      
+      {/* Display error message if present */}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/70">
+          <div className="bg-destructive/10 p-4 rounded-lg max-w-[80%] text-center">
+            <p className="text-destructive font-medium">{error}</p>
+            <p className="text-white text-sm mt-2">Please check your camera permissions and try again</p>
+          </div>
         </div>
       )}
       

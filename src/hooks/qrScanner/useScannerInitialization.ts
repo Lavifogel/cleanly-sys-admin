@@ -1,6 +1,7 @@
 
 import { useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseScannerInitializationProps {
   scannerRef: React.MutableRefObject<Html5Qrcode | null>;
@@ -34,6 +35,9 @@ export const useScannerInitialization = ({
       return false;
     }
     
+    // Ensure any existing camera stream is stopped
+    stopAllVideoStreams();
+    
     // Wait a brief moment to ensure the container is properly sized in the DOM
     await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -61,7 +65,7 @@ export const useScannerInitialization = ({
     }
     
     return true;
-  }, [scannerContainerId, setError]);
+  }, [scannerContainerId, setError, stopAllVideoStreams]);
 
   // Create configuration for QR scanner
   const createScannerConfig = useCallback(() => {
@@ -86,10 +90,27 @@ export const useScannerInitialization = ({
       if (!mountedRef.current) return;
       
       console.log("QR code scanned successfully:", decodedText);
-      setIsScanning(false);
       
-      // Call the original success callback
-      onScanSuccess(decodedText);
+      // First stop the camera to prevent any conflicts
+      stopCamera().then(() => {
+        // Then set scanning to false
+        if (mountedRef.current) {
+          setIsScanning(false);
+          
+          // Call the original success callback
+          onScanSuccess(decodedText);
+        }
+      }).catch(err => {
+        console.error("Error stopping camera after successful scan:", err);
+        // Force stop all video streams
+        stopAllVideoStreams();
+        
+        if (mountedRef.current) {
+          setIsScanning(false);
+          // Still call success callback even if there was an error stopping
+          onScanSuccess(decodedText);
+        }
+      });
     };
   }, [mountedRef, setIsScanning]);
 
