@@ -114,6 +114,22 @@ export const stopAllVideoStreams = () => {
         console.log("Error removing scanner UI elements:", e);
       }
       
+      // Reset any scanner controls
+      try {
+        const scannerButtons = document.querySelectorAll('#html5-qrcode-button-camera-start, #html5-qrcode-button-camera-stop');
+        scannerButtons.forEach(button => {
+          if (button.parentNode && document.contains(button)) {
+            try {
+              button.parentNode.removeChild(button);
+            } catch (e) {
+              console.log("Error removing scanner button:", e);
+            }
+          }
+        });
+      } catch (e) {
+        console.log("Error removing scanner buttons:", e);
+      }
+      
       // Remove any orphaned scanner containers
       try {
         const scannerContainers = document.querySelectorAll('[id^="html5-qrcode-"]');

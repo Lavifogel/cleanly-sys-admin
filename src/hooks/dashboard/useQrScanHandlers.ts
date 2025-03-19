@@ -19,6 +19,7 @@ export function useQrScanHandlers({
 }) {
   const scanInProgressRef = useRef(false);
   const [lastScanTime, setLastScanTime] = useState(0);
+  const cleanupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const qrScannerHandlers = useQRScannerHandlers({
     onStartShiftScan,
@@ -48,13 +49,25 @@ export function useQrScanHandlers({
       // Make sure camera is fully stopped before proceeding
       stopAllVideoStreams();
       
+      // Clear any existing cleanup timeout
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+        cleanupTimeoutRef.current = null;
+      }
+      
       // Add a delay to ensure UI updates before processing
       setTimeout(() => {
-        onEndCleaningScan(qrData);
+        try {
+          onEndCleaningScan(qrData);
+        } catch (error) {
+          console.error("Error processing end cleaning scan:", error);
+        }
         
         // Reset scan in progress after a delay
-        setTimeout(() => {
+        cleanupTimeoutRef.current = setTimeout(() => {
           scanInProgressRef.current = false;
+          cleanupTimeoutRef.current = null;
+          console.log("End cleaning scan process complete, ready for new scans");
         }, 3000);
       }, 500);
     },
@@ -72,11 +85,24 @@ export function useQrScanHandlers({
   // Reset scan in progress when scanner is closed
   useEffect(() => {
     if (!showQRScanner) {
-      setTimeout(() => {
+      // Delay resetting the scan in progress flag to prevent immediate rescans
+      const resetTimer = setTimeout(() => {
         scanInProgressRef.current = false;
       }, 2000);
+      
+      return () => clearTimeout(resetTimer);
     }
   }, [showQRScanner]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (cleanupTimeoutRef.current) {
+        clearTimeout(cleanupTimeoutRef.current);
+        cleanupTimeoutRef.current = null;
+      }
+    };
+  }, []);
   
   return {
     showQRScanner,

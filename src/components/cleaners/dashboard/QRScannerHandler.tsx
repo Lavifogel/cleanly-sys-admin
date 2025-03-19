@@ -25,6 +25,7 @@ const QRScannerHandler = ({
   const prevShowQRScannerRef = useRef(showQRScanner);
   const closeTimeoutRef = useRef<number | null>(null);
   const processingQRRef = useRef(false);
+  const lastProcessedCodeRef = useRef<string | null>(null);
   
   // Effect to manage scanner visibility changes
   useEffect(() => {
@@ -32,7 +33,8 @@ const QRScannerHandler = ({
     if (showQRScanner && !prevShowQRScannerRef.current) {
       scannerMounted.current = true;
       processingQRRef.current = false;
-      console.log("QR scanner opened");
+      lastProcessedCodeRef.current = null;
+      console.log("QR scanner opened for purpose:", scannerPurpose);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
@@ -48,6 +50,7 @@ const QRScannerHandler = ({
       closeTimeoutRef.current = window.setTimeout(() => {
         scannerMounted.current = false;
         processingQRRef.current = false;
+        lastProcessedCodeRef.current = null;
         closeTimeoutRef.current = null;
       }, 1000);
     }
@@ -69,7 +72,7 @@ const QRScannerHandler = ({
         console.log("QR scanner handler unmounted, resources cleaned up");
       }
     };
-  }, [showQRScanner]);
+  }, [showQRScanner, scannerPurpose]);
 
   if (!showQRScanner) return null;
 
@@ -77,12 +80,20 @@ const QRScannerHandler = ({
   const canClose = scannerPurpose === 'startShift' && !activeShift;
 
   const handleScanSuccess = (decodedText: string) => {
+    // Prevent duplicate processing
     if (processingQRRef.current) {
       console.log("Already processing a QR code, ignoring duplicate scan");
       return;
     }
     
+    // Check if this is the same code we just processed
+    if (lastProcessedCodeRef.current === decodedText) {
+      console.log("Same QR code scanned again, ignoring");
+      return;
+    }
+    
     processingQRRef.current = true;
+    lastProcessedCodeRef.current = decodedText;
     console.log("QR scan successful with purpose:", scannerPurpose, "data:", decodedText);
     
     // First stop all camera streams
@@ -91,11 +102,28 @@ const QRScannerHandler = ({
     // Special handling for endCleaning
     if (scannerPurpose === 'endCleaning') {
       console.log("Processing endCleaning scan");
+      
+      // Force a longer delay for endCleaning to ensure complete UI updates before processing
+      setTimeout(() => {
+        try {
+          onQRScan(decodedText);
+        } catch (error) {
+          console.error("Error processing endCleaning scan:", error);
+          processingQRRef.current = false;
+        }
+      }, 1000);
+      
+      return;
     }
     
-    // Force a delay before processing the scan result
+    // Force a delay before processing the scan result for other scan types
     setTimeout(() => {
-      onQRScan(decodedText);
+      try {
+        onQRScan(decodedText);
+      } catch (error) {
+        console.error("Error processing scan:", error);
+        processingQRRef.current = false;
+      }
     }, 800);
   };
 

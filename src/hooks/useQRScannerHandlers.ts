@@ -24,10 +24,15 @@ export function useQRScannerHandlers({
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
   const processingQRCodeRef = useRef(false);
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProcessedCodeRef = useRef<string | null>(null);
   
   // Effect to ensure camera resources are released when scanner is closed
   useEffect(() => {
-    if (!showQRScanner && processingQRCodeRef.current) {
+    if (!showQRScanner) {
+      // Forcefully stop all camera streams when scanner is closed
+      stopAllVideoStreams();
+      console.log("Camera resources released after scanner closed");
+      
       // Add a small delay before allowing new scans to prevent multiple triggers
       if (scanTimeoutRef.current) {
         clearTimeout(scanTimeoutRef.current);
@@ -35,6 +40,7 @@ export function useQRScannerHandlers({
       
       scanTimeoutRef.current = setTimeout(() => {
         processingQRCodeRef.current = false;
+        lastProcessedCodeRef.current = null;
         console.log("Reset processing state after scanner closed");
         scanTimeoutRef.current = null;
       }, 3000); // Longer timeout to ensure complete cleanup
@@ -63,10 +69,13 @@ export function useQRScannerHandlers({
       return;
     }
     
-    // Reset processing flag before starting
+    // Reset processing flag and last processed code before starting
     processingQRCodeRef.current = false;
+    lastProcessedCodeRef.current = null;
     setScannerPurpose(purpose);
     setShowQRScanner(true);
+    
+    console.log(`Starting QR scanner with purpose: ${purpose}`);
   };
   
   const handleQRScan = (decodedText: string) => {
@@ -76,14 +85,31 @@ export function useQRScannerHandlers({
       return;
     }
     
+    // Check if this is the same code we just processed
+    if (lastProcessedCodeRef.current === decodedText) {
+      console.log("Same QR code scanned again, ignoring");
+      return;
+    }
+    
     console.log(`QR scan detected for purpose: ${scannerPurpose}`);
     processingQRCodeRef.current = true;
+    lastProcessedCodeRef.current = decodedText;
     
     try {
       console.log(`Processing QR scan for purpose: ${scannerPurpose}, data: ${decodedText}`);
       
       // First close the scanner to release camera resources
       closeScanner();
+      
+      // Special handling for endCleaning scan type
+      if (scannerPurpose === 'endCleaning') {
+        console.log("Processing endCleaning scan with special handling");
+        // Add extra delay for endCleaning to ensure clean UI transition
+        setTimeout(() => {
+          onEndCleaningScan(decodedText);
+        }, 800);
+        return;
+      }
       
       // Use setTimeout to ensure UI updates before processing the scan
       setTimeout(() => {
@@ -116,6 +142,7 @@ export function useQRScannerHandlers({
       // Reset processing state after error
       setTimeout(() => {
         processingQRCodeRef.current = false;
+        lastProcessedCodeRef.current = null;
       }, 2000);
     }
   };
