@@ -29,9 +29,7 @@ export function useQRScannerHandlers({
   // Effect to ensure camera resources are released when scanner is closed
   useEffect(() => {
     if (!showQRScanner) {
-      // Forcefully stop all camera streams when scanner is closed
-      stopAllVideoStreams();
-      console.log("Camera resources released after scanner closed");
+      console.log("useQRScannerHandlers: Scanner closed, releasing camera");
       
       // Add a small delay before allowing new scans to prevent multiple triggers
       if (scanTimeoutRef.current) {
@@ -98,42 +96,39 @@ export function useQRScannerHandlers({
     try {
       console.log(`Processing QR scan for purpose: ${scannerPurpose}, data: ${decodedText}`);
       
-      // Don't close the scanner immediately - let the processing complete first
-      // Use setTimeout to ensure UI updates before processing the scan
+      switch (scannerPurpose) {
+        case 'startShift':
+          onStartShiftScan(decodedText);
+          closeScanner(); // Close after processing
+          break;
+        case 'endShift':
+          onEndShiftScan(decodedText);
+          closeScanner(); // Close after processing
+          break;
+        case 'startCleaning':
+          onStartCleaningScan(decodedText);
+          // Switch to cleaning tab after starting a cleaning
+          if (setActiveTab) {
+            setActiveTab('cleaning');
+          }
+          closeScanner(); // Close after processing
+          break;
+        case 'endCleaning':
+          console.log("Calling onEndCleaningScan with data:", decodedText);
+          onEndCleaningScan(decodedText);
+          closeScanner(); // Close after processing
+          break;
+        default:
+          console.warn("Unknown scanner purpose:", scannerPurpose);
+          closeScanner(); // Close on unknown purpose
+      }
+      
+      // Reset processing state after a delay to prevent multiple scans
       setTimeout(() => {
-        switch (scannerPurpose) {
-          case 'startShift':
-            onStartShiftScan(decodedText);
-            closeScanner(); // Close after processing
-            break;
-          case 'endShift':
-            onEndShiftScan(decodedText);
-            closeScanner(); // Close after processing
-            break;
-          case 'startCleaning':
-            onStartCleaningScan(decodedText);
-            // Switch to cleaning tab after starting a cleaning
-            if (setActiveTab) {
-              setActiveTab('cleaning');
-            }
-            closeScanner(); // Close after processing
-            break;
-          case 'endCleaning':
-            console.log("Calling onEndCleaningScan with data:", decodedText);
-            onEndCleaningScan(decodedText);
-            closeScanner(); // Close after processing
-            break;
-          default:
-            console.warn("Unknown scanner purpose:", scannerPurpose);
-            closeScanner(); // Close on unknown purpose
-        }
-        
-        // Reset processing state after a delay to prevent multiple scans
-        setTimeout(() => {
-          processingQRCodeRef.current = false;
-          console.log("Reset processing state after handling scan");
-        }, 2000);
-      }, 500);
+        processingQRCodeRef.current = false;
+        console.log("Reset processing state after handling scan");
+      }, 2000);
+      
     } catch (error) {
       console.error("Error processing QR scan:", error);
       // Reset processing state after error

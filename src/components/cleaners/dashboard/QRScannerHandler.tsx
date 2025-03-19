@@ -31,16 +31,16 @@ const QRScannerHandler = ({
   useEffect(() => {
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
+      console.log("QRScannerHandler: Scanner opening for purpose:", scannerPurpose);
       scannerMounted.current = true;
       processingQRRef.current = false;
       lastProcessedCodeRef.current = null;
-      console.log("QR scanner opened for purpose:", scannerPurpose);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
       // Ensure camera is released when QR scanner is closed
       stopAllVideoStreams();
-      console.log("QR scanner closed, camera resources released");
+      console.log("QRScannerHandler: Scanner closed, releasing camera");
       
       // Add a delay before setting scannerMounted to false to avoid conflicts
       if (closeTimeoutRef.current) {
@@ -69,7 +69,7 @@ const QRScannerHandler = ({
         stopAllVideoStreams();
         scannerMounted.current = false;
         processingQRRef.current = false;
-        console.log("QR scanner handler unmounted, resources cleaned up");
+        console.log("QRScannerHandler unmounted, resources cleaned up");
       }
     };
   }, [showQRScanner, scannerPurpose]);
@@ -80,28 +80,30 @@ const QRScannerHandler = ({
   const canClose = true;
 
   const handleScanSuccess = (decodedText: string) => {
+    console.log("QRScannerHandler: QR code scanned:", decodedText);
+    
     // Prevent duplicate processing
     if (processingQRRef.current) {
-      console.log("Already processing a QR code, ignoring duplicate scan");
+      console.log("QRScannerHandler: Already processing a QR code, ignoring");
       return;
     }
     
     // Check if this is the same code we just processed
     if (lastProcessedCodeRef.current === decodedText) {
-      console.log("Same QR code scanned again, ignoring");
+      console.log("QRScannerHandler: Same QR code scanned again, ignoring");
       return;
     }
     
     processingQRRef.current = true;
     lastProcessedCodeRef.current = decodedText;
-    console.log("QR scan successful with purpose:", scannerPurpose, "data:", decodedText);
     
-    // Pass the scan data to the handler without stopping camera first
-    // The handler is responsible for closing the scanner after processing
+    // Pass the scan data to the parent handler
+    // Don't close scanner immediately - let the parent component handle it
     onQRScan(decodedText);
   };
 
   const handleCloseScanner = () => {
+    console.log("QRScannerHandler: Manually closing scanner");
     // Stop all camera streams first
     stopAllVideoStreams();
     

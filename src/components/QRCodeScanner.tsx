@@ -19,19 +19,20 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     handleClose,
     handleManualSimulation
   } = useQRScannerLogic(
-    // Wrap the success callback to ensure proper cleanup before callback
+    // Handle successful scan
     (decodedText: string) => {
+      console.log("QRCodeScanner: Scan successful, data:", decodedText);
+      
       // Prevent duplicate scan processing
       if (scanProcessingRef.current) {
-        console.log("Scan already being processed, ignoring duplicate");
+        console.log("QRCodeScanner: Scan already being processed, ignoring duplicate");
         return;
       }
       
       scanProcessingRef.current = true;
-      console.log("QR scan successful, data:", decodedText);
       
-      // Pass the data to the original success callback without stopping camera
-      // The parent component is responsible for closing the scanner after processing
+      // Pass the data to the success callback without stopping the camera
+      // The parent component is responsible for closing the scanner
       onScanSuccess(decodedText);
       
       // Reset the processing flag after a delay
@@ -46,21 +47,13 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   
   // Component mount effect
   useEffect(() => {
+    console.log("QRCodeScanner: Component mounted");
     // Mark component as mounted
     scannerMountedRef.current = true;
     scanProcessingRef.current = false;
     
-    // Add a delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      if (scannerMountedRef.current) {
-        console.log("QR scanner mounted, camera active:", cameraActive);
-      }
-    }, 500);
-    
     return () => {
-      clearTimeout(timer);
-      
-      console.log("QRCodeScanner component unmounting, cleaning up resources");
+      console.log("QRCodeScanner: Component unmounting, cleaning up resources");
       // Set mounted ref to false to prevent any subsequent state updates
       scannerMountedRef.current = false;
       
@@ -80,6 +73,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
 
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {
+    console.log("QRCodeScanner: Manually closing scanner");
     // Prevent duplicate close attempts
     if (!scannerMountedRef.current) return;
     

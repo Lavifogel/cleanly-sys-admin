@@ -46,20 +46,18 @@ export function useQrScanHandlers({
       
       scanInProgressRef.current = true;
       
-      // Process the scan without stopping the camera first
-      // The camera will be stopped by the handler after processing
       try {
         onEndCleaningScan(qrData);
       } catch (error) {
         console.error("Error processing end cleaning scan:", error);
+      } finally {
+        // Reset scan in progress after a delay
+        cleanupTimeoutRef.current = setTimeout(() => {
+          scanInProgressRef.current = false;
+          cleanupTimeoutRef.current = null;
+          console.log("End cleaning scan process complete, ready for new scans");
+        }, 3000);
       }
-      
-      // Reset scan in progress after a delay
-      cleanupTimeoutRef.current = setTimeout(() => {
-        scanInProgressRef.current = false;
-        cleanupTimeoutRef.current = null;
-        console.log("End cleaning scan process complete, ready for new scans");
-      }, 3000);
     },
     setActiveTab
   });
