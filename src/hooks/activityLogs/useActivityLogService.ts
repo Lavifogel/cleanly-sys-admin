@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { 
   ActivityLog, 
@@ -16,7 +17,7 @@ export async function createActivityLog(request: ActivityLogRequest): Promise<Ac
   // Prepare the data
   const activityData = {
     ...request,
-    id: request.id || uuidv4(),
+    id: uuidv4(), // Generate UUID here since it's not in the request
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     end_time: request.end_time || null
