@@ -22,7 +22,6 @@ interface DashboardContentProps {
   handleEndShiftWithScan: () => void;
   handleEndShiftWithoutScan: () => void;
   handleStartCleaning: () => void;
-  handleEndCleaningWithScan: () => void;
   handleEndCleaningWithoutScan: () => void;
   handleStartShift: () => void;
   handleAutoEndShift: () => void;
@@ -42,7 +41,6 @@ const DashboardContent = ({
   handleEndShiftWithScan,
   handleEndShiftWithoutScan,
   handleStartCleaning,
-  handleEndCleaningWithScan,
   handleEndCleaningWithoutScan,
   handleStartShift,
   handleAutoEndShift,
@@ -101,7 +99,6 @@ const DashboardContent = ({
           handleEndShiftWithScan={handleEndShiftWithScan}
           handleEndShiftWithoutScan={handleEndShiftWithoutScan}
           handleStartCleaning={handleStartCleaning}
-          handleEndCleaningWithScan={handleEndCleaningWithScan}
           handleEndCleaningWithoutScan={handleEndCleaningWithoutScan}
           handleAutoEndCleaning={handleAutoEndCleaning}
         />
