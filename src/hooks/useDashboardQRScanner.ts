@@ -33,7 +33,7 @@ export function useDashboardQRScanner(
     // Set processing flag
     isProcessingScan.current = true;
     
-    // Close scanner first
+    // Close scanner first to release camera resources
     closeScanner();
 
     // Process based on scanner purpose
@@ -74,11 +74,13 @@ export function useDashboardQRScanner(
   // Handler functions for different QR scanning purposes
   const handleStartShift = () => {
     if (activeShift) return;
+    console.log("Opening scanner for starting shift");
     openScanner("startShift");
   };
 
   const handleEndShiftWithScan = () => {
     if (!activeShift || activeCleaning) return;
+    console.log("Opening scanner for ending shift");
     openScanner("endShift");
   };
 

@@ -9,6 +9,7 @@ export function useQRScanner() {
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>("startShift");
   const isProcessingScan = useRef(false);
   const scannerClosedTimeRef = useRef(Date.now());
+  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Effect to release camera resources when QR scanner is closed
   useEffect(() => {
@@ -31,17 +32,28 @@ export function useQRScanner() {
   // Also clean up on component unmount
   useEffect(() => {
     return () => {
+      if (openTimeoutRef.current) {
+        clearTimeout(openTimeoutRef.current);
+      }
       stopAllVideoStreams();
       console.log("Camera resources released on component unmount");
     };
   }, []);
 
   const openScanner = (purpose: ScannerPurpose) => {
+    console.log(`Attempting to open scanner for purpose: ${purpose}`);
+    
+    // Clear any existing timeout
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = null;
+    }
+    
     // Prevent rapid reopening of scanner
     const timeSinceLastClose = Date.now() - scannerClosedTimeRef.current;
     if (timeSinceLastClose < 1500) {
       console.log("Preventing rapid scanner reopen, waiting...");
-      setTimeout(() => {
+      openTimeoutRef.current = setTimeout(() => {
         openScannerImpl(purpose);
       }, 1500 - timeSinceLastClose);
       return;

@@ -13,6 +13,8 @@ export function useStartCleaning(
   setActiveCleaning: (cleaning: Cleaning | null) => void,
   setCleaningElapsedTime: (time: number) => void
 ) {
+  const { toast } = useToast();
+
   // Start a new cleaning session with QR code data
   const startCleaning = async (qrData: string) => {
     if (!activeShiftId) {
@@ -69,6 +71,12 @@ export function useStartCleaning(
       });
       setCleaningElapsedTime(0);
       
+      // Show success toast
+      toast({
+        title: "Cleaning Started",
+        description: `Started cleaning at ${locationFromQR}`,
+      });
+      
       console.log("Cleaning started successfully:", {
         id: cleaningId,
         location: locationFromQR,
@@ -77,6 +85,13 @@ export function useStartCleaning(
       
     } catch (error) {
       console.error("Failed to start cleaning:", error);
+      
+      // Show error toast
+      toast({
+        title: "Failed to Start Cleaning",
+        description: "Please try again or contact support if the issue persists.",
+        variant: "destructive",
+      });
     }
   };
 

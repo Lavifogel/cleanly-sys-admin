@@ -95,6 +95,7 @@ export function useQrScanHandlers({
       // Add a delay to ensure UI updates before processing
       setTimeout(() => {
         try {
+          console.log("Calling onEndCleaningScan with data:", qrData);
           onEndCleaningScan(qrData);
         } catch (error) {
           console.error("Error processing end cleaning scan:", error);

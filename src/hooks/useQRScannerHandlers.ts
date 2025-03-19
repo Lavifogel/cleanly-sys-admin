@@ -26,6 +26,7 @@ export function useQRScannerHandlers({
   const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastProcessedCodeRef = useRef<string | null>(null);
   const lastScanTimeRef = useRef(0);
+  const openScannerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Effect to ensure camera resources are released when scanner is closed
   useEffect(() => {
@@ -52,6 +53,11 @@ export function useQRScannerHandlers({
         clearTimeout(scanTimeoutRef.current);
         scanTimeoutRef.current = null;
       }
+      
+      if (openScannerTimeoutRef.current) {
+        clearTimeout(openScannerTimeoutRef.current);
+        openScannerTimeoutRef.current = null;
+      }
     };
   }, [showQRScanner]);
   
@@ -64,17 +70,25 @@ export function useQRScannerHandlers({
   };
   
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
+    console.log(`handleQRScannerStart called with purpose: ${purpose}`);
+    
     // Prevent starting a new scan if we're still processing
     if (processingQRCodeRef.current) {
       console.log("Still processing previous scan, preventing new scan");
       return;
     }
     
+    // Clear any existing timeout
+    if (openScannerTimeoutRef.current) {
+      clearTimeout(openScannerTimeoutRef.current);
+      openScannerTimeoutRef.current = null;
+    }
+    
     // Prevent rapid repeated scanning
     const now = Date.now();
     if (now - lastScanTimeRef.current < 2000) {
       console.log("Too soon since last scan attempt, waiting...");
-      setTimeout(() => {
+      openScannerTimeoutRef.current = setTimeout(() => {
         startScannerWithPurpose(purpose);
       }, 2000 - (now - lastScanTimeRef.current));
       return;
@@ -91,7 +105,15 @@ export function useQRScannerHandlers({
     processingQRCodeRef.current = false;
     lastProcessedCodeRef.current = null;
     setScannerPurpose(purpose);
-    setShowQRScanner(true);
+    
+    // Ensure we stop any existing camera streams before starting a new one
+    stopAllVideoStreams();
+    
+    // Short delay to ensure camera resources are fully released
+    setTimeout(() => {
+      setShowQRScanner(true);
+      console.log(`QR scanner UI shown for purpose: ${purpose}`);
+    }, 300);
   };
   
   const handleQRScan = (decodedText: string) => {
