@@ -23,18 +23,29 @@ export function useQRScannerHandlers({
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
   const processingQRCodeRef = useRef(false);
+  const scanTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Effect to ensure camera resources are released when scanner is closed
   useEffect(() => {
     if (!showQRScanner && processingQRCodeRef.current) {
       // Add a small delay before allowing new scans to prevent multiple triggers
-      const timer = setTimeout(() => {
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+      }
+      
+      scanTimeoutRef.current = setTimeout(() => {
         processingQRCodeRef.current = false;
         console.log("Reset processing state after scanner closed");
-      }, 2000); // Longer timeout to ensure complete cleanup
-      
-      return () => clearTimeout(timer);
+        scanTimeoutRef.current = null;
+      }, 3000); // Longer timeout to ensure complete cleanup
     }
+    
+    return () => {
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+        scanTimeoutRef.current = null;
+      }
+    };
   }, [showQRScanner]);
   
   const closeScanner = () => {
@@ -97,6 +108,8 @@ export function useQRScannerHandlers({
           default:
             console.warn("Unknown scanner purpose:", scannerPurpose);
         }
+        
+        // Don't reset processing state immediately - let the handler decide when to reset
       }, 500);
     } catch (error) {
       console.error("Error processing QR scan:", error);

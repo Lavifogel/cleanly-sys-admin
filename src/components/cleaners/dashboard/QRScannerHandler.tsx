@@ -88,10 +88,15 @@ const QRScannerHandler = ({
     // First stop all camera streams
     stopAllVideoStreams();
     
+    // Special handling for endCleaning
+    if (scannerPurpose === 'endCleaning') {
+      console.log("Processing endCleaning scan");
+    }
+    
     // Force a delay before processing the scan result
     setTimeout(() => {
       onQRScan(decodedText);
-    }, 500);
+    }, 800);
   };
 
   return (

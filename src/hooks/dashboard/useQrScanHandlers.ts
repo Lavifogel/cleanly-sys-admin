@@ -1,7 +1,8 @@
 
 import { ScannerPurpose } from "@/hooks/useQRScanner";
 import { useQRScannerHandlers } from "@/hooks/useQRScannerHandlers";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export function useQrScanHandlers({
   onStartShiftScan,
@@ -17,6 +18,7 @@ export function useQrScanHandlers({
   setActiveTab: (tab: string) => void;
 }) {
   const scanInProgressRef = useRef(false);
+  const [lastScanTime, setLastScanTime] = useState(0);
   
   const qrScannerHandlers = useQRScannerHandlers({
     onStartShiftScan,
@@ -27,12 +29,24 @@ export function useQrScanHandlers({
     },
     onEndCleaningScan: (qrData: string) => {
       console.log("Ending cleaning with QR data:", qrData);
+      
+      // Prevent multiple rapid scans
+      const now = Date.now();
+      if (now - lastScanTime < 3000) {
+        console.log("Ignoring scan - too soon after previous scan");
+        return;
+      }
+      setLastScanTime(now);
+      
       if (scanInProgressRef.current) {
-        console.log("Scan already in progress, ignoring");
+        console.log("Scan already in progress, ignoring duplicate");
         return;
       }
       
       scanInProgressRef.current = true;
+      
+      // Make sure camera is fully stopped before proceeding
+      stopAllVideoStreams();
       
       // Add a delay to ensure UI updates before processing
       setTimeout(() => {
@@ -41,7 +55,7 @@ export function useQrScanHandlers({
         // Reset scan in progress after a delay
         setTimeout(() => {
           scanInProgressRef.current = false;
-        }, 2000);
+        }, 3000);
       }, 500);
     },
     setActiveTab
