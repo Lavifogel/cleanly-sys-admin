@@ -1,8 +1,25 @@
 
 import { FC } from "react";
 
+interface CleaningImage {
+  id: string;
+  image_url: string;
+}
+
+interface CleaningData {
+  id: string;
+  start_time: string;
+  end_time?: string;
+  status: string;
+  notes?: string;
+  qr_codes?: {
+    area_name: string | null;
+  } | null;
+  images?: CleaningImage[];
+}
+
 interface CleaningItemProps {
-  cleaning: any;
+  cleaning: CleaningData;
   getLocationFromNotes: (notes: string) => string;
 }
 
@@ -11,7 +28,7 @@ const CleaningItem: FC<CleaningItemProps> = ({ cleaning, getLocationFromNotes })
     <div className="bg-card p-3 rounded-md border">
       <div className="flex justify-between items-start">
         <div>
-          <p className="font-medium">{cleaning.qr_codes?.area_name || getLocationFromNotes(cleaning.notes)}</p>
+          <p className="font-medium">{cleaning.qr_codes?.area_name || getLocationFromNotes(cleaning.notes || '')}</p>
           <p className="text-xs text-muted-foreground">
             {new Date(cleaning.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} 
             {cleaning.end_time && ` - ${new Date(cleaning.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`}
@@ -29,7 +46,7 @@ const CleaningItem: FC<CleaningItemProps> = ({ cleaning, getLocationFromNotes })
         <div className="mt-2">
           <p className="text-xs font-medium mb-1">Images ({cleaning.images.length})</p>
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {cleaning.images.map((img: any) => (
+            {cleaning.images.map((img) => (
               <a 
                 key={img.id} 
                 href={img.image_url} 

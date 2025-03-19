@@ -3,9 +3,24 @@ import { FC } from "react";
 import { Loader2 } from "lucide-react";
 import CleaningItem from "./CleaningItem";
 
+interface CleaningData {
+  id: string;
+  start_time: string;
+  end_time?: string;
+  status: string;
+  notes?: string;
+  qr_codes?: {
+    area_name: string | null;
+  } | null;
+  images?: {
+    id: string;
+    image_url: string;
+  }[];
+}
+
 interface ExpandedShiftDetailsProps {
   loading: boolean;
-  cleanings: any[];
+  cleanings: CleaningData[];
   getLocationFromNotes: (notes: string) => string;
 }
 
