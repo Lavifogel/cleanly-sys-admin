@@ -67,7 +67,7 @@ export const stopAllVideoStreams = () => {
       }
     });
     
-    // Also stop any active MediaStream from getUserMedia
+    // Safely stop any MediaStream that might be active
     try {
       if (navigator.mediaDevices) {
         navigator.mediaDevices.getUserMedia({ audio: false, video: true })
@@ -84,23 +84,7 @@ export const stopAllVideoStreams = () => {
       // Ignore any errors in this cleanup
     }
     
-    // Remove any HTML5QrCode scanner UI elements that might be orphaned
-    try {
-      const scannerElements = document.querySelectorAll('.html5-qrcode-element');
-      scannerElements.forEach(element => {
-        if (element.parentNode && document.contains(element)) {
-          try {
-            element.parentNode.removeChild(element);
-          } catch (e) {
-            console.log("Error removing scanner UI element:", e);
-          }
-        }
-      });
-    } catch (e) {
-      console.log("Error removing scanner UI elements:", e);
-    }
-    
-    // Then attempt to safely remove video elements in a separate pass
+    // Then attempt to safely remove video elements in a separate pass after a short delay
     // This avoids issues with modifying the DOM while iterating
     setTimeout(() => {
       videoElements.forEach(video => {
@@ -114,7 +98,21 @@ export const stopAllVideoStreams = () => {
         }
       });
       
-      console.log("All video streams stopped");
+      // Remove any HTML5QrCode scanner UI elements that might be orphaned
+      try {
+        const scannerElements = document.querySelectorAll('.html5-qrcode-element');
+        scannerElements.forEach(element => {
+          if (element.parentNode && document.contains(element)) {
+            try {
+              element.parentNode.removeChild(element);
+            } catch (e) {
+              console.log("Error removing scanner UI element:", e);
+            }
+          }
+        });
+      } catch (e) {
+        console.log("Error removing scanner UI elements:", e);
+      }
     }, 100);
   } catch (e) {
     console.log("Error in stopAllVideoStreams:", e);

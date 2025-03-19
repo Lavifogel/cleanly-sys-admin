@@ -25,7 +25,6 @@ export function useQRScannerHandlers({
   const processingRef = useRef(false);
   
   const closeScanner = () => {
-    console.log("Closing scanner for purpose:", scannerPurpose);
     // Force stop all camera streams before hiding the scanner UI
     stopAllVideoStreams();
     setShowQRScanner(false);
@@ -37,8 +36,6 @@ export function useQRScannerHandlers({
   };
   
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
-    console.log("Starting QR scanner for purpose:", purpose);
-    // Reset processing state before opening scanner
     processingRef.current = false;
     setScannerPurpose(purpose);
     setShowQRScanner(true);
@@ -51,7 +48,6 @@ export function useQRScannerHandlers({
       return;
     }
     
-    console.log(`QR code scanned successfully for purpose: ${scannerPurpose}, data: ${decodedText}`);
     processingRef.current = true;
     
     // Immediately stop all camera streams
@@ -64,7 +60,7 @@ export function useQRScannerHandlers({
     // This ensures camera resources are fully released
     setTimeout(() => {
       try {
-        console.log(`Processing scan result for purpose: ${scannerPurpose}`);
+        console.log(`QR scanned for purpose: ${scannerPurpose}, data: ${decodedText}`);
         
         switch (scannerPurpose) {
           case 'startShift':
