@@ -5,13 +5,14 @@ import { useToast } from "@/hooks/use-toast";
 import { User } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { createActivityLog } from "@/hooks/activityLogs/useActivityLogService";
-import { loginWithCredentials } from "@/services/authService";
+import { loginWithCredentials, closeActiveShift, closeActiveCleaning } from "@/services/authService";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -78,10 +79,85 @@ export function useAuth() {
     }
   }, []);
 
+  // Logout function
+  const performLogout = useCallback(async () => {
+    try {
+      setIsLoggingOut(true);
+      
+      // Get user ID for activity log
+      const storedAuth = localStorage.getItem('auth');
+      let userId: string | null = null;
+      
+      if (storedAuth) {
+        try {
+          const parsedAuth = JSON.parse(storedAuth);
+          if (parsedAuth.userData && parsedAuth.userData.id) {
+            userId = parsedAuth.userData.id;
+          }
+        } catch (error) {
+          console.error("Error parsing auth data:", error);
+        }
+      }
+      
+      // Log logout activity
+      if (userId) {
+        try {
+          await createActivityLog({
+            user_id: userId,
+            activity_type: 'logout',
+            start_time: new Date().toISOString(),
+            status: 'success'
+          });
+        } catch (error) {
+          console.error("Error logging logout activity:", error);
+        }
+      }
+      
+      // Close active sessions in database
+      await closeActiveShift();
+      await closeActiveCleaning();
+      
+      // Clear authentication data
+      localStorage.removeItem('auth');
+      
+      // Clear all shift and cleaning related data
+      localStorage.removeItem('activeShift');
+      localStorage.removeItem('shiftTimer');
+      localStorage.removeItem('shiftStartTime');
+      localStorage.removeItem('activeCleaning');
+      localStorage.removeItem('cleaningTimer');
+      localStorage.removeItem('cleaningStartTime');
+      localStorage.removeItem('cleaningPaused');
+      
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      
+      // Update auth state
+      setUser(null);
+      setStatus("unauthenticated");
+      
+      return true;
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [toast]);
+
   return {
     user,
     status,
     isAuthenticated: status === "authenticated",
-    login
+    login,
+    isLoggingOut,
+    performLogout
   };
 }
