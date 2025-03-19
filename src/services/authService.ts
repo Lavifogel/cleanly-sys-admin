@@ -144,16 +144,8 @@ export const loginWithCredentials = async (phoneNumber: string, password: string
       const user = users[0];
       console.log("User data retrieved:", user);
       
-      // Important fix: Correct password comparison
-      // For users who have a password set, check if it matches
-      if (user.password) {
-        // Convert both to strings before comparing to ensure consistent comparison
-        if (String(user.password).trim() !== String(password).trim()) {
-          console.error('Password mismatch, expected:', user.password, 'provided:', password);
-          return { success: false, error: new Error("Invalid phone number or password") };
-        }
-      } else {
-        // If no password is set, save the provided password
+      // Check if password is not set and needs to be updated
+      if (!user.password) {
         console.log("User has no password, setting password:", password);
         
         const { error: updateError } = await supabase
@@ -165,6 +157,13 @@ export const loginWithCredentials = async (phoneNumber: string, password: string
           console.error('Error updating password:', updateError);
           return { success: false, error: new Error("Failed to set up account") };
         }
+        
+        user.password = password;
+      } 
+      // Verify password matches
+      else if (user.password !== password) {
+        console.error('Invalid password');
+        return { success: false, error: new Error("Invalid phone number or password") };
       }
       
       // Prepare user data for localStorage
