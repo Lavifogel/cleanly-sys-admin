@@ -39,7 +39,7 @@ export const useActivities = () => {
             last_name,
             full_name
           ),
-          qr_codes (
+          qr_codes!start_qr_id (
             area_name
           )
         `)
@@ -57,7 +57,7 @@ export const useActivities = () => {
           end_time,
           status,
           notes,
-          qr_codes (
+          qr_codes!start_qr_id (
             area_name
           ),
           shifts (

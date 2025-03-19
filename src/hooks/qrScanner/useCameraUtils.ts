@@ -42,19 +42,19 @@ export const useCameraUtils = ({
             return true;
           }
         } catch (err) {
-          console.log("User-facing camera failed, trying with deviceId: true");
+          console.log("User-facing camera failed, trying with fallback approach");
           
-          // Try with deviceId: true as last resort
+          // Try with a different approach as last resort
           try {
             await scannerRef.current.start(
-              true, // Use any available camera
+              { facingMode: { ideal: "environment" } }, // Use an object instead of boolean
               config,
               qrCodeSuccessCallback,
               () => {}
             );
             
             if (mountedRef.current) {
-              console.log("Camera started with deviceId: true");
+              console.log("Camera started with fallback approach");
               setCameraActive(true);
               setError(null);
               return true;

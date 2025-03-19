@@ -146,21 +146,21 @@ export const useCameraStart = ({
           console.log("Trying with no camera constraints...");
           try {
             await scannerRef.current.start(
-              true, // Use any camera
+              { facingMode: { ideal: "environment" } }, // Use a more generic constraint instead of boolean
               config,
               qrCodeSuccessCallback,
               () => {}
             );
             
             if (mountedRef.current) {
-              console.log("Camera started with no constraints");
+              console.log("Camera started with more generic constraints");
               setCameraActive(true);
               clearTimeout(timeoutId);
               resetStartingState();
               return;
             }
           } catch (fallbackErr) {
-            console.error("Error starting with no constraints:", fallbackErr);
+            console.error("Error starting with generic constraints:", fallbackErr);
             
             // Try one more fallback approach
             await tryFallbackCamera(config, qrCodeSuccessCallback);

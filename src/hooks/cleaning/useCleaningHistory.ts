@@ -56,12 +56,12 @@ export function useCleaningHistory(activeShiftId: string | undefined) {
           .select(`
             id, 
             shift_id, 
-            qr_id, 
+            start_qr_id,
             start_time, 
             end_time, 
             status, 
             notes,
-            qr_codes(area_name)
+            qr_codes!start_qr_id(area_name)
           `)
           .eq('shift_id', activeShiftId)
           .order('start_time', { ascending: false });
