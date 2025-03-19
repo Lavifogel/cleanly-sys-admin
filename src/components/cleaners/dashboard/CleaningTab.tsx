@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import ActiveCleaningCard from "@/components/cleaners/ActiveCleaningCard";
 import CleaningHistoryCard from "@/components/cleaners/CleaningHistoryCard";
 import { Cleaning, CleaningHistoryItem } from "@/types/cleaning";
-import { PlayIcon } from "lucide-react";
+import { PlayIcon, QrCode } from "lucide-react";
 
 interface CleaningTabProps {
   activeCleaning: Cleaning | null;
@@ -27,7 +27,7 @@ const CleaningTab = ({
   handleEndCleaningWithoutScan,
   togglePauseCleaning,
   handleAutoEndCleaning,
-  activeShiftId // Add activeShiftId prop
+  activeShiftId
 }: CleaningTabProps) => {
   // Auto-close cleaning after 5 hours (5 * 60 * 60 = 18000 seconds)
   useEffect(() => {
@@ -53,8 +53,8 @@ const CleaningTab = ({
             Start a new cleaning session by scanning a QR code.
           </p>
           <Button onClick={handleStartCleaning} className="mt-4">
-            <PlayIcon className="mr-2 h-4 w-4" />
-            Start Cleaning
+            <QrCode className="mr-2 h-4 w-4" />
+            Scan to Start Cleaning
           </Button>
         </div>
       ) : (
