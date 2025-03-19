@@ -138,6 +138,9 @@ export function useAuth() {
       setUser(null);
       setStatus("unauthenticated");
       
+      // Navigate to login page
+      navigate('/login', { replace: true });
+      
       return true;
     } catch (error) {
       console.error("Logout error:", error);
@@ -150,7 +153,7 @@ export function useAuth() {
     } finally {
       setIsLoggingOut(false);
     }
-  }, [toast]);
+  }, [toast, navigate]);
 
   return {
     user,
