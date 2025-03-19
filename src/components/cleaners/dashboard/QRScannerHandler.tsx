@@ -26,13 +26,19 @@ const QRScannerHandler = ({
   const closeTimeoutRef = useRef<number | null>(null);
   const processingQRScanRef = useRef(false);
   
-  // Effect to manage scanner visibility changes
+  // Effect to manage scanner visibility changes and ensure camera starts
   useEffect(() => {
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
-      scannerMounted.current = true;
-      processingQRScanRef.current = false;
-      console.log("QR scanner opened");
+      // First make sure any previous camera streams are fully stopped
+      stopAllVideoStreams();
+      
+      // Short delay to ensure clean start
+      setTimeout(() => {
+        scannerMounted.current = true;
+        processingQRScanRef.current = false;
+        console.log("QR scanner opened, camera should start now");
+      }, 100);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {

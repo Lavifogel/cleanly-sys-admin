@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Scan } from "lucide-react";
+import { Scan, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,16 +16,30 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
   const handleStartShift = async () => {
     setIsLoading(true);
     try {
+      // Clear any existing video streams before opening scanner
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+        const mediaDevices = navigator.mediaDevices as MediaDevices;
+        await mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
+            stream.getTracks().forEach(track => track.stop());
+            console.log("Camera access granted before starting shift");
+          })
+          .catch(err => {
+            console.warn("Could not access camera before start shift:", err);
+          });
+      }
+      
+      toast({
+        title: "Opening Scanner",
+        description: "Camera is initializing...",
+        duration: 3000,
+      });
+      
       // Slight delay to ensure UI updates before opening scanner
       setTimeout(() => {
         onStartShift();
-        toast({
-          title: "QR Scanner opening",
-          description: "Please scan a QR code to start your shift.",
-          duration: 3000,
-        });
         setIsLoading(false);
-      }, 100);
+      }, 300);
     } catch (error: any) {
       console.error("Error starting shift:", error);
       toast({
@@ -55,8 +69,17 @@ const StartShiftCard = ({ onStartShift }: StartShiftCardProps) => {
           size="lg"
           disabled={isLoading}
         >
-          <Scan className="mr-2 h-5 w-5" />
-          {isLoading ? "Opening Scanner..." : "Scan to Start Shift"}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Opening Scanner...
+            </>
+          ) : (
+            <>
+              <Scan className="mr-2 h-5 w-5" />
+              Scan to Start Shift
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>

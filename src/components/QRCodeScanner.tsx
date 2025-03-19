@@ -1,22 +1,27 @@
 
 import React, { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { X, Camera } from "lucide-react";
 import { QRCodeScannerProps } from "@/types/qrScanner";
 import { useQRScannerLogic } from "@/hooks/useQRScannerLogic";
 import QRScannerView from "@/components/qrScanner/QRScannerView";
 import { Button } from "./ui/button";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
+import { useToast } from "@/hooks/use-toast";
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose }) => {
   const scannerMountedRef = useRef(false);
   const cleanupTimeoutRef = useRef<number | null>(null);
   const scanProcessedRef = useRef(false);
+  const { toast } = useToast();
   
   const {
     scannerState,
     scannerContainerId,
+    fileInputRef,
     handleClose,
+    handleTakePicture,
+    handleFileSelect,
     handleManualSimulation
   } = useQRScannerLogic(
     // Wrap the success callback to ensure proper cleanup before callback
@@ -31,6 +36,13 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       
       // Stop camera streams first and ensure complete cleanup
       stopAllVideoStreams();
+      
+      // Notify the user of successful scan
+      toast({
+        title: "QR Code Scanned",
+        description: "Successfully scanned QR code",
+        duration: 3000,
+      });
       
       // Call the original success callback with a delay to ensure camera is fully stopped
       setTimeout(() => {
@@ -58,6 +70,21 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     const timer = setTimeout(() => {
       if (scannerMountedRef.current) {
         console.log("QR scanner mounted, camera active:", cameraActive);
+        
+        // If camera isn't active after a few seconds, show a toast with instructions
+        if (!cameraActive) {
+          const permissionTimer = setTimeout(() => {
+            if (scannerMountedRef.current && !cameraActive) {
+              toast({
+                title: "Camera Access",
+                description: "Please allow camera access to scan QR codes",
+                duration: 5000,
+              });
+            }
+          }, 3000);
+          
+          return () => clearTimeout(permissionTimer);
+        }
       }
     }, 500);
     
@@ -83,7 +110,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         stopAllVideoStreams();
       }, 200);
     };
-  }, []);
+  }, [cameraActive, toast]);
 
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {
@@ -127,8 +154,23 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
         />
         
         {error && (
-          <div className="mt-4 text-destructive text-center text-sm">
+          <div className="mt-4 p-3 bg-destructive/10 rounded-md text-destructive text-center text-sm">
             {error}
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 w-full"
+              onClick={() => {
+                // Try restarting camera
+                stopAllVideoStreams();
+                setTimeout(() => {
+                  window.location.reload();
+                }, 500);
+              }}
+            >
+              <Camera className="mr-2 h-4 w-4" />
+              Retry Camera
+            </Button>
           </div>
         )}
 
@@ -143,6 +185,15 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
             </Button>
           </div>
         )}
+        
+        {/* Hidden file input for image upload */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
       </CardContent>
     </Card>
   );
