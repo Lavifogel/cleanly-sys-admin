@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { QRCodeScannerProps } from "@/types/qrScanner";
-import { useQRScannerLogic } from "@/hooks/useQRScannerLogic";
+import { useQRScannerLogic } from "@/hooks/qrScanner/useQRScannerLogic";
 import QRScannerView from "@/components/qrScanner/QRScannerView";
 import { Button } from "./ui/button";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
@@ -12,7 +12,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
   const scannerMountedRef = useRef(false);
   const cleanupTimeoutRef = useRef<number | null>(null);
   const scanProcessedRef = useRef(false);
-  const explicitStartRef = useRef(false);
+  const startAttemptedRef = useRef(false);
   
   const {
     scannerState,
@@ -34,6 +34,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       
       // Stop camera streams first and ensure complete cleanup
       stopAllVideoStreams();
+      stopCamera();
       
       // Call the original success callback with a delay to ensure camera is fully stopped
       setTimeout(() => {
@@ -43,35 +44,38 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Wrap close callback to ensure camera shutdown
     () => {
       stopAllVideoStreams();
+      stopCamera();
       onClose();
     }
   );
 
-  const { error, cameraActive } = scannerState;
+  const { error, cameraActive, isScanning } = scannerState;
   
   // Component mount effect - explicitly start camera
   useEffect(() => {
     // Mark component as mounted
     scannerMountedRef.current = true;
     scanProcessedRef.current = false;
-    explicitStartRef.current = false;
+    
+    // Initial camera cleanup to ensure fresh start
+    stopAllVideoStreams();
     
     // Initial camera start with increased delay
     const timer = setTimeout(() => {
-      if (scannerMountedRef.current && !explicitStartRef.current) {
+      if (scannerMountedRef.current && !startAttemptedRef.current) {
         console.log("QR scanner mounted, explicitly starting camera (initial)...");
-        explicitStartRef.current = true;
+        startAttemptedRef.current = true;
         startScanner();
         
         // Add a backup timer in case the first attempt fails
         setTimeout(() => {
-          if (scannerMountedRef.current && !cameraActive) {
+          if (scannerMountedRef.current && !cameraActive && !scanProcessedRef.current) {
             console.log("Camera not active after initial start, trying again...");
             startScanner();
           }
-        }, 1500);
+        }, 1200);
       }
-    }, 700); // Increased delay for better reliability
+    }, 500); // Delay for better reliability
     
     return () => {
       clearTimeout(timer);
@@ -89,22 +93,22 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       stopCamera();
       stopAllVideoStreams();
     };
-  }, []);
+  }, [startScanner, stopCamera, cameraActive]);
   
   // Add a separate effect to monitor camera state and retry if needed
   useEffect(() => {
-    if (scannerMountedRef.current && !cameraActive && explicitStartRef.current) {
+    if (scannerMountedRef.current && !cameraActive && startAttemptedRef.current && !scanProcessedRef.current) {
       // Camera should be active but isn't, try to restart
       const retryTimer = setTimeout(() => {
-        if (scannerMountedRef.current && !cameraActive) {
+        if (scannerMountedRef.current && !cameraActive && !scanProcessedRef.current) {
           console.log("Camera still not active, retrying camera start...");
           startScanner();
         }
-      }, 2000);
+      }, 1500);
       
       return () => clearTimeout(retryTimer);
     }
-  }, [cameraActive]);
+  }, [cameraActive, startScanner]);
 
   // Safely handle close with proper cleanup
   const safeHandleClose = () => {
@@ -164,13 +168,13 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
           </div>
         )}
         
-        {!cameraActive && (
+        {!cameraActive && !scanProcessedRef.current && (
           <div className="mt-4">
             <Button 
               variant="outline" 
               onClick={() => {
                 console.log("Manual camera start requested");
-                explicitStartRef.current = true;
+                startAttemptedRef.current = true;
                 startScanner();
               }}
               className="w-full"

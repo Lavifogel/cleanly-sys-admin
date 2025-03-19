@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { ScannerPurpose } from "@/hooks/useQRScanner";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
@@ -21,6 +21,8 @@ const QRScannerHandler = ({
   onQRScan,
   activeShift = false
 }: QRScannerHandlerProps) => {
+  // Local state to properly handle scanner mount/unmount
+  const [showScannerComponent, setShowScannerComponent] = useState(false);
   const scannerMounted = useRef(false);
   const prevShowQRScannerRef = useRef(showQRScanner);
   const closeTimeoutRef = useRef<number | null>(null);
@@ -34,13 +36,17 @@ const QRScannerHandler = ({
       stopAllVideoStreams();
       processingQRScanRef.current = false;
       
-      // Give time for previous resources to clean up
+      // Reset state before showing scanner
+      console.log(`Preparing to open QR scanner for purpose: ${scannerPurpose}`);
+      
+      // Add delay to ensure clean mounting
       setTimeout(() => {
         if (showQRScanner) { // Double check scanner should still be shown
           scannerMounted.current = true;
+          setShowScannerComponent(true);
           console.log(`QR scanner opened for purpose: ${scannerPurpose}`);
         }
-      }, 100);
+      }, 200);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
@@ -48,20 +54,22 @@ const QRScannerHandler = ({
       if (scannerMounted.current) {
         // Immediately force stop all video streams
         stopAllVideoStreams();
-        console.log("QR scanner closed, camera resources released");
+        console.log("QR scanner closing, camera resources released");
         
-        // Add a delay before setting scannerMounted to false to avoid conflicts
+        // Add a delay before removing the component to avoid conflicts
         if (closeTimeoutRef.current) {
           clearTimeout(closeTimeoutRef.current);
         }
         
         closeTimeoutRef.current = window.setTimeout(() => {
+          setShowScannerComponent(false);
           scannerMounted.current = false;
           processingQRScanRef.current = false;
           closeTimeoutRef.current = null;
           
           // Force stop streams again to ensure complete cleanup
           stopAllVideoStreams();
+          console.log("QR scanner fully closed");
         }, 300);
       }
     }
@@ -92,10 +100,18 @@ const QRScannerHandler = ({
     };
   }, []);
 
+  // If the scanner is not shown, don't render anything
   if (!showQRScanner) return null;
-
-  // All scanning purposes now allow closing
-  const canClose = true;
+  
+  // If we're in the process of mounting/unmounting, show a loading state
+  if (!showScannerComponent) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm">
+        <p className="text-lg mb-2">Preparing camera...</p>
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   const handleScanSuccess = (decodedText: string) => {
     // Prevent duplicate scan handling
@@ -118,21 +134,19 @@ const QRScannerHandler = ({
 
   return (
     <div className="fixed inset-0 z-50">
-      {canClose && (
-        <div className="absolute top-4 right-4 z-50">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => {
-              stopAllVideoStreams();
-              closeScanner();
-            }} 
-            className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-      )}
+      <div className="absolute top-4 right-4 z-[60]">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => {
+            stopAllVideoStreams();
+            closeScanner();
+          }} 
+          className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
       <QRCodeScanner 
         onScanSuccess={handleScanSuccess}
         onClose={() => {

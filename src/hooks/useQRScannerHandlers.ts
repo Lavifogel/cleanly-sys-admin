@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
@@ -24,16 +24,20 @@ export function useQRScannerHandlers({
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
   const processingRef = useRef(false);
   const scannerTimeoutRef = useRef<number | null>(null);
+  const isOpeningRef = useRef(false);
   
   // Reset processing flag when scanner is closed
   useEffect(() => {
     if (!showQRScanner) {
       console.log("Scanner closed, resetting processing flag");
-      processingRef.current = false;
+      setTimeout(() => {
+        processingRef.current = false;
+        isOpeningRef.current = false;
+      }, 500);
     }
   }, [showQRScanner]);
   
-  const closeScanner = () => {
+  const closeScanner = useCallback(() => {
     console.log(`Closing scanner with purpose: ${scannerPurpose}`);
     
     // Force stop all camera streams before hiding the scanner UI
@@ -41,10 +45,17 @@ export function useQRScannerHandlers({
     
     // Hide scanner immediately
     setShowQRScanner(false);
-  };
+  }, [scannerPurpose]);
   
-  const handleQRScannerStart = (purpose: ScannerPurpose) => {
+  const handleQRScannerStart = useCallback((purpose: ScannerPurpose) => {
+    // Prevent opening scanner while already in process
+    if (isOpeningRef.current) {
+      console.log("Already opening scanner, ignoring duplicate request");
+      return;
+    }
+    
     console.log(`Starting QR scanner for purpose: ${purpose}`);
+    isOpeningRef.current = true;
     
     // Clear any existing timeouts
     if (scannerTimeoutRef.current) {
@@ -65,20 +76,23 @@ export function useQRScannerHandlers({
         setScannerPurpose(purpose);
         setShowQRScanner(true);
         scannerTimeoutRef.current = null;
-      }, 500);
+      }, 800);
     } else {
-      // If no scanner is currently open, just open a new one
+      // Force clean up any lingering camera resources
+      stopAllVideoStreams();
+      
+      // If no scanner is currently open, prepare then open a new one
       setScannerPurpose(purpose);
       
-      // Small delay to ensure clean state
+      // Slightly longer delay to ensure clean state
       scannerTimeoutRef.current = window.setTimeout(() => {
         setShowQRScanner(true);
         scannerTimeoutRef.current = null;
-      }, 100);
+      }, 300);
     }
-  };
+  }, [showQRScanner]);
   
-  const handleQRScan = (decodedText: string) => {
+  const handleQRScan = useCallback((decodedText: string) => {
     // Prevent duplicate processing
     if (processingRef.current) {
       console.log("Already processing a scan result, ignoring duplicate");
@@ -123,22 +137,22 @@ export function useQRScannerHandlers({
       } catch (error) {
         console.error("Error processing QR scan:", error);
       }
-    }, 300);
-  };
+    }, 500);
+  }, [scannerPurpose, onStartShiftScan, onEndShiftScan, onStartCleaningScan, onEndCleaningScan, setActiveTab]);
 
   // Clean up on unmount
-  const cleanup = () => {
+  const cleanup = useCallback(() => {
     if (scannerTimeoutRef.current) {
       clearTimeout(scannerTimeoutRef.current);
       scannerTimeoutRef.current = null;
     }
     stopAllVideoStreams();
-  };
+  }, []);
   
   // Explicitly clean up on unmount
   useEffect(() => {
     return cleanup;
-  }, []);
+  }, [cleanup]);
   
   return {
     showQRScanner,
