@@ -36,7 +36,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       // Call the original success callback with a slight delay
       setTimeout(() => {
         onScanSuccess(decodedText);
-      }, 500);
+      }, 800); // Increased delay for more reliable processing
     },
     onClose
   );
@@ -54,7 +54,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       if (scannerMountedRef.current) {
         console.log("QR scanner mounted, camera active:", cameraActive);
       }
-    }, 500);
+    }, 800); // Increased delay for more reliable initialization
     
     return () => {
       clearTimeout(timer);
@@ -73,7 +73,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
       setTimeout(() => {
         // Stop all video streams on unmount
         stopAllVideoStreams();
-      }, 200);
+      }, 300);
     };
   }, []);
 
@@ -91,7 +91,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onClose })
     // Slight delay to ensure cleanup completes before closing
     setTimeout(() => {
       handleClose();
-    }, 300);
+    }, 500); // Increased delay for more reliable closing
   };
 
   return (

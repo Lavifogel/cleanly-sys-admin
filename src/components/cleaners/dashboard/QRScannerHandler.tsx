@@ -50,7 +50,7 @@ const QRScannerHandler = ({
           scannerMounted.current = false;
           processingQRRef.current = false;
           closeTimeoutRef.current = null;
-        }, 500);
+        }, 800); // Increased timeout to ensure complete cleanup
       }
     }
     
@@ -103,7 +103,7 @@ const QRScannerHandler = ({
           // Allow a moment for cleanup before processing result
           setTimeout(() => {
             onQRScan(decodedText);
-          }, 300);
+          }, 500); // Increased delay for more reliable processing
         }}
         onClose={() => {
           // Only allow closing if it's the initial scanner
@@ -113,7 +113,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 300);
+            }, 500); // Increased delay for more reliable closing
           }
         }}
       />

@@ -38,8 +38,17 @@ export const stopCameraStream = (videoElement: HTMLVideoElement | null) => {
 
 export const stopAllVideoStreams = () => {
   console.log("Stopping all video streams");
+  const stopInProgressRef = { current: false };
   
   try {
+    // Avoid duplicate stop calls
+    if (stopInProgressRef.current) {
+      console.log("Stop already in progress, skipping duplicate call");
+      return;
+    }
+    
+    stopInProgressRef.current = true;
+    
     // First collect all video elements
     const videoElements = document.querySelectorAll('video');
     
@@ -67,25 +76,26 @@ export const stopAllVideoStreams = () => {
       }
     });
     
-    // Safely stop any MediaStream that might be active
+    // Also try to release any existing camera if possible
     try {
-      if (navigator.mediaDevices) {
-        navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-          .then(stream => {
-            stream.getTracks().forEach(track => {
-              track.stop();
-            });
-          })
-          .catch(() => {
-            // Ignore errors, as they might just mean no camera is available
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(stream => {
+          stream.getTracks().forEach(track => {
+            track.stop();
           });
-      }
-    } catch (error) {
-      // Ignore any errors in this cleanup
+        })
+        .catch(() => {
+          // Silently ignore any errors here
+        })
+        .finally(() => {
+          // Mark stop as complete no matter what
+          stopInProgressRef.current = false;
+        });
+    } catch (e) {
+      // Ignore errors here, just trying to be thorough
     }
     
-    // Then attempt to safely remove video elements in a separate pass after a short delay
-    // This avoids issues with modifying the DOM while iterating
+    // Then attempt to safely remove video elements in a separate pass
     setTimeout(() => {
       videoElements.forEach(video => {
         // Only remove if actually in the DOM
@@ -113,9 +123,13 @@ export const stopAllVideoStreams = () => {
       } catch (e) {
         console.log("Error removing scanner UI elements:", e);
       }
-    }, 100);
+      
+      console.log("All video streams stopped");
+      stopInProgressRef.current = false;
+    }, 300);
   } catch (e) {
     console.log("Error in stopAllVideoStreams:", e);
+    stopInProgressRef.current = false;
   }
 };
 
