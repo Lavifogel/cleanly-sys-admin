@@ -82,19 +82,6 @@ export const useCameraStart = ({
 
   // Memoize the startScanner function
   const startScanner = useCallback(async () => {
-    // Force creation of scanner container if it doesn't exist
-    const container = document.getElementById(scannerContainerId);
-    if (!container) {
-      console.log(`Creating missing scanner container: ${scannerContainerId}`);
-      const newContainer = document.createElement('div');
-      newContainer.id = scannerContainerId;
-      newContainer.style.position = 'absolute';
-      document.body.appendChild(newContainer);
-      
-      // Small delay to ensure DOM is updated
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
-    
     // Initialize the scanner
     const initialized = await initializeScanner();
     if (!initialized) return;
@@ -169,12 +156,7 @@ export const useCameraStart = ({
           }
         }
         
-        // Handle generic camera start error
-        if (err.toString().includes("Permission denied") || err.toString().includes("permission")) {
-          setError("Camera permission denied. Please allow camera access in your browser settings.");
-        } else {
-          handleCameraError(err, currentAttempt);
-        }
+        handleCameraError(err, currentAttempt);
       }
     } catch (err: any) {
       handleCameraError(err, incrementAttempt());

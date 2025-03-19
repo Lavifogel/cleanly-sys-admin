@@ -16,25 +16,21 @@ export const useCameraInitialization = () => {
   const isInitializedRef = useRef(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Create the scanner instance with improved reliability
+  // Initialize HTML5QrCode instance only once
   useEffect(() => {
     const mountedRef = { current: true };
     
-    // Attempt to initialize immediately
-    const attemptInit = () => {
+    // Slight delay to ensure container is ready
+    const timeoutId = setTimeout(() => {
       try {
         if (!scannerRef.current && mountedRef.current) {
-          console.log("Attempting to initialize HTML5QrCode instance");
+          console.log("Initializing HTML5QrCode instance");
           
-          // First, ensure the container element exists or create it
-          let containerElement = document.getElementById(scannerContainerId);
+          // First, ensure the container element exists
+          const containerElement = document.getElementById(scannerContainerId);
           if (!containerElement) {
-            console.log(`Container element '${scannerContainerId}' not found, creating it`);
-            containerElement = document.createElement('div');
-            containerElement.id = scannerContainerId;
-            containerElement.style.position = 'absolute';
-            containerElement.style.visibility = 'hidden';
-            document.body.appendChild(containerElement);
+            console.log(`Container element '${scannerContainerId}' not found, will try again later`);
+            return;
           }
           
           // Clean up any existing HTML5QrCode elements to prevent conflicts
@@ -54,31 +50,15 @@ export const useCameraInitialization = () => {
           isInitializedRef.current = true;
           setIsInitialized(true);
           console.log("HTML5QrCode instance created successfully");
-          return true;
         }
-        return false;
       } catch (error) {
         console.error("Error initializing scanner:", error);
-        return false;
       }
-    };
-    
-    // Try immediately
-    if (!attemptInit()) {
-      // If initial attempt fails, try again with delay
-      const timeoutId = setTimeout(() => {
-        if (mountedRef.current && !scannerRef.current) {
-          attemptInit();
-        }
-      }, 300);
-      
-      return () => {
-        clearTimeout(timeoutId);
-      };
-    }
+    }, 500);
     
     return () => {
       mountedRef.current = false;
+      clearTimeout(timeoutId);
     };
   }, []);
 

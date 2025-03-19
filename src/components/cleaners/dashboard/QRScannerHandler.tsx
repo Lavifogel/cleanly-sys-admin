@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { ScannerPurpose } from "@/hooks/useQRScanner";
-import { stopAllVideoStreams } from "@/utils/qrScanner";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
@@ -30,27 +30,9 @@ const QRScannerHandler = ({
   useEffect(() => {
     // Handle when scanner opens
     if (showQRScanner && !prevShowQRScannerRef.current) {
-      // First ensure that any existing camera is fully stopped before starting a new one
-      stopAllVideoStreams();
-      
-      // Pre-create the scanner container to ensure it exists before the QRCodeScanner component renders
-      const containerId = "qr-scanner-container";
-      if (!document.getElementById(containerId)) {
-        const containerElement = document.createElement('div');
-        containerElement.id = containerId;
-        containerElement.style.position = 'absolute';
-        containerElement.style.visibility = 'hidden';
-        document.body.appendChild(containerElement);
-      }
-      
-      // Small delay before mounting scanner to ensure clean camera state
-      setTimeout(() => {
-        if (!scannerMounted.current) {
-          scannerMounted.current = true;
-          processingQRScanRef.current = false;
-          console.log(`QR scanner opened for purpose: ${scannerPurpose}`);
-        }
-      }, 50); // Reduced delay
+      scannerMounted.current = true;
+      processingQRScanRef.current = false;
+      console.log("QR scanner opened");
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
@@ -72,7 +54,7 @@ const QRScannerHandler = ({
           
           // Force stop streams again to ensure complete cleanup
           stopAllVideoStreams();
-        }, 200); // Reduced delay
+        }, 300);
       }
     }
     
@@ -92,7 +74,7 @@ const QRScannerHandler = ({
         console.log("QR scanner handler unmounted, resources cleaned up");
       }
     };
-  }, [showQRScanner, scannerPurpose]);
+  }, [showQRScanner]);
 
   // Additional cleanup when component unmounts
   useEffect(() => {
@@ -104,8 +86,8 @@ const QRScannerHandler = ({
 
   if (!showQRScanner) return null;
 
-  // Always allow the scanner to be closed with the X button
-  const canClose = true;
+  // If 'startShift' and no active shift, show a close button
+  const canClose = scannerPurpose === 'startShift' && !activeShift;
 
   const handleScanSuccess = (decodedText: string) => {
     // Prevent duplicate scan handling
@@ -120,28 +102,11 @@ const QRScannerHandler = ({
     // First stop all camera streams BEFORE processing the result
     stopAllVideoStreams();
     
-    // Use a shorter delay for better responsiveness
+    // Delay processing to ensure camera cleanup completes first
     setTimeout(() => {
       onQRScan(decodedText);
       // Processing flag will be reset when the scanner is closed
-    }, 200);
-  };
-
-  const handleClose = () => {
-    // Stop camera streams first
-    stopAllVideoStreams();
-    console.log("Close button clicked, stopping camera streams");
-    
-    // Log to help identify if this close handler is being called
-    console.log("QRScannerHandler: handleClose called, scannerPurpose:", scannerPurpose);
-    
-    // Set the scanner as unmounted immediately to prevent race conditions
-    scannerMounted.current = false;
-    
-    // Then close the scanner with a delay to ensure proper cleanup
-    setTimeout(() => {
-      closeScanner();
-    }, 200);
+    }, 300); // Increased delay to ensure camera is properly stopped
   };
 
   return (
@@ -151,28 +116,30 @@ const QRScannerHandler = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={handleClose} 
+            onClick={() => {
+              stopAllVideoStreams();
+              setTimeout(closeScanner, 100);
+            }} 
             className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
-            data-testid="handler-close-button"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
       )}
-      {scannerMounted.current && (
-        <QRCodeScanner 
-          onScanSuccess={handleScanSuccess}
-          onClose={() => {
-            console.log("QRCodeScanner onClose callback triggered");
+      <QRCodeScanner 
+        onScanSuccess={handleScanSuccess}
+        onClose={() => {
+          // Only allow closing if it's the initial scanner
+          if (canClose) {
             // Ensure camera is stopped before closing
             stopAllVideoStreams();
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
             }, 200);
-          }}
-        />
-      )}
+          }
+        }}
+      />
     </div>
   );
 };

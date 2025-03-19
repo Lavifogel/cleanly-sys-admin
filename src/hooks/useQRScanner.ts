@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { stopAllVideoStreams } from "@/utils/qrScanner";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 export type ScannerPurpose = "startShift" | "endShift" | "startCleaning" | "endCleaning";
 

@@ -1,6 +1,6 @@
 
 import { useState, useRef } from "react";
-import { stopAllVideoStreams } from "@/utils/qrScanner";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 // Importing ScannerPurpose from useQRScanner instead of qrScanner types
 import { ScannerPurpose } from "@/hooks/useQRScanner";
@@ -23,52 +23,34 @@ export function useQRScannerHandlers({
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scannerPurpose, setScannerPurpose] = useState<ScannerPurpose>('startShift');
   const processingRef = useRef(false);
-  const closeTimeoutRef = useRef<number | null>(null);
   
   const closeScanner = () => {
-    console.log("Closing QR scanner in useQRScannerHandlers");
-    
-    // Prevent multiple close attempts
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-    }
-    
     // Force stop all camera streams before hiding the scanner UI
     stopAllVideoStreams();
-    
-    // Set the scanner state to hidden
     setShowQRScanner(false);
     
     // Double-check camera is fully stopped after a delay
-    closeTimeoutRef.current = window.setTimeout(() => {
+    setTimeout(() => {
       stopAllVideoStreams();
       
       // Reset processing state after a delay
       setTimeout(() => {
         processingRef.current = false;
-        closeTimeoutRef.current = null;
-      }, 200);
+      }, 300);
     }, 200);
   };
   
   const handleQRScannerStart = (purpose: ScannerPurpose) => {
-    console.log(`Starting QR scanner for purpose: ${purpose}`);
     processingRef.current = false;
     setScannerPurpose(purpose);
     
     // Ensure any existing camera is fully closed before opening scanner
     stopAllVideoStreams();
     
-    // Clear any pending close operations
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-    
-    // Add small delay before showing scanner to ensure clean start
+    // Add small delay before showing scanner
     setTimeout(() => {
       setShowQRScanner(true);
-    }, 200);
+    }, 100);
   };
   
   const handleQRScan = (decodedText: string) => {
@@ -79,7 +61,6 @@ export function useQRScannerHandlers({
     }
     
     processingRef.current = true;
-    console.log(`QR scanned for purpose: ${scannerPurpose}, data: ${decodedText}`);
     
     // Immediately stop all camera streams
     stopAllVideoStreams();
@@ -87,10 +68,12 @@ export function useQRScannerHandlers({
     // Hide scanner UI
     setShowQRScanner(false);
     
-    // Add a delay before processing the scan result
+    // Add a larger delay before processing the scan result
     // This ensures camera resources are fully released
     setTimeout(() => {
       try {
+        console.log(`QR scanned for purpose: ${scannerPurpose}, data: ${decodedText}`);
+        
         // Force stop camera streams again to ensure complete cleanup
         stopAllVideoStreams();
         
@@ -121,18 +104,9 @@ export function useQRScannerHandlers({
         // Reset processing flag
         setTimeout(() => {
           processingRef.current = false;
-        }, 300);
+        }, 500);
       }
-    }, 300);
-  };
-  
-  // Clean up on unmount
-  const cleanup = () => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-    stopAllVideoStreams();
+    }, 500);
   };
   
   return {
@@ -140,7 +114,6 @@ export function useQRScannerHandlers({
     scannerPurpose,
     handleQRScan,
     handleQRScannerStart,
-    closeScanner,
-    cleanup
+    closeScanner
   };
 }

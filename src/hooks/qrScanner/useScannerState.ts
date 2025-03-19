@@ -1,6 +1,7 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { stopAllVideoStreams } from "@/utils/qrScanner";
+import { stopAllVideoStreams } from "@/utils/qrScannerUtils";
 
 interface UseScannerStateProps {
   scannerRef: React.MutableRefObject<Html5Qrcode | null>;
