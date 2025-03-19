@@ -63,36 +63,35 @@ export function useQRScannerHandlers({
     processingQRCodeRef.current = true;
     
     try {
-      switch (scannerPurpose) {
-        case 'startShift':
+      // Stop all camera streams immediately to prevent multiple scan attempts
+      stopAllVideoStreams();
+      
+      // Process after a slight delay to ensure clean camera shutdown
+      setTimeout(() => {
+        if (scannerPurpose === 'startShift') {
           console.log("Processing startShift scan");
           onStartShiftScan(decodedText);
-          break;
-        case 'endShift':
+        } else if (scannerPurpose === 'endShift') {
           console.log("Processing endShift scan");
           onEndShiftScan(decodedText);
-          break;
-        case 'startCleaning':
+        } else if (scannerPurpose === 'startCleaning') {
           console.log("Processing startCleaning scan");
           onStartCleaningScan(decodedText);
           // Switch to cleaning tab after starting a cleaning
           if (setActiveTab) {
             setActiveTab('cleaning');
           }
-          break;
-        case 'endCleaning':
-          console.log("Processing endCleaning scan");
+        } else if (scannerPurpose === 'endCleaning') {
+          console.log("Processing endCleaning scan with data:", decodedText);
           onEndCleaningScan(decodedText);
-          break;
-      }
-    } catch (error) {
-      console.error("Error processing QR scan:", error);
-    } finally {
-      // Close scanner AFTER processing the scan with a slight delay
-      // to ensure the scan is fully processed
-      window.setTimeout(() => {
+        }
+        
+        // Close scanner AFTER processing the scan
         closeScanner();
       }, 300);
+    } catch (error) {
+      console.error("Error processing QR scan:", error);
+      closeScanner();
     }
   };
   

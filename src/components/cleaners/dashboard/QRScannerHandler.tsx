@@ -32,7 +32,7 @@ const QRScannerHandler = ({
     if (showQRScanner && !prevShowQRScannerRef.current) {
       scannerMounted.current = true;
       processingQRRef.current = false;
-      console.log("QR scanner opened");
+      console.log("QR scanner opened with purpose:", scannerPurpose);
     } 
     // Handle when scanner closes
     else if (!showQRScanner && prevShowQRScannerRef.current) {
@@ -71,12 +71,30 @@ const QRScannerHandler = ({
         console.log("QR scanner handler unmounted, resources cleaned up");
       }
     };
-  }, [showQRScanner]);
+  }, [showQRScanner, scannerPurpose]);
 
   if (!showQRScanner) return null;
 
   // If 'startShift' and no active shift, show a close button
   const canClose = scannerPurpose === 'startShift' && !activeShift;
+
+  const handleQRScanSuccess = (decodedText: string) => {
+    if (processingQRRef.current) {
+      console.log("Already processing a QR code, ignoring duplicate scan");
+      return;
+    }
+    
+    processingQRRef.current = true;
+    console.log(`QR scan successful for purpose ${scannerPurpose}, data:`, decodedText);
+    
+    // First stop all camera streams
+    stopAllVideoStreams();
+    
+    // Allow a moment for cleanup before processing result
+    setTimeout(() => {
+      onQRScan(decodedText);
+    }, 500);
+  };
 
   return (
     <div className="fixed inset-0 z-50">
@@ -88,23 +106,7 @@ const QRScannerHandler = ({
         </div>
       )}
       <QRCodeScanner 
-        onScanSuccess={(decodedText) => {
-          if (processingQRRef.current) {
-            console.log("Already processing a QR code, ignoring duplicate scan");
-            return;
-          }
-          
-          processingQRRef.current = true;
-          console.log("QR scan successful, data:", decodedText);
-          
-          // First stop all camera streams
-          stopAllVideoStreams();
-          
-          // Allow a moment for cleanup before processing result
-          setTimeout(() => {
-            onQRScan(decodedText);
-          }, 500); // Increased delay for more reliable processing
-        }}
+        onScanSuccess={handleQRScanSuccess}
         onClose={() => {
           // Only allow closing if it's the initial scanner
           if (canClose) {
@@ -113,7 +115,7 @@ const QRScannerHandler = ({
             // Allow a moment for cleanup before closing
             setTimeout(() => {
               closeScanner();
-            }, 500); // Increased delay for more reliable closing
+            }, 500);
           }
         }}
       />
